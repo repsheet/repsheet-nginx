@@ -66,3 +66,4 @@ test/Makefile
 
 cov-int
 librepsheet.tar.gz
+autom4te.cache
