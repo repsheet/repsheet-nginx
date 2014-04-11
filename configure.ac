@@ -2,7 +2,7 @@ AC_PREREQ(2.61)
 AC_INIT([librepsheet], [0.0.1], [aaron@aaronbedra.com])
 AC_CONFIG_HEADERS([config.h])
 
-AM_INIT_AUTOMAKE([-Wall foreign subdir-objects])
+AM_INIT_AUTOMAKE([-Weverything -Werror foreign subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
