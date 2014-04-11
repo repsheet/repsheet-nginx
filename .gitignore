@@ -64,3 +64,5 @@ test/Makefile
 
 
 
+cov-int
+librepsheet.tar.gz
