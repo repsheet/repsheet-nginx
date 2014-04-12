@@ -19,7 +19,6 @@
  * TODO: write this
  */
 
-
 #include "librepsheet.h"
 
 /**
@@ -73,3 +72,17 @@ void mark_actor(redisContext *context, char *actor)
 {
   freeReplyObject(redisCommand(context, "SET %s:repsheet true", actor));
 }
+
+/**
+ * Sets the expiry for a record
+ *
+ * @param context the Redis connection
+ * @param actor the IP address of the actor
+ * @param label the label associated with the actor
+ * @param expiry the length until the record expires
+ */
+void expire(redisContext *context, char *actor, char *label, int expiry)
+{
+  freeReplyObject(redisCommand(context, "EXPIRE %s:%s %d", actor, label, expiry));
+}
+

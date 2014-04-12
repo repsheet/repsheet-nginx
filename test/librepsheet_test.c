@@ -37,6 +37,19 @@ START_TEST(mark_actor_test)
 }
 END_TEST
 
+START_TEST(expire_test)
+{
+  redisContext *context = get_redis_context("localhost", 6379, 0);
+
+  mark_actor(context, "1.1.1.1");
+  expire(context, "1.1.1.1", "repsheet", 200);
+
+  redisReply *reply;
+  reply = redisCommand(context, "TTL 1.1.1.1:repsheet");
+  ck_assert_int_eq(reply->integer, 200);
+}
+END_TEST
+
 Suite *make_librepsheet_connection_suite(void) {
   Suite *suite = suite_create("librepsheet connection");
 
@@ -47,6 +60,7 @@ Suite *make_librepsheet_connection_suite(void) {
   TCase *tc_connection_operations = tcase_create("connection operations");
   tcase_add_test(tc_connection_operations, increment_rule_count_test);
   tcase_add_test(tc_connection_operations, mark_actor_test);
+  tcase_add_test(tc_connection_operations, expire_test);
   suite_add_tcase(suite, tc_connection_operations);
 
   return suite;
