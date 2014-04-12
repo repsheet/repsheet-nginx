@@ -19,3 +19,8 @@ redisContext *get_redis_context(char *host, int port, int timeout)
     return context;
   }
 }
+
+void increment_rule_count(redisContext *context, char *actor, char *rule)
+{
+  freeReplyObject(redisCommand(context, "ZINCRBY %s:detected 1 %s", actor, rule));
+}

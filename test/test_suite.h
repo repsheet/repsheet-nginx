@@ -3,6 +3,6 @@
 
 #include <check.h>
 
-Suite *make_librepsheet_suite();
+Suite *make_librepsheet_connection_suite();
 
 #endif
