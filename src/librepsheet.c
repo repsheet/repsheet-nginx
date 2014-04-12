@@ -24,3 +24,8 @@ void increment_rule_count(redisContext *context, char *actor, char *rule)
 {
   freeReplyObject(redisCommand(context, "ZINCRBY %s:detected 1 %s", actor, rule));
 }
+
+void mark_actor(redisContext *context, char *actor)
+{
+  freeReplyObject(redisCommand(context, "SET %s:repsheet true", actor));
+}
