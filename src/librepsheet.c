@@ -86,3 +86,23 @@ void expire(redisContext *context, char *actor, char *label, int expiry)
   freeReplyObject(redisCommand(context, "EXPIRE %s:%s %d", actor, label, expiry));
 }
 
+/**
+ * Checks to see if an actor is on the Repsheet
+ *
+ * @param context the Redis connection
+ * @param actor the IP address of the actor
+ *
+ * @returns TRUE if yes, FALSE if no
+ */
+int is_on_repsheet(redisContext *context, char *actor)
+{
+  redisReply *reply;
+
+  reply = redisCommand(context, "GET %s:repsheet", actor);
+  if (reply->str && strcmp(reply->str, "true") == 0) {
+    freeReplyObject(reply);
+    return TRUE;
+  }
+
+  return FALSE;
+}
