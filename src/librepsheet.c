@@ -85,6 +85,17 @@ void blacklist_actor(redisContext *context, char *actor)
 }
 
 /**
+ * Adds the actor to the Repsheet whitelist
+ *
+ * @param context the Redis connection
+ * @param actor the IP address of the actor
+ */
+void whitelist_actor(redisContext *context, char *actor)
+{
+  freeReplyObject(redisCommand(context, "SET %s:repsheet:whitelist true", actor));
+}
+
+/**
  * Sets the expiry for a record
  *
  * @param context the Redis connection

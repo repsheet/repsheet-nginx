@@ -50,6 +50,19 @@ START_TEST(blacklist_actor_test)
 }
 END_TEST
 
+START_TEST(whitelist_actor_test)
+{
+  redisContext *context = get_redis_context("localhost", 6379, 0);
+
+  whitelist_actor(context, "1.1.1.1");
+
+  redisReply *reply;
+  reply = redisCommand(context, "GET 1.1.1.1:repsheet:whitelist");
+  ck_assert_str_eq(reply->str, "true");
+
+}
+END_TEST
+
 START_TEST(expire_test)
 {
   redisContext *context = get_redis_context("localhost", 6379, 0);
@@ -86,6 +99,7 @@ Suite *make_librepsheet_connection_suite(void) {
   tcase_add_test(tc_connection_operations, increment_rule_count_test);
   tcase_add_test(tc_connection_operations, mark_actor_test);
   tcase_add_test(tc_connection_operations, blacklist_actor_test);
+  tcase_add_test(tc_connection_operations, whitelist_actor_test);
   tcase_add_test(tc_connection_operations, expire_test);
   tcase_add_test(tc_connection_operations, is_on_repsheet_test);
   suite_add_tcase(suite, tc_connection_operations);
