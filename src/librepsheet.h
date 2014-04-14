@@ -15,5 +15,6 @@ void blacklist_actor(redisContext *context, char *actor);
 void whitelist_actor(redisContext *context, char *actor);
 void expire(redisContext *context, char *actor, char *label, int expiry);
 int is_on_repsheet(redisContext *context, char *actor);
+int is_blacklisted(redisContext *context, char *actor);
 
 #endif

@@ -128,3 +128,24 @@ int is_on_repsheet(redisContext *context, char *actor)
 
   return FALSE;
 }
+
+/**
+ * Checks to see if an actor is on the Repsheet blacklist
+ *
+ * @param context the Redis connection
+ * @param actor the IP address of the actor
+ *
+ * @returns TRUE if yes, FALSE if no
+ */
+int is_blacklisted(redisContext *context, char *actor)
+{
+  redisReply *reply;
+
+  reply = redisCommand(context, "GET %s:repsheet:blacklist", actor);
+  if (reply->str && strcmp(reply->str, "true") == 0) {
+    freeReplyObject(reply);
+    return TRUE;
+  }
+
+  return FALSE;
+}

@@ -88,6 +88,18 @@ START_TEST(is_on_repsheet_test)
 }
 END_TEST
 
+START_TEST(is_blacklisted_test)
+{
+  int response;
+  redisContext *context = get_redis_context("localhost", 6379, 0);
+
+  blacklist_actor(context, "1.1.1.1");
+  response = is_blacklisted(context, "1.1.1.1");
+
+  ck_assert_int_eq(response, TRUE);
+}
+END_TEST
+
 Suite *make_librepsheet_connection_suite(void) {
   Suite *suite = suite_create("librepsheet connection");
 
@@ -102,6 +114,7 @@ Suite *make_librepsheet_connection_suite(void) {
   tcase_add_test(tc_connection_operations, whitelist_actor_test);
   tcase_add_test(tc_connection_operations, expire_test);
   tcase_add_test(tc_connection_operations, is_on_repsheet_test);
+  tcase_add_test(tc_connection_operations, is_blacklisted_test);
   suite_add_tcase(suite, tc_connection_operations);
 
   return suite;
