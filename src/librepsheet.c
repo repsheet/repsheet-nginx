@@ -68,7 +68,7 @@ void increment_rule_count(redisContext *context, char *actor, char *rule)
  * @param context the Redis connection
  * @param actor the IP address of the actor
  */
-void blacklist_actor(redisContext *context, char *actor)
+void mark_actor(redisContext *context, char *actor)
 {
   freeReplyObject(redisCommand(context, "SET %s:repsheet true", actor));
 }
@@ -79,7 +79,7 @@ void blacklist_actor(redisContext *context, char *actor)
  * @param context the Redis connection
  * @param actor the IP address of the actor
  */
-void mark_actor(redisContext *context, char *actor)
+void blacklist_actor(redisContext *context, char *actor)
 {
   freeReplyObject(redisCommand(context, "SET %s:repsheet:blacklist true", actor));
 }
