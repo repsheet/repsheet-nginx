@@ -96,19 +96,6 @@ void whitelist_actor(redisContext *context, char *actor)
 }
 
 /**
- * Sets the expiry for a record
- *
- * @param context the Redis connection
- * @param actor the IP address of the actor
- * @param label the label associated with the actor
- * @param expiry the length until the record expires
- */
-void expire(redisContext *context, char *actor, char *label, int expiry)
-{
-  freeReplyObject(redisCommand(context, "EXPIRE %s:%s %d", actor, label, expiry));
-}
-
-/**
  * Checks to see if an actor is on the Repsheet
  *
  * @param context the Redis connection
@@ -169,4 +156,33 @@ int is_whitelisted(redisContext *context, char *actor)
   }
 
   return FALSE;
+}
+
+/**
+ * Sets the expiry for a record
+ *
+ * @param context the Redis connection
+ * @param actor the IP address of the actor
+ * @param label the label associated with the actor
+ * @param expiry the length until the record expires
+ */
+void expire(redisContext *context, char *actor, char *label, int expiry)
+{
+  freeReplyObject(redisCommand(context, "EXPIRE %s:%s %d", actor, label, expiry));
+}
+
+/**
+ * Blacklists and sets the expiry for a record. Adds the actor to the
+ * blacklist history and sets the reason code.
+ *
+ * @param context the Redis connection
+ * @param actor the IP address of the actor
+ * @param expiry the length until the record expires
+ * @param reason the reason for blacklisting the actor
+ */
+void blacklist_and_expire(redisContext *context, char *actor, int expiry, char *reason)
+{
+  freeReplyObject(redisCommand(context, "SETEX %s:repsheet:blacklist %d true", actor, expiry));
+  freeReplyObject(redisCommand(context, "SETEX %s:repsheet:blacklist:reason %d %s", actor, expiry, reason));
+  freeReplyObject(redisCommand(context, "SADD repsheet:blacklist:history %s", actor));
 }

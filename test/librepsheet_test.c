@@ -112,6 +112,27 @@ START_TEST(is_whitelisted_test)
 }
 END_TEST
 
+START_TEST(blacklist_and_expire_test)
+{
+  redisContext *context = get_redis_context("localhost", 6379, 0);
+
+  blacklist_and_expire(context, "1.1.1.1", 200, "test");
+
+  redisReply *reply;
+  reply = redisCommand(context, "TTL 1.1.1.1:repsheet:blacklist");
+  ck_assert_int_eq(reply->integer, 200);
+
+  reply = redisCommand(context, "GET 1.1.1.1:repsheet:blacklist");
+  ck_assert_str_eq(reply->str, "true");
+
+  reply = redisCommand(context, "GET 1.1.1.1:repsheet:blacklist:reason");
+  ck_assert_str_eq(reply->str, "test");
+
+  reply = redisCommand(context, "SISMEMBER repsheet:blacklist:history 1.1.1.1");
+  ck_assert_int_eq(reply->integer, 1);
+}
+END_TEST
+
 Suite *make_librepsheet_connection_suite(void) {
   Suite *suite = suite_create("librepsheet connection");
 
@@ -121,13 +142,19 @@ Suite *make_librepsheet_connection_suite(void) {
 
   TCase *tc_connection_operations = tcase_create("connection operations");
   tcase_add_test(tc_connection_operations, increment_rule_count_test);
+
   tcase_add_test(tc_connection_operations, mark_actor_test);
   tcase_add_test(tc_connection_operations, blacklist_actor_test);
   tcase_add_test(tc_connection_operations, whitelist_actor_test);
-  tcase_add_test(tc_connection_operations, expire_test);
+
+
   tcase_add_test(tc_connection_operations, is_on_repsheet_test);
   tcase_add_test(tc_connection_operations, is_blacklisted_test);
   tcase_add_test(tc_connection_operations, is_whitelisted_test);
+
+  tcase_add_test(tc_connection_operations, expire_test);
+  tcase_add_test(tc_connection_operations, blacklist_and_expire_test);
+
   suite_add_tcase(suite, tc_connection_operations);
 
   return suite;
