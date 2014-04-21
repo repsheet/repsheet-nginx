@@ -1,15 +1,6 @@
 #include "../src/librepsheet.h"
 #include "test_suite.h"
 
-START_TEST(base_connection)
-{
-  redisContext *context = get_redis_context("localhost", 6379, 0);
-
-  ck_assert(&context);
-  ck_assert_int_eq(context->err, 0);
-}
-END_TEST
-
 START_TEST(increment_rule_count_test)
 {
   redisContext *context = get_redis_context("localhost", 6379, 0);
@@ -135,10 +126,6 @@ END_TEST
 
 Suite *make_librepsheet_connection_suite(void) {
   Suite *suite = suite_create("librepsheet connection");
-
-  TCase *tc_connection = tcase_create("connection");
-  tcase_add_test(tc_connection, base_connection);
-  suite_add_tcase(suite, tc_connection);
 
   TCase *tc_connection_operations = tcase_create("connection operations");
   tcase_add_test(tc_connection_operations, increment_rule_count_test);
