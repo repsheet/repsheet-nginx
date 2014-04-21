@@ -19,7 +19,7 @@
  * TODO: write this
  */
 
-#include "librepsheet.h"
+#include "repsheet.h"
 
 /**
  * This function establishes a connection to Redis

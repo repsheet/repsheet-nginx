@@ -1,5 +1,5 @@
-#ifndef __LIBREPSHEET_H
-#define __LIBREPSHEET_H
+#ifndef __REPSHEET_H
+#define __REPSHEET_H
 
 #include <string.h>
 #include "hiredis/hiredis.h"

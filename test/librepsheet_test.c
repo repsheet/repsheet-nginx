@@ -1,4 +1,4 @@
-#include "../src/librepsheet.h"
+#include "../src/repsheet.h"
 #include "test_suite.h"
 
 START_TEST(increment_rule_count_test)
