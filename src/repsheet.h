@@ -22,4 +22,7 @@ int is_whitelisted(redisContext *context, char *actor);
 void expire(redisContext *context, char *actor, char *label, int expiry);
 void blacklist_and_expire(redisContext *context, char *actor, int expiry, char *reason);
 
+void record(redisContext *context, char *timestamp, char *user_agent, char *method,
+            char *uri, char *arguments, int redis_max_length, int redis_expiry, char *actor);
+
 #endif
