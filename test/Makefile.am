@@ -5,4 +5,4 @@ test_runner_SOURCES = librepsheet_test.c \
                       ../src/librepsheet.c \
                       ../src/librepsheet.h
 test_runner_CFLAGS = $(CHECK_CFLAGS)
-test_runner_LDADD = $(CHECK_LIBS) -lhiredis
+test_runner_LDADD = $(CHECK_LIBS) -lhiredis -lpcre
