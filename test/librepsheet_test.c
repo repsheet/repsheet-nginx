@@ -196,6 +196,22 @@ START_TEST(handles_multiple_events)
 }
 END_TEST
 
+START_TEST(correctly_parses_anonmaly_total) {
+  char *input = "Total=5;SQLi=;XSS=;";
+  int score = modsecurity_total(input);
+
+  ck_assert_int_eq(5, score);
+}
+END_TEST
+
+START_TEST(returns_0_when_no_values_exist) {
+  char *input = "Total=;SQLi=;XSS=;";
+  int score = modsecurity_total(input);
+
+  ck_assert_int_eq(0, score);
+}
+END_TEST
+
 Suite *make_librepsheet_connection_suite(void) {
   Suite *suite = suite_create("librepsheet connection");
 
@@ -231,6 +247,8 @@ Suite *make_librepsheet_connection_suite(void) {
   TCase *tc_mod_security = tcase_create("ModSecurity Headers");
   tcase_add_test(tc_mod_security, handles_a_single_event);
   tcase_add_test(tc_mod_security, handles_multiple_events);
+  tcase_add_test(tc_mod_security, correctly_parses_anonmaly_total);
+  tcase_add_test(tc_mod_security, returns_0_when_no_values_exist);
   suite_add_tcase(suite, tc_mod_security);
 
   return suite;
