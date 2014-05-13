@@ -297,3 +297,69 @@ const char *remote_address(char *connected_address, const char *xff_header)
 
   return address;
 }
+
+/**
+ * Finds the number of ModSecurity rules in X-WAF-Events header. This
+ * is used before the actual processor so that the events array can be
+ * properly allocated.
+ *
+ * @param waf_events the contents of the X-WAF-Events header
+ */
+
+int matches(char *waf_events)
+{
+  int match, error_offset;
+  int offset = 0;
+  int matches = 0;
+  int ovector[100];
+
+  const char *error;
+
+  pcre *regex = pcre_compile("(?<!\\d)\\d{6}(?!\\d)", PCRE_MULTILINE, &error, &error_offset, 0);
+
+  while (offset < strlen(waf_events) && (match = pcre_exec(regex, 0, waf_events, strlen(waf_events), offset, 0, ovector, sizeof(ovector))) >= 0) {
+    matches++;
+    offset = ovector[1];
+  }
+
+  return matches;
+}
+
+/**
+ * Populates the events array with ModSecurity rule ids that were
+ * present in the X-WAF-Events header
+ *
+ * @param waf_events the contents of the X-WAF-Events header
+ * @param events the pre-allocated events array to place results
+ */
+
+void process_mod_security_headers(char *waf_events, char *events[])
+{
+  int i = 0;
+  int matches = 0;
+  int offset = 0;
+  int count = 0;
+  int match, error_offset;
+  int ovector[100];
+
+  char *prev_event = NULL;
+
+  const char *event;
+  const char *error;
+
+  pcre *regex;
+
+  regex = pcre_compile("(?<!\\d)\\d{6}(?!\\d)", PCRE_MULTILINE, &error, &error_offset, 0);
+
+  while (offset < strlen(waf_events) && (match = pcre_exec(regex, 0, waf_events, strlen(waf_events), offset, 0, ovector, sizeof(ovector))) >= 0) {
+    for(i = 0; i < match; i++) {
+      pcre_get_substring(waf_events, ovector, match, i, &(event));
+      if (event != prev_event) {
+        strcpy(events[count], event);
+        prev_event = (char*)event;
+      }
+    }
+    count++;
+    offset = ovector[1];
+  }
+}
