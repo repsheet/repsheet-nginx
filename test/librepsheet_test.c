@@ -99,6 +99,24 @@ START_TEST(is_whitelisted_test)
 }
 END_TEST
 
+START_TEST(is_historical_offender_test)
+{
+  redisCommand(context, "SADD repsheet:blacklist:history 1.1.1.1");
+  int response = is_historical_offender(context, "1.1.1.1");
+
+  ck_assert_int_eq(response, TRUE);
+}
+END_TEST
+
+START_TEST(is_not_historical_offender_test)
+{
+  redisCommand(context, "SADD repsheet:blacklist:history 1.1.1.2");
+  int response = is_historical_offender(context, "1.1.1.1");
+
+  ck_assert_int_eq(response, FALSE);
+}
+END_TEST
+
 START_TEST(blacklist_and_expire_test)
 {
   blacklist_and_expire(context, "1.1.1.1", 200, "test");
@@ -227,6 +245,8 @@ Suite *make_librepsheet_connection_suite(void) {
   tcase_add_test(tc_connection_operations, is_on_repsheet_test);
   tcase_add_test(tc_connection_operations, is_blacklisted_test);
   tcase_add_test(tc_connection_operations, is_whitelisted_test);
+  tcase_add_test(tc_connection_operations, is_historical_offender_test);
+  tcase_add_test(tc_connection_operations, is_not_historical_offender_test);
 
   tcase_add_test(tc_connection_operations, expire_test);
   tcase_add_test(tc_connection_operations, blacklist_and_expire_test);

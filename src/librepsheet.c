@@ -393,3 +393,28 @@ int modsecurity_total(char *waf_score)
 
   return 0;
 }
+
+/**
+ * Checks to see if an actor has been previously blacklisted
+ *
+ * @param context the Redis connection
+ * @param actor the addres of the actor in question
+ */
+
+int is_historical_offender(redisContext *context, char *actor)
+{
+  redisReply *reply;
+
+  reply = redisCommand(context, "SISMEMBER repsheet:blacklist:history %s", actor);
+  if (reply) {
+    if (reply->integer == 1) {
+      freeReplyObject(reply);
+      return 1;
+    } else {
+      freeReplyObject(reply);
+      return 0;
+    }
+  }
+
+  return 0;
+}
