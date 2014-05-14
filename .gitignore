@@ -12,6 +12,7 @@
 *.lo
 *.Po
 *.Plo
+*.pc
 
 # Shared objects (inc. Windows DLLs)
 *.dll
@@ -27,8 +28,9 @@
 *.x86_64
 *.hex
 
+# Autotools stuff
 m4
-
+autom4te.cache
 Makefile.in
 Makefile
 aclocal.m4
@@ -48,6 +50,7 @@ config.log
 config.status
 libtool
 stamp-h1
+dump.rdb
 
 src/Makefile
 src/Makefile.in
@@ -60,13 +63,10 @@ test/test_runner.trs
 test/Makefile.in
 test/Makefile
 
-
-
-
-
+# Coverity
 cov-int
 librepsheet.tar.gz
-autom4te.cache
-dump.rdb
-*.pc
+
+# Doxygen
 docs
+
