@@ -253,11 +253,19 @@ void record(redisContext *context, char *timestamp, const char *user_agent,
   rec = (char*)malloc(strlen(t) + strlen(ua) + strlen(method) + strlen(u) + strlen(args) + 9);
   sprintf(rec, "%s, %s, %s, %s, %s", t, ua, method, u, args);
 
+  free(t);
+  free(ua);
+  free(method);
+  free(u);
+  free(args);
+
   freeReplyObject(redisCommand(context, "LPUSH %s:requests %s", actor, rec));
   freeReplyObject(redisCommand(context, "LTRIM %s:requests 0 %d", actor, (redis_max_length - 1)));
   if (redis_expiry > 0) {
     freeReplyObject(redisCommand(context, "EXPIRE %s:requests %d", actor, redis_expiry));
   }
+
+  free(rec);
 }
 
 /**
