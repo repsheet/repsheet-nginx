@@ -19,6 +19,9 @@ void whitelist_actor(redisContext *context, char *actor);
 int is_on_repsheet(redisContext *context, const char *actor);
 int is_blacklisted(redisContext *context, const char *actor);
 int is_whitelisted(redisContext *context, const char *actor);
+int is_historical_offender(redisContext *context, char *actor);
+int is_previously_scored(redisContext *context, char *actor);
+
 
 void expire(redisContext *context, char *actor, char *label, int expiry);
 void blacklist_and_expire(redisContext *context, char *actor, int expiry, char *reason);
@@ -28,5 +31,9 @@ void record(redisContext *context, char *timestamp, const char *user_agent,
             int redis_expiry, const char *actor);
 
 const char *remote_address(char *connected_address, const char *xff_header);
+
+int modsecurity_total(char *waf_score);
+void process_mod_security_headers(char *waf_events, char *events[]);
+int matches(char *waf_events);
 
 #endif
