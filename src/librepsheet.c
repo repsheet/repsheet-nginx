@@ -418,3 +418,23 @@ int is_historical_offender(redisContext *context, char *actor)
 
   return 0;
 }
+
+/**
+ * Checks to see if an actor has been previously scored
+ *
+ * @param context the Redis connection
+ * @param actor the addres of the actor in question
+ */
+
+int is_previously_scored(redisContext *context, char *actor)
+{
+  redisReply *score;
+
+  score = redisCommand(context, "GET %s:score", actor);
+  if (score && (score->type != REDIS_REPLY_NIL)) {
+    freeReplyObject(score);
+    return 1;
+  }
+
+  return 0;
+}
