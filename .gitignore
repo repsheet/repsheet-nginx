@@ -4,6 +4,12 @@
 *.obj
 *.elf
 
+# Coverage files
+*.gcda
+*.gcno
+*.info
+test_coverage
+
 # Libraries
 *.lib
 *.a
