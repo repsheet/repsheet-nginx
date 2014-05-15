@@ -51,18 +51,6 @@ redisContext *get_redis_context(char *host, int port, int timeout)
 }
 
 /**
- * Increments the number of times a rule has been triggered for an actor
- *
- * @param context the Redis connection
- * @param actor the IP address of the actor
- * @param rule the ModSecurity rule number
- */
-void increment_rule_count(redisContext *context, char *actor, char *rule)
-{
-  freeReplyObject(redisCommand(context, "ZINCRBY %s:detected 1 %s", actor, rule));
-}
-
-/**
  * Adds the actor to the Repsheet
  *
  * @param context the Redis connection
@@ -156,6 +144,51 @@ int is_whitelisted(redisContext *context, const char *actor)
   }
 
   return FALSE;
+}
+
+/**
+ * Checks to see if an actor has been previously blacklisted
+ *
+ * @param context the Redis connection
+ * @param actor the addres of the actor in question
+ */
+
+int is_historical_offender(redisContext *context, char *actor)
+{
+  redisReply *reply;
+
+  reply = redisCommand(context, "SISMEMBER repsheet:blacklist:history %s", actor);
+  if (reply) {
+    if (reply->integer == 1) {
+      freeReplyObject(reply);
+      return 1;
+    } else {
+      freeReplyObject(reply);
+      return 0;
+    }
+  }
+
+  return 0;
+}
+
+/**
+ * Checks to see if an actor has been previously scored
+ *
+ * @param context the Redis connection
+ * @param actor the addres of the actor in question
+ */
+
+int is_previously_scored(redisContext *context, char *actor)
+{
+  redisReply *score;
+
+  score = redisCommand(context, "GET %s:score", actor);
+  if (score && (score->type != REDIS_REPLY_NIL)) {
+    freeReplyObject(score);
+    return 1;
+  }
+
+  return 0;
 }
 
 /**
@@ -373,6 +406,18 @@ void process_mod_security_headers(char *waf_events, char *events[])
 }
 
 /**
+ * Increments the number of times a rule has been triggered for an actor
+ *
+ * @param context the Redis connection
+ * @param actor the IP address of the actor
+ * @param rule the ModSecurity rule number
+ */
+void increment_rule_count(redisContext *context, char *actor, char *rule)
+{
+  freeReplyObject(redisCommand(context, "ZINCRBY %s:detected 1 %s", actor, rule));
+}
+
+/**
  * Processes the X-WAF-Score header to determine the total ModSecurity
  * anomaly score
  *
@@ -397,51 +442,6 @@ int modsecurity_total(char *waf_score)
   if (match && match > 0) {
     pcre_get_substring(waf_score, ovector, match, 0, &(event));
     return strtol(event, 0, 10);
-  }
-
-  return 0;
-}
-
-/**
- * Checks to see if an actor has been previously blacklisted
- *
- * @param context the Redis connection
- * @param actor the addres of the actor in question
- */
-
-int is_historical_offender(redisContext *context, char *actor)
-{
-  redisReply *reply;
-
-  reply = redisCommand(context, "SISMEMBER repsheet:blacklist:history %s", actor);
-  if (reply) {
-    if (reply->integer == 1) {
-      freeReplyObject(reply);
-      return 1;
-    } else {
-      freeReplyObject(reply);
-      return 0;
-    }
-  }
-
-  return 0;
-}
-
-/**
- * Checks to see if an actor has been previously scored
- *
- * @param context the Redis connection
- * @param actor the addres of the actor in question
- */
-
-int is_previously_scored(redisContext *context, char *actor)
-{
-  redisReply *score;
-
-  score = redisCommand(context, "GET %s:score", actor);
-  if (score && (score->type != REDIS_REPLY_NIL)) {
-    freeReplyObject(score);
-    return 1;
   }
 
   return 0;
