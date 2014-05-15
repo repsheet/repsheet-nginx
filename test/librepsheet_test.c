@@ -174,6 +174,60 @@ START_TEST(record_test)
 }
 END_TEST
 
+START_TEST(record_handles_null_values)
+{
+  record(context, NULL, NULL, NULL, NULL, NULL, 5, 200, "1.1.1.1");
+
+  reply = redisCommand(context, "LRANGE 1.1.1.1:requests 0 0");
+  ck_assert_str_eq(reply->element[0]->str, "-, -, -, -, -");
+}
+END_TEST
+
+START_TEST(record_properly_records_timestamp)
+{
+  record(context, "12345", NULL, NULL, NULL, NULL, 5, 200, "1.1.1.1");
+
+  reply = redisCommand(context, "LRANGE 1.1.1.1:requests 0 0");
+  ck_assert_str_eq(reply->element[0]->str, "12345, -, -, -, -");
+}
+END_TEST
+
+START_TEST(record_properly_records_user_agent)
+{
+  record(context, NULL, "A User Agent", NULL, NULL, NULL, 5, 200, "1.1.1.1");
+
+  reply = redisCommand(context, "LRANGE 1.1.1.1:requests 0 0");
+  ck_assert_str_eq(reply->element[0]->str, "-, A User Agent, -, -, -");
+}
+END_TEST
+
+START_TEST(record_properly_records_http_method)
+{
+  record(context, NULL, NULL, "GET", NULL, NULL, 5, 200, "1.1.1.1");
+
+  reply = redisCommand(context, "LRANGE 1.1.1.1:requests 0 0");
+  ck_assert_str_eq(reply->element[0]->str, "-, -, GET, -, -");
+}
+END_TEST
+
+START_TEST(record_properly_records_uri)
+{
+  record(context, NULL, NULL, NULL, "/", NULL, 5, 200, "1.1.1.1");
+
+  reply = redisCommand(context, "LRANGE 1.1.1.1:requests 0 0");
+  ck_assert_str_eq(reply->element[0]->str, "-, -, -, /, -");
+}
+END_TEST
+
+START_TEST(record_properly_records_arguments)
+{
+  record(context, NULL, NULL, NULL, NULL, "foo=bar", 5, 200, "1.1.1.1");
+
+  reply = redisCommand(context, "LRANGE 1.1.1.1:requests 0 0");
+  ck_assert_str_eq(reply->element[0]->str, "-, -, -, -, foo=bar");
+}
+END_TEST
+
 START_TEST(returns_null_when_headers_are_null)
 {
   fail_unless(remote_address(NULL, NULL) == NULL);
@@ -282,6 +336,12 @@ Suite *make_librepsheet_connection_suite(void) {
   tcase_add_test(tc_connection_operations, blacklist_and_expire_test);
 
   tcase_add_test(tc_connection_operations, record_test);
+  tcase_add_test(tc_connection_operations, record_handles_null_values);
+  tcase_add_test(tc_connection_operations, record_properly_records_uri);
+  tcase_add_test(tc_connection_operations, record_properly_records_arguments);
+  tcase_add_test(tc_connection_operations, record_properly_records_timestamp);
+  tcase_add_test(tc_connection_operations, record_properly_records_user_agent);
+  tcase_add_test(tc_connection_operations, record_properly_records_http_method);
   suite_add_tcase(suite, tc_connection_operations);
 
   TCase *tc_proxy = tcase_create("Standard");
