@@ -6,7 +6,7 @@ redisReply *reply;
 
 void setup(void)
 {
-  context = redisConnect("localhost", 6379);
+  context = get_redis_context("localhost", 6379, 0);
 
   if (context == NULL || context->err) {
     ck_abort_msg("Could not connect to Redis");
@@ -22,6 +22,12 @@ void teardown(void)
   redisFree(context);
 }
 
+START_TEST(get_redis_context_failure_test)
+{
+  context = get_redis_context("localhost", 12345, 0);
+  ck_assert(context == NULL);
+}
+END_TEST
 
 START_TEST(increment_rule_count_test)
 {
@@ -250,6 +256,10 @@ END_TEST
 
 Suite *make_librepsheet_connection_suite(void) {
   Suite *suite = suite_create("librepsheet connection");
+
+  TCase *tc_redis_connection = tcase_create("redis connection");
+  tcase_add_test(tc_redis_connection, get_redis_context_failure_test);
+  suite_add_tcase(suite, tc_redis_connection);
 
   TCase *tc_connection_operations = tcase_create("connection operations");
   tcase_add_checked_fixture(tc_connection_operations, setup, teardown);
