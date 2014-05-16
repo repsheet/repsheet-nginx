@@ -20,8 +20,6 @@ int is_on_repsheet(redisContext *context, const char *actor);
 int is_blacklisted(redisContext *context, const char *actor);
 int is_whitelisted(redisContext *context, const char *actor);
 int is_historical_offender(redisContext *context, const char *actor);
-int is_previously_scored(redisContext *context, const char *actor);
-
 
 void expire(redisContext *context, const char *actor, char *label, int expiry);
 void blacklist_and_expire(redisContext *context, const char *actor, int expiry, char *reason);

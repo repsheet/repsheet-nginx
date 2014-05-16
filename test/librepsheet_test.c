@@ -123,24 +123,6 @@ START_TEST(is_not_historical_offender_test)
 }
 END_TEST
 
-START_TEST(is_previously_scored_test)
-{
-  redisCommand(context, "SET 1.1.1.1:score 5");
-  int response = is_previously_scored(context, "1.1.1.1");
-
-  ck_assert_int_eq(response, TRUE);
-}
-END_TEST
-
-START_TEST(is_not_previously_scored_test)
-{
-  int response = is_historical_offender(context, "1.1.1.1");
-
-  ck_assert_int_eq(response, FALSE);
-}
-END_TEST
-
-
 START_TEST(blacklist_and_expire_test)
 {
   blacklist_and_expire(context, "1.1.1.1", 200, "test");
@@ -329,8 +311,6 @@ Suite *make_librepsheet_connection_suite(void) {
   tcase_add_test(tc_connection_operations, is_whitelisted_test);
   tcase_add_test(tc_connection_operations, is_historical_offender_test);
   tcase_add_test(tc_connection_operations, is_not_historical_offender_test);
-  tcase_add_test(tc_connection_operations, is_previously_scored_test);
-  tcase_add_test(tc_connection_operations, is_not_previously_scored_test);
 
   tcase_add_test(tc_connection_operations, expire_test);
   tcase_add_test(tc_connection_operations, blacklist_and_expire_test);

@@ -172,26 +172,6 @@ int is_historical_offender(redisContext *context, const char *actor)
 }
 
 /**
- * Checks to see if an actor has been previously scored
- *
- * @param context the Redis connection
- * @param actor the addres of the actor in question
- */
-
-int is_previously_scored(redisContext *context, const char *actor)
-{
-  redisReply *score;
-
-  score = redisCommand(context, "GET %s:score", actor);
-  if (score && (score->type != REDIS_REPLY_NIL)) {
-    freeReplyObject(score);
-    return 1;
-  }
-
-  return 0;
-}
-
-/**
  * Sets the expiry for a record
  *
  * @param context the Redis connection
