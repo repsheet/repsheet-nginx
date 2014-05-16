@@ -1,0 +1,12 @@
+Source: librepsheet
+Section: utils
+Priority: optional
+Maintainer: Aaron Bedra <aaron@aaronbedra.com>
+Build-Depends: debhelper (>> 8), libhiredis-dev
+Standards-Version: 3.9.1
+
+Package: librepsheet
+Architecture: any
+Depends: libhiredis0.10, ${shlibs:Depends}, ${misc:Depends}
+Description: The Repsheet base library
+ This library holds the business logic for Repsheet
