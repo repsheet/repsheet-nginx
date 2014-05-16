@@ -30,7 +30,7 @@
  *
  * @returns a Redis connection
  */
-redisContext *get_redis_context(char *host, int port, int timeout)
+redisContext *get_redis_context(const char *host, int port, int timeout)
 {
   redisContext *context;
 
@@ -56,7 +56,7 @@ redisContext *get_redis_context(char *host, int port, int timeout)
  * @param context the Redis connection
  * @param actor the IP address of the actor
  */
-void mark_actor(redisContext *context, char *actor)
+void mark_actor(redisContext *context, const char *actor)
 {
   freeReplyObject(redisCommand(context, "SET %s:repsheet true", actor));
 }
@@ -67,7 +67,7 @@ void mark_actor(redisContext *context, char *actor)
  * @param context the Redis connection
  * @param actor the IP address of the actor
  */
-void blacklist_actor(redisContext *context, char *actor)
+void blacklist_actor(redisContext *context, const char *actor)
 {
   freeReplyObject(redisCommand(context, "SET %s:repsheet:blacklist true", actor));
 }
@@ -78,7 +78,7 @@ void blacklist_actor(redisContext *context, char *actor)
  * @param context the Redis connection
  * @param actor the IP address of the actor
  */
-void whitelist_actor(redisContext *context, char *actor)
+void whitelist_actor(redisContext *context, const char *actor)
 {
   freeReplyObject(redisCommand(context, "SET %s:repsheet:whitelist true", actor));
 }
@@ -153,7 +153,7 @@ int is_whitelisted(redisContext *context, const char *actor)
  * @param actor the addres of the actor in question
  */
 
-int is_historical_offender(redisContext *context, char *actor)
+int is_historical_offender(redisContext *context, const char *actor)
 {
   redisReply *reply;
 
@@ -178,7 +178,7 @@ int is_historical_offender(redisContext *context, char *actor)
  * @param actor the addres of the actor in question
  */
 
-int is_previously_scored(redisContext *context, char *actor)
+int is_previously_scored(redisContext *context, const char *actor)
 {
   redisReply *score;
 
@@ -199,7 +199,7 @@ int is_previously_scored(redisContext *context, char *actor)
  * @param label the label associated with the actor
  * @param expiry the length until the record expires
  */
-void expire(redisContext *context, char *actor, char *label, int expiry)
+void expire(redisContext *context, const char *actor, char *label, int expiry)
 {
   freeReplyObject(redisCommand(context, "EXPIRE %s:%s %d", actor, label, expiry));
 }
@@ -213,7 +213,7 @@ void expire(redisContext *context, char *actor, char *label, int expiry)
  * @param expiry the length until the record expires
  * @param reason the reason for blacklisting the actor
  */
-void blacklist_and_expire(redisContext *context, char *actor, int expiry, char *reason)
+void blacklist_and_expire(redisContext *context, const char *actor, int expiry, char *reason)
 {
   freeReplyObject(redisCommand(context, "SETEX %s:repsheet:blacklist %d true", actor, expiry));
   freeReplyObject(redisCommand(context, "SETEX %s:repsheet:blacklist:reason %d %s", actor, expiry, reason));
@@ -347,7 +347,7 @@ const char *remote_address(char *connected_address, const char *xff_header)
  * @param waf_events the contents of the X-WAF-Events header
  */
 
-int matches(char *waf_events)
+int matches(const char *waf_events)
 {
   int match, error_offset;
   int offset = 0;
@@ -374,7 +374,7 @@ int matches(char *waf_events)
  * @param events the pre-allocated events array to place results
  */
 
-void process_mod_security_headers(char *waf_events, char *events[])
+void process_mod_security_headers(const char *waf_events, char *events[])
 {
   int i = 0;
   int matches = 0;
@@ -412,7 +412,7 @@ void process_mod_security_headers(char *waf_events, char *events[])
  * @param actor the IP address of the actor
  * @param rule the ModSecurity rule number
  */
-void increment_rule_count(redisContext *context, char *actor, char *rule)
+void increment_rule_count(redisContext *context, const char *actor, char *rule)
 {
   freeReplyObject(redisCommand(context, "ZINCRBY %s:detected 1 %s", actor, rule));
 }
@@ -424,7 +424,7 @@ void increment_rule_count(redisContext *context, char *actor, char *rule)
  * @param waf_score the X-WAF-Score header
  */
 
-int modsecurity_total(char *waf_score)
+int modsecurity_total(const char *waf_score)
 {
   int offset = 0;
   int match, error_offset;
