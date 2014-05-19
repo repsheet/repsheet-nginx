@@ -1,12 +1,24 @@
 Source: librepsheet
-Section: utils
+Section: libs
 Priority: optional
 Maintainer: Aaron Bedra <aaron@aaronbedra.com>
-Build-Depends: debhelper (>> 8), libhiredis-dev
+Build-Depends: debhelper (>> 8), libhiredis-dev, libpcre3-dev
 Standards-Version: 3.9.1
 
 Package: librepsheet
+Section: libs
 Architecture: any
-Depends: libhiredis0.10, ${shlibs:Depends}, ${misc:Depends}
-Description: The Repsheet base library
+Depends: libhiredis0.10, libpcre3, ${shlibs:Depends}, ${misc:Depends}
+Description: Core library
  This library holds the business logic for Repsheet
+
+Package: librepsheet-dev
+Section: libdevel
+Architecture: any
+Depends: libhiredis-dev, libpcre3-dev, ${shlibs:Depends}, ${misc:Depends}
+Description: Core library - development files
+ This library holds the business logic for Repsheet
+ .
+ This package contains the development files, including headers, static 
+ libraries, and documentation
+

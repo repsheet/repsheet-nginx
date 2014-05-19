@@ -76,3 +76,12 @@ librepsheet.tar.gz
 # Doxygen
 docs
 
+# Debian
+debian/*.log
+debian/*.debhelper
+debian/*.substvars
+debian/files
+debian/tmp
+debian/librepsheet
+debian/librepsheet-dev
+
