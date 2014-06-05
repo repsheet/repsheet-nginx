@@ -30,21 +30,19 @@ describe "Integration Specs" do
       @redis.set("127.0.0.1:repsheet:whitelist", "true")
       Curl.get("http://127.0.0.1:8888").response_code.should == 200
     end
+
+    it "Returns a 200 response if the actor is marked on the repsheet" do
+      @redis.set("127.0.0.1:repsheet", "true")
+      Curl.get("http://127.0.0.1:8888").response_code.should == 200
+    end
   end
 
   describe "Proxy Filtering" do
-    it "Properly determines the IP address when multiple proxies are present in X-Forwarded-For" do
-      http = Curl.get("http://127.0.0.1:8888?../../") do |http|
-        http.headers['X-Forwarded-For'] = '8.8.8.8, 12.34.56.78, 98.76.54.32'
-      end
-      @redis.lrange("8.8.8.8:requests", 0, -1).size.should == 1
-    end
-
-    it "Ignores user submitted noise in X-Forwarded-For" do
+    it "Blocks request when invalid addresses are present in X-Forwarded-For" do
       http = Curl.get("http://127.0.0.1:8888?../../") do |http|
         http.headers['X-Forwarded-For'] = '\x5000 8.8.8.8, 12.34.56.78, 98.76.54.32'
       end
-      @redis.lrange("8.8.8.8:requests", 0, -1).size.should == 1
+      http.response_code.should == 403
     end
   end
 end

@@ -71,9 +71,6 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     in_addr_t addr;
     u_char *p;
 
-    /* Get the first value from the XFF list.
-     * Note that xfwd->value.data already has any extra whitespace removed.
-     */
     for (p=xfwd->value.data; p < (xfwd->value.data + xfwd->value.len); p++) {
       if (*p == ' ' || *p == ',')
         break;
@@ -85,31 +82,30 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     if (addr != INADDR_NONE && length <= INET_ADDRSTRLEN) {
       strncpy(address, (char *)xfwd->value.data, length);
       address[length] = '\0';
+    } else {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Invalid X-Forwarded-For. Blocking suspected attack");
+      return NGX_HTTP_FORBIDDEN;
     }
-  }
-
-  if (address == NULL) {
+  } else {
     length = r->connection->addr_text.len;
     strncpy(address, (char *)r->connection->addr_text.data, length);
     address[length] = '\0';
   }
 
-  ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "%s Address is %s", "[repsheet]", address);
-
   if (is_whitelisted(context, address)) {
-    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "%s %s was allowed by the repsheet whitelist", "[repsheet]", address);
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "%s is whitelisted by repsheet", address);
     redisFree(context);
     return NGX_DECLINED;
   }
 
   if (is_blacklisted(context, address)) {
-    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "%s %s was blocked by the repsheet blacklist", "[repsheet]", address);
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "%s was blocked by repsheet", address);
     redisFree(context);
     return NGX_HTTP_FORBIDDEN;
   }
 
   if (is_on_repsheet(context, address)) {
-    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "%s %s was found on the repsheet", "[repsheet]", address);
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "%s was found on repsheet. No action taken", address);
     ngx_table_elt_t *h;
     ngx_str_t label = ngx_string("X-Repsheet");
     ngx_str_t val = ngx_string("true");

@@ -31,4 +31,4 @@ namespace :repsheet do
 end
 
 desc "Run the integration tests against NGINX"
-task :default => ["repsheet:bootstrap", "nginx:compile", "nginx:start", :integration, "nginx:stop"]
+task :default => ["repsheet:bootstrap", "nginx:start", :integration, "nginx:stop"]
