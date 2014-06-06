@@ -11,4 +11,4 @@ pkg-config --list-all
 cd ..
 script/bootstrap
 bundle install
-rake
+bundle exec rake
