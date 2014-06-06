@@ -5,3 +5,5 @@ before_install:
 script: sh ci.sh
 rvm:
   2.0
+services:
+  - redis-server
