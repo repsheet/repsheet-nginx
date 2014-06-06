@@ -3,6 +3,7 @@ GEM
   specs:
     curb (0.8.5)
     diff-lcs (1.2.5)
+    rake (0.9.6)
     redis (3.0.7)
     rspec (3.0.0)
       rspec-core (~> 3.0.0)
@@ -22,5 +23,6 @@ PLATFORMS
 
 DEPENDENCIES
   curb
+  rake
   redis
   rspec
