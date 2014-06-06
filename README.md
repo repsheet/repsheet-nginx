@@ -1,4 +1,4 @@
-# Repsheet NGINX
+# Repsheet NGINX [![Build Status](https://secure.travis-ci.org/repsheet/repsheet-nginx.png)](http://travis-ci.org/repsheet/repsheet-nginx?branch=master)
 
 ## How does it work?
 
