@@ -85,3 +85,5 @@ debian/tmp
 debian/librepsheet
 debian/librepsheet-dev
 
+test
+test.c

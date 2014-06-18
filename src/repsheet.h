@@ -4,9 +4,17 @@
 #include <string.h>
 #include <pcre.h>
 #include "hiredis/hiredis.h"
+#include "mpc.h"
 
 #define TRUE 1
 #define FALSE 0
+
+typedef struct repsheet_rule_t {
+  char *part;
+  char *location;
+  char *field;
+  char *error;
+} repsheet_rule_t;
 
 redisContext *get_redis_context(const char *host, int port, int timeout);
 
@@ -34,4 +42,5 @@ int modsecurity_total(const char *waf_score);
 void process_mod_security_headers(const char *waf_events, char *events[]);
 int matches(const char *waf_events);
 
+repsheet_rule_t process_rule(char *rule_string);
 #endif
