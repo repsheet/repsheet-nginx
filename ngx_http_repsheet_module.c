@@ -143,7 +143,7 @@ ngx_http_repsheet_init(ngx_conf_t *cf)
 static ngx_command_t ngx_http_repsheet_commands[] = {
   {
     ngx_string("repsheet"),
-    NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+    NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
     ngx_conf_set_flag_slot,
     NGX_HTTP_LOC_CONF_OFFSET,
     offsetof(repsheet_loc_conf_t, enabled),
@@ -151,7 +151,7 @@ static ngx_command_t ngx_http_repsheet_commands[] = {
   },
   {
     ngx_string("repsheet_proxy_headers"),
-    NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+    NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
     ngx_conf_set_flag_slot,
     NGX_HTTP_LOC_CONF_OFFSET,
     offsetof(repsheet_loc_conf_t, proxy_headers),
