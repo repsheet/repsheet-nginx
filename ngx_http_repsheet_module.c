@@ -31,17 +31,12 @@ ngx_module_t ngx_http_repsheet_module;
 static ngx_int_t
 ngx_http_repsheet_handler(ngx_http_request_t *r)
 {
-  repsheet_main_conf_t *cmcf;
   char address[INET_ADDRSTRLEN];
   int length;
 
-  cmcf = ngx_http_get_module_main_conf(r,ngx_http_repsheet_module);
+  repsheet_main_conf_t *cmcf = ngx_http_get_module_main_conf(r,ngx_http_repsheet_module);
 
-  if (!cmcf->enabled) {
-    return NGX_DECLINED;
-  }
-
-  if (r->main->internal) {
+  if (!cmcf->enabled || r->main->internal) {
     return NGX_DECLINED;
   }
 
@@ -58,8 +53,8 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
 #if (nginx_version >= 1004000)
   ngx_array_t *ngx_array = &r->headers_in.x_forwarded_for;
   if (ngx_array != NULL && ngx_array->nelts > 0) {
-     ngx_table_elt_t **first_elt = ngx_array->elts;
-     xfwd = first_elt[0];
+    ngx_table_elt_t **first_elt = ngx_array->elts;
+    xfwd = first_elt[0];
   }
 #else
   xfwd = r->headers_in.x_forwarded_for;
@@ -70,8 +65,9 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     u_char *p;
 
     for (p=xfwd->value.data; p < (xfwd->value.data + xfwd->value.len); p++) {
-      if (*p == ' ' || *p == ',')
+      if (*p == ' ' || *p == ',') {
         break;
+      }
     }
 
     /* Validate it is a valid IP */
