@@ -16,13 +16,13 @@ typedef struct {
 
 typedef struct {
   repsheet_redis_t redis;
+  ngx_flag_t enabled;
+  ngx_flag_t record;
+  ngx_flag_t proxy_headers;
 
 } repsheet_main_conf_t;
 
 typedef struct {
-  ngx_flag_t enabled;
-  ngx_flag_t record;
-  ngx_flag_t proxy_headers;
 
 } repsheet_loc_conf_t;
 
@@ -31,15 +31,13 @@ ngx_module_t ngx_http_repsheet_module;
 static ngx_int_t
 ngx_http_repsheet_handler(ngx_http_request_t *r)
 {
-  repsheet_loc_conf_t *conf;
-  repsheet_main_conf_t *mconf;
+  repsheet_main_conf_t *cmcf;
   char address[INET_ADDRSTRLEN];
   int length;
 
-  conf = ngx_http_get_module_loc_conf(r, ngx_http_repsheet_module);
-  mconf = ngx_http_get_module_main_conf(r,ngx_http_repsheet_module);
+  cmcf = ngx_http_get_module_main_conf(r,ngx_http_repsheet_module);
 
-  if (!conf->enabled) {
+  if (!cmcf->enabled) {
     return NGX_DECLINED;
   }
 
@@ -49,7 +47,7 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
 
   r->main->internal = 1;
 
-  redisContext *context = get_redis_context((const char*)mconf->redis.host.data, mconf->redis.port, mconf->redis.timeout);
+  redisContext *context = get_redis_context((const char*)cmcf->redis.host.data, cmcf->redis.port, cmcf->redis.timeout);
 
   if (context == NULL) {
     return NGX_DECLINED;
@@ -145,16 +143,16 @@ static ngx_command_t ngx_http_repsheet_commands[] = {
     ngx_string("repsheet"),
     NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
     ngx_conf_set_flag_slot,
-    NGX_HTTP_LOC_CONF_OFFSET,
-    offsetof(repsheet_loc_conf_t, enabled),
+    NGX_HTTP_MAIN_CONF_OFFSET,
+    offsetof(repsheet_main_conf_t, enabled),
     NULL
   },
   {
     ngx_string("repsheet_proxy_headers"),
     NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
     ngx_conf_set_flag_slot,
-    NGX_HTTP_LOC_CONF_OFFSET,
-    offsetof(repsheet_loc_conf_t, proxy_headers),
+    NGX_HTTP_MAIN_CONF_OFFSET,
+    offsetof(repsheet_main_conf_t, proxy_headers),
     NULL
   },
   {
@@ -201,6 +199,10 @@ ngx_http_repsheet_create_main_conf(ngx_conf_t *cf)
   conf->redis.max_length = NGX_CONF_UNSET_UINT;
   conf->redis.expiry = NGX_CONF_UNSET_UINT;
 
+  conf->enabled = NGX_CONF_UNSET;
+  conf->record = NGX_CONF_UNSET;
+  conf->proxy_headers = NGX_CONF_UNSET;
+
   return conf;
 }
 
@@ -215,25 +217,7 @@ ngx_http_repsheet_create_loc_conf(ngx_conf_t *cf)
     return NULL;
   }
 
-  conf->enabled = NGX_CONF_UNSET;
-  conf->record = NGX_CONF_UNSET;
-  conf->proxy_headers = NGX_CONF_UNSET;
-
   return conf;
-}
-
-
-static char*
-ngx_http_repsheet_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
-{
-  repsheet_loc_conf_t *prev = (repsheet_loc_conf_t *)parent;
-  repsheet_loc_conf_t *conf = (repsheet_loc_conf_t *)child;
-
-  ngx_conf_merge_value(conf->enabled, prev->enabled, 0);
-  ngx_conf_merge_value(conf->record, prev->record, 0);
-  ngx_conf_merge_value(conf->proxy_headers, prev->proxy_headers, 0);
-
-  return NGX_CONF_OK;
 }
 
 
@@ -245,7 +229,7 @@ static ngx_http_module_t ngx_http_repsheet_module_ctx = {
   NULL,                               /* create server configuration */
   NULL,                               /* merge server configuration */
   ngx_http_repsheet_create_loc_conf,  /* create location configuration */
-  ngx_http_repsheet_merge_loc_conf    /* merge location configuration */
+  NULL                                /* merge location configuration */
 };
 
 
