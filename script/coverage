@@ -15,6 +15,7 @@ make check
 
 lcov --base-directory src --directory src -c -o librepsheet_test.info
 lcov --remove librepsheet_test.info "/usr*" -o librepsheet_test.info
+lcov --remove librepsheet_test.info "src/mpc.*" -o librepsheet_test.info
 rm -rf test_coverage
 genhtml -o test_coverage -t "librepsheet test coverage" --num-spaces 4 librepsheet_test.info
 
