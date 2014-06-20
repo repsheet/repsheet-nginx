@@ -1,3 +1,4 @@
+#include "hiredis/hiredis.h"
 #include "../src/repsheet.h"
 #include "test_suite.h"
 

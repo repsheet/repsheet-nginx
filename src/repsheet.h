@@ -1,11 +1,6 @@
 #ifndef __REPSHEET_H
 #define __REPSHEET_H
 
-#include <string.h>
-#include <pcre.h>
-#include "hiredis/hiredis.h"
-#include "mpc.h"
-
 #define TRUE 1
 #define FALSE 0
 
@@ -43,4 +38,5 @@ void process_mod_security_headers(const char *waf_events, char *events[]);
 int matches(const char *waf_events);
 
 repsheet_rule_t process_rule(char *rule_string);
+
 #endif

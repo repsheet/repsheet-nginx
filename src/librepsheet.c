@@ -1,3 +1,10 @@
+#include <string.h>
+#include <pcre.h>
+
+#include "hiredis/hiredis.h"
+#include "repsheet.h"
+#include "mpc.h"
+
 /**
  * @file librepsheet.c
  * @author Aaron Bedra
