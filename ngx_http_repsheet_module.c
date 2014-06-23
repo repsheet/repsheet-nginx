@@ -30,12 +30,62 @@ typedef struct {
 
 ngx_module_t ngx_http_repsheet_module;
 
+static ngx_table_elt_t*
+x_forwarded_for(ngx_http_request_t *r)
+{
+  ngx_table_elt_t *xff = NULL;
+
+#if (nginx_version >= 1004000)
+  ngx_array_t *ngx_array = &r->headers_in.x_forwarded_for;
+  if (ngx_array != NULL && ngx_array->nelts > 0) {
+    ngx_table_elt_t **first_elt = ngx_array->elts;
+    xff = first_elt[0];
+  }
+#else
+  xff = r->headers_in.x_forwarded_for;
+#endif
+
+  return xff;
+}
+
+
+static void
+derive_actor_address(ngx_http_request_t *r, char address[])
+{
+  int length;
+  ngx_table_elt_t *xff = x_forwarded_for(r);
+
+  if (xff != NULL && xff->value.data != NULL) {
+    in_addr_t addr;
+    u_char *p;
+
+    for (p = xff->value.data; p < (xff->value.data + xff->value.len); p++) {
+      if (*p == ' ' || *p == ',') {
+        break;
+      }
+    }
+
+    // Validate the address
+    length = p - xff->value.data;
+    addr = ngx_inet_addr(xff->value.data, length);
+    if (addr != INADDR_NONE && length <= INET_ADDRSTRLEN) {
+      strncpy(address, (char *)xff->value.data, length);
+      address[length] = '\0';
+    } else {
+      // Address was invalid, clear the array to signal the error
+      memset(address, '\0', sizeof(address));
+    }
+  } else {
+    length = r->connection->addr_text.len;
+    strncpy(address, (char *)r->connection->addr_text.data, length);
+    address[length] = '\0';
+  }
+}
+
+
 static ngx_int_t
 ngx_http_repsheet_handler(ngx_http_request_t *r)
 {
-  char address[INET_ADDRSTRLEN];
-  int length;
-
   repsheet_main_conf_t *cmcf = ngx_http_get_module_main_conf(r,ngx_http_repsheet_module);
 
   if (!cmcf->enabled || r->main->internal) {
@@ -50,42 +100,12 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     return NGX_DECLINED;
   }
 
-  ngx_table_elt_t *xfwd = NULL;
+  char address[INET_ADDRSTRLEN];
+  derive_actor_address(r, address);
 
-#if (nginx_version >= 1004000)
-  ngx_array_t *ngx_array = &r->headers_in.x_forwarded_for;
-  if (ngx_array != NULL && ngx_array->nelts > 0) {
-    ngx_table_elt_t **first_elt = ngx_array->elts;
-    xfwd = first_elt[0];
-  }
-#else
-  xfwd = r->headers_in.x_forwarded_for;
-#endif
-
-  if (xfwd != NULL && xfwd->value.data != NULL) {
-    in_addr_t addr;
-    u_char *p;
-
-    for (p=xfwd->value.data; p < (xfwd->value.data + xfwd->value.len); p++) {
-      if (*p == ' ' || *p == ',') {
-        break;
-      }
-    }
-
-    /* Validate it is a valid IP */
-    length = p - xfwd->value.data;
-    addr = ngx_inet_addr(xfwd->value.data, length);
-    if (addr != INADDR_NONE && length <= INET_ADDRSTRLEN) {
-      strncpy(address, (char *)xfwd->value.data, length);
-      address[length] = '\0';
-    } else {
-      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Invalid X-Forwarded-For. Blocking suspected attack");
-      return NGX_HTTP_FORBIDDEN;
-    }
-  } else {
-    length = r->connection->addr_text.len;
-    strncpy(address, (char *)r->connection->addr_text.data, length);
-    address[length] = '\0';
+  if (address[0] == '\0') {
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Invalid X-Forwarded-For. Blocking suspected attack");
+    return NGX_HTTP_FORBIDDEN;
   }
 
   if (is_whitelisted(context, address)) {
