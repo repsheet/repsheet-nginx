@@ -3,6 +3,8 @@
 #include <ngx_core.h>
 #include <ngx_http.h>
 
+#include "hiredis/hiredis.h"
+
 #include "repsheet.h"
 
 typedef struct {
