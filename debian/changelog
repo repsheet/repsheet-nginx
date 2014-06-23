@@ -1,3 +1,9 @@
+librepsheet (2.1.0) unstable-security; urgency=low
+
+  * Small fix, new functionality
+
+ -- Aaron Bedra <abedra@debian64>  Mon, 23 Jun 2014 07:46:18 -0500
+
 librepsheet (2.0.0-1) unstable-security; urgency=low
 
   * Updated API, better error handling, new functionality
