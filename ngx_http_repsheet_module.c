@@ -73,7 +73,7 @@ derive_actor_address(ngx_http_request_t *r, char address[])
       address[length] = '\0';
     } else {
       // Address was invalid, clear the array to signal the error
-      memset(address, '\0', sizeof(address));
+      memset(address, '\0', INET_ADDRSTRLEN);
     }
   } else {
     length = r->connection->addr_text.len;
