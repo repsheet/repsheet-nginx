@@ -43,35 +43,46 @@ END_TEST
 
 START_TEST(mark_actor_test)
 {
-  mark_actor(context, "1.1.1.1");
-  reply = redisCommand(context, "GET 1.1.1.1:repsheet");
+  mark_actor(context, "1.1.1.1", IP);
+  mark_actor(context, "repsheet", USER);
 
+  reply = redisCommand(context, "GET 1.1.1.1:repsheet");
   ck_assert_str_eq(reply->str, "true");
 
+  reply = redisCommand(context, "SISMEMBER repsheet:users repsheet");
+  ck_assert_int_eq(reply->integer, 1);
 }
 END_TEST
 
 START_TEST(blacklist_actor_test)
 {
-  blacklist_actor(context, "1.1.1.1");
-  reply = redisCommand(context, "GET 1.1.1.1:repsheet:blacklist");
+  blacklist_actor(context, "1.1.1.1", IP);
+  blacklist_actor(context, "repsheet", USER);
 
+  reply = redisCommand(context, "GET 1.1.1.1:repsheet:blacklist");
   ck_assert_str_eq(reply->str, "true");
+
+  reply = redisCommand(context, "SISMEMBER repsheet:users:blacklist repsheet");
+  ck_assert_int_eq(reply->integer, 1);
 }
 END_TEST
 
 START_TEST(whitelist_actor_test)
 {
-  whitelist_actor(context, "1.1.1.1");
-  reply = redisCommand(context, "GET 1.1.1.1:repsheet:whitelist");
+  whitelist_actor(context, "1.1.1.1", IP);
+  whitelist_actor(context, "repsheet", USER);
 
+  reply = redisCommand(context, "GET 1.1.1.1:repsheet:whitelist");
   ck_assert_str_eq(reply->str, "true");
+
+  reply = redisCommand(context, "SISMEMBER repsheet:users:whitelist repsheet");
+  ck_assert_int_eq(reply->integer, 1);
 }
 END_TEST
 
 START_TEST(expire_test)
 {
-  mark_actor(context, "1.1.1.1");
+  mark_actor(context, "1.1.1.1", IP);
   expire(context, "1.1.1.1", "repsheet", 200);
   reply = redisCommand(context, "TTL 1.1.1.1:repsheet");
 
@@ -79,30 +90,78 @@ START_TEST(expire_test)
 }
 END_TEST
 
-START_TEST(is_on_repsheet_test)
+START_TEST(is_ip_marked_test)
 {
-  mark_actor(context, "1.1.1.1");
-  int response = is_on_repsheet(context, "1.1.1.1");
+  mark_actor(context, "1.1.1.1", IP);
+  int response = is_ip_marked(context, "1.1.1.1");
 
   ck_assert_int_eq(response, TRUE);
 }
 END_TEST
 
-START_TEST(is_blacklisted_test)
+START_TEST(is_user_marked_test)
 {
-  blacklist_actor(context, "1.1.1.1");
-  int response = is_blacklisted(context, "1.1.1.1");
+  mark_actor(context, "repsheet", USER);
+  int response = is_user_marked(context, "repsheet");
 
   ck_assert_int_eq(response, TRUE);
 }
 END_TEST
 
-START_TEST(is_whitelisted_test)
+START_TEST(is_ip_blacklisted_test)
 {
-  whitelist_actor(context, "1.1.1.1");
-  int response = is_whitelisted(context, "1.1.1.1");
+  blacklist_actor(context, "1.1.1.1", IP);
+  int response = is_ip_blacklisted(context, "1.1.1.1");
 
   ck_assert_int_eq(response, TRUE);
+}
+END_TEST
+
+START_TEST(is_user_blacklisted_test)
+{
+  blacklist_actor(context, "repsheet", USER);
+  int response = is_user_blacklisted(context, "repsheet");
+
+  ck_assert_int_eq(response, TRUE);
+}
+END_TEST
+
+START_TEST(is_ip_whitelisted_test)
+{
+  whitelist_actor(context, "1.1.1.1", IP);
+  int response = is_ip_whitelisted(context, "1.1.1.1");
+
+  ck_assert_int_eq(response, TRUE);
+}
+END_TEST
+
+START_TEST(is_user_whitelisted_test)
+{
+  whitelist_actor(context, "repsheet", USER);
+  int response = is_user_whitelisted(context, "repsheet");
+
+  ck_assert_int_eq(response, TRUE);
+}
+END_TEST
+
+START_TEST(actor_status_test)
+{
+  whitelist_actor(context, "1.1.1.1", IP);
+  whitelist_actor(context, "whitelist", USER);
+  blacklist_actor(context, "1.1.1.2", IP);
+  blacklist_actor(context, "blacklist", USER);
+  mark_actor(context, "1.1.1.3", IP);
+  mark_actor(context, "marked", USER);
+
+  ck_assert_int_eq(actor_status(context, "1.1.1.1", IP), WHITELISTED);
+  ck_assert_int_eq(actor_status(context, "1.1.1.2", IP), BLACKLISTED);
+  ck_assert_int_eq(actor_status(context, "1.1.1.3", IP), MARKED);
+
+  ck_assert_int_eq(actor_status(context, "whitelist", USER), WHITELISTED);
+  ck_assert_int_eq(actor_status(context, "blacklist", USER), BLACKLISTED);
+  ck_assert_int_eq(actor_status(context, "marked", USER), MARKED);
+
+  ck_assert_int_eq(actor_status(context, "good", UNSUPPORTED), UNSUPPORTED);
 }
 END_TEST
 
@@ -334,9 +393,13 @@ Suite *make_librepsheet_connection_suite(void) {
   tcase_add_test(tc_connection_operations, blacklist_actor_test);
   tcase_add_test(tc_connection_operations, whitelist_actor_test);
 
-  tcase_add_test(tc_connection_operations, is_on_repsheet_test);
-  tcase_add_test(tc_connection_operations, is_blacklisted_test);
-  tcase_add_test(tc_connection_operations, is_whitelisted_test);
+  tcase_add_test(tc_connection_operations, is_ip_marked_test);
+  tcase_add_test(tc_connection_operations, is_user_marked_test);
+  tcase_add_test(tc_connection_operations, is_ip_blacklisted_test);
+  tcase_add_test(tc_connection_operations, is_user_blacklisted_test);
+  tcase_add_test(tc_connection_operations, is_ip_whitelisted_test);
+  tcase_add_test(tc_connection_operations, is_user_whitelisted_test);
+  tcase_add_test(tc_connection_operations, actor_status_test);
   tcase_add_test(tc_connection_operations, is_historical_offender_test);
   tcase_add_test(tc_connection_operations, is_not_historical_offender_test);
 

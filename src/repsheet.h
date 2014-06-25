@@ -4,6 +4,14 @@
 #define TRUE 1
 #define FALSE 0
 
+#define WHITELISTED 2
+#define MARKED 3
+#define BLACKLISTED 4
+#define UNSUPPORTED 5
+
+#define IP 6
+#define USER 7
+
 typedef struct repsheet_rule_t {
   char *part;
   char *location;
@@ -15,13 +23,18 @@ redisContext *get_redis_context(const char *host, int port, int timeout);
 
 void increment_rule_count(redisContext *context, const char *actor, char *rule);
 
-void mark_actor(redisContext *context, const char *actor);
-void blacklist_actor(redisContext *context, const char *actor);
-void whitelist_actor(redisContext *context, const char *actor);
+void mark_actor(redisContext *context, const char *actor, int type);
+void blacklist_actor(redisContext *context, const char *actor, int type);
+void whitelist_actor(redisContext *context, const char *actor, int type);
 
-int is_on_repsheet(redisContext *context, const char *actor);
-int is_blacklisted(redisContext *context, const char *actor);
-int is_whitelisted(redisContext *context, const char *actor);
+int is_ip_marked(redisContext *context, const char *actor);
+int is_ip_blacklisted(redisContext *context, const char *actor);
+int is_ip_whitelisted(redisContext *context, const char *actor);
+int is_user_marked(redisContext *context, const char *actor);
+int is_user_blacklisted(redisContext *context, const char *actor);
+int is_user_whitelisted(redisContext *context, const char *actor);
+int actor_status(redisContext *context, const char *actor, int type);
+
 int is_historical_offender(redisContext *context, const char *actor);
 
 void expire(redisContext *context, const char *actor, char *label, int expiry);

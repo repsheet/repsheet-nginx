@@ -78,44 +78,68 @@ redisContext *get_redis_context(const char *host, int port, int timeout)
  * Adds the actor to the Repsheet
  *
  * @param context the Redis connection
- * @param actor the IP address of the actor
+ * @param actor the actors user data or ip address
+ * @param type IP or USER
  */
-void mark_actor(redisContext *context, const char *actor)
+void mark_actor(redisContext *context, const char *actor, int type)
 {
-  freeReplyObject(redisCommand(context, "SET %s:repsheet true", actor));
+  switch(type) {
+  case IP:
+    freeReplyObject(redisCommand(context, "SET %s:repsheet true", actor));
+    break;
+  case USER:
+    freeReplyObject(redisCommand(context, "SADD repsheet:users %s", actor));
+    break;
+  }
 }
 
 /**
  * Adds the actor to the Repsheet blacklist
  *
  * @param context the Redis connection
- * @param actor the IP address of the actor
+ * @param actor the actors user data or ip address
+ * @param type IP or USER
  */
-void blacklist_actor(redisContext *context, const char *actor)
+void blacklist_actor(redisContext *context, const char *actor, int type)
 {
-  freeReplyObject(redisCommand(context, "SET %s:repsheet:blacklist true", actor));
+  switch(type) {
+  case IP:
+    freeReplyObject(redisCommand(context, "SET %s:repsheet:blacklist true", actor));
+    break;
+  case USER:
+    freeReplyObject(redisCommand(context, "SADD repsheet:users:blacklist %s", actor));
+    break;
+  }
 }
 
 /**
  * Adds the actor to the Repsheet whitelist
  *
  * @param context the Redis connection
- * @param actor the IP address of the actor
+ * @param actor the actors user data or ip address
+ * @param type IP or USER
  */
-void whitelist_actor(redisContext *context, const char *actor)
+void whitelist_actor(redisContext *context, const char *actor, int type)
 {
-  freeReplyObject(redisCommand(context, "SET %s:repsheet:whitelist true", actor));
+  switch(type) {
+  case IP:
+    freeReplyObject(redisCommand(context, "SET %s:repsheet:whitelist true", actor));
+    break;
+  case USER:
+    freeReplyObject(redisCommand(context, "SADD repsheet:users:whitelist %s", actor));
+    break;
+  }
 }
 
 /**
- * Checks to see if an actor is on the Repsheet
+ * Checks to see if an ip is on the Repsheet
  *
  * @param context the Redis connection
  * @param actor the IP address of the actor
  *
  * @returns TRUE if yes, FALSE if no
  */
-int is_on_repsheet(redisContext *context, const char *actor)
+int is_ip_marked(redisContext *context, const char *actor)
 {
   redisReply *reply;
 
@@ -129,14 +153,14 @@ int is_on_repsheet(redisContext *context, const char *actor)
 }
 
 /**
- * Checks to see if an actor is on the Repsheet blacklist
+ * Checks to see if an ip is on the Repsheet blacklist
  *
  * @param context the Redis connection
  * @param actor the IP address of the actor
  *
  * @returns TRUE if yes, FALSE if no
  */
-int is_blacklisted(redisContext *context, const char *actor)
+int is_ip_blacklisted(redisContext *context, const char *actor)
 {
   redisReply *reply;
 
@@ -150,14 +174,14 @@ int is_blacklisted(redisContext *context, const char *actor)
 }
 
 /**
- * Checks to see if an actor is on the Repsheet whitelist
+ * Checks to see if an ip is on the Repsheet whitelist
  *
  * @param context the Redis connection
  * @param actor the IP address of the actor
  *
  * @returns TRUE if yes, FALSE if no
  */
-int is_whitelisted(redisContext *context, const char *actor)
+int is_ip_whitelisted(redisContext *context, const char *actor)
 {
   redisReply *reply;
 
@@ -168,6 +192,96 @@ int is_whitelisted(redisContext *context, const char *actor)
   }
 
   return FALSE;
+}
+
+/**
+ * Checks to see if a user is on the Repsheet
+ *
+ * @param context the Redis connection
+ * @param actor the user
+ *
+ * @returns TRUE if yes, FALSE if no
+ */
+int is_user_marked(redisContext *context, const char *actor)
+{
+  redisReply *reply;
+
+  reply = redisCommand(context, "SISMEMBER repsheet:users %s", actor);
+  if (reply->integer && reply->integer == 1) {
+    freeReplyObject(reply);
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/**
+ * Checks to see if a user is on the Repsheet blacklist
+ *
+ * @param context the Redis connection
+ * @param actor the user
+ *
+ * @returns TRUE if yes, FALSE if no
+ */
+int is_user_blacklisted(redisContext *context, const char *actor)
+{
+  redisReply *reply;
+
+  reply = redisCommand(context, "SISMEMBER repsheet:users:blacklist %s", actor);
+  if (reply->integer && reply->integer == 1) {
+    freeReplyObject(reply);
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/**
+ * Checks to see if a user is on the Repsheet whitelist
+ *
+ * @param context the Redis connection
+ * @param actor the user
+ *
+ * @returns TRUE if yes, FALSE if no
+ */
+int is_user_whitelisted(redisContext *context, const char *actor)
+{
+  redisReply *reply;
+
+  reply = redisCommand(context, "SISMEMBER repsheet:users:whitelist %s", actor);
+  if (reply->integer && reply->integer == 1) {
+    freeReplyObject(reply);
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/**
+ * Top level API for determining the status of an actor
+ *
+ * @param context the Redis connection
+ * @param actor the IP address or user value of the actor
+ * @param type IP or USER
+ *
+ * @returns an integer status
+ */
+int actor_status(redisContext *context, const char *actor, int type)
+{
+  switch(type) {
+  case IP:
+    if (is_ip_whitelisted(context, actor)) { return WHITELISTED; }
+    if (is_ip_blacklisted(context, actor)) { return BLACKLISTED; }
+    if (is_ip_marked(context, actor))      { return MARKED; }
+    break;
+  case USER:
+    if (is_user_whitelisted(context, actor)) { return WHITELISTED; }
+    if (is_user_blacklisted(context, actor)) { return BLACKLISTED; }
+    if (is_user_marked(context, actor))      { return MARKED; }
+    break;
+  }
+
+  return UNSUPPORTED;
 }
 
 /**
