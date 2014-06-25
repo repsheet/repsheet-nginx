@@ -8,9 +8,10 @@
 #define MARKED 3
 #define BLACKLISTED 4
 #define UNSUPPORTED 5
+#define OK 6
 
-#define IP 6
-#define USER 7
+#define IP 7
+#define USER 8
 
 typedef struct repsheet_rule_t {
   char *part;
