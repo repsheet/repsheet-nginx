@@ -102,7 +102,7 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     return NGX_DECLINED;
   }
 
-  int user_status;
+  int user_status = OK;
   ngx_int_t location;
   ngx_str_t cookie_value;
   location = ngx_http_parse_multi_header_lines(&r->headers_in.cookies, &cmcf->cookie, &cookie_value);
@@ -110,10 +110,10 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "Could not locate %V cookie", &cmcf->cookie);
   } else {
     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "Got value for %V cookie: %V", &cmcf->cookie, &cookie_value);
-    user_status = actor_status(context, cookie_value.data, USER);
+    user_status = actor_status(context, (const char *)cookie_value.data, USER);
   }
 
-  int ip_status;
+  int ip_status = OK;
   char address[INET_ADDRSTRLEN];
   derive_actor_address(r, address);
 
@@ -237,6 +237,7 @@ static ngx_command_t ngx_http_repsheet_commands[] = {
     ngx_conf_set_str_slot,
     NGX_HTTP_MAIN_CONF_OFFSET,
     offsetof(repsheet_main_conf_t, cookie),
+    NULL
   },
 
   ngx_null_command
