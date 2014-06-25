@@ -20,21 +20,52 @@ describe "Integration Specs" do
   end
 
   describe "Actions" do
-    it "Returns a 403 response if the actor is on the blacklist" do
+    it "Returns a 403 response if the IP is on the blacklist" do
       @redis.set("127.0.0.1:repsheet:blacklist", "true")
       expect(Curl.get("http://127.0.0.1:8888").response_code).to eq(403)
     end
 
-    it "Returns a 200 response if the actor is on the whitelist" do
+    it "Returns a 403 response if the user is on the blacklist" do
+      @redis.sadd("repsheet:users:blacklist", "repsheet")
+      http = Curl.get("http://127.0.0.1:8888") do |http|
+        http.headers['Cookie'] = "user=repsheet"
+      end
+
+      expect(http.response_code).to eq(403)
+    end
+
+    it "Returns a 200 response if the IP is on the whitelist" do
       @redis.set("127.0.0.1:repsheet:blacklist", "true")
       @redis.set("127.0.0.1:repsheet:whitelist", "true")
       expect(Curl.get("http://127.0.0.1:8888").response_code).to eq(200)
     end
 
-    it "Returns a 200 response if the actor is marked on the repsheet" do
+    it "Returns a 200 response if the user is on the whitelist" do
+      @redis.sadd("repsheet:users:blacklist", "repsheet")
+      @redis.sadd("repsheet:users:whitelist", "repsheet")
+
+      http = Curl.get("http://127.0.0.1:8888") do |http|
+        http.headers['Cookie'] = "user=repsheet"
+      end
+
+      expect(http.response_code).to eq(200)
+    end
+
+    it "Returns a 200 response if the IP is marked on the repsheet" do
       @redis.set("127.0.0.1:repsheet", "true")
       expect(Curl.get("http://127.0.0.1:8888").response_code).to eq(200)
     end
+
+    it "Returns a 200 response if the user is marked on the repsheet" do
+      @redis.sadd("repsheet:users", "repsheet")
+
+      http = Curl.get("http://127.0.0.1:8888") do |http|
+        http.headers['Cookie'] = "user=repsheet"
+      end
+
+      expect(http.response_code).to eq(200)
+    end
+
   end
 
   describe "Proxy Filtering" do
