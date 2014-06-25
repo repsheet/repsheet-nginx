@@ -31,12 +31,9 @@ options. For main configuration there are the following:
 * `repsheet_redis_host <host>` - Sets the host for the Redis connection
 * `repsheet_redis_port <port>` - Sets the port for the Redis connection
 * `repsheet_redis_timeout <n>` - Sets the time (in milliseconds) before the attempt to connect to redis will timeout
-
-The location configuration provides controls that can be tuned for
-each individual location:
-
 * `repsheet <on|off>` - Determines if Repsheet will do any processing
 * `repsheet_proxy_headers <on|off>` - Determines if Repsheet will look for the X-Forwarded-For header to determine remote ip
+* `repsheet_user_cookie <name>` - Sets the cookie that holds the user value to be examined
 
 Here's a simple example NGINX config:
 
@@ -51,6 +48,7 @@ http {
   repsheet_redis_timeout 5;
   repsheet on;
   repsheet_proxy_headers on;
+  repsheet_user_cookie "user"
 
   server {
     listen 8888;
