@@ -11,8 +11,7 @@ install_nginx () {
             --prefix=$(pwd)/../../build/nginx \
             --conf-path=conf/nginx.conf       \
             --error-log-path=logs/error.log   \
-            --http-log-path=logs/access.log   \
-            --add-module=../../
+            --http-log-path=logs/access.log
         make
         make install
         popd > /dev/null 2>&1

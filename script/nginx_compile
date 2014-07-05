@@ -2,12 +2,13 @@
 
 pushd "vendor"
 pushd "nginx-1.4.7"
-CFLAGS="-g -O0" ./configure           \
-    --with-debug                      \
-    --prefix=$(pwd)/../../build/nginx \
-    --conf-path=conf/nginx.conf       \
-    --error-log-path=logs/error.log   \
-    --http-log-path=logs/access.log   \
+CFLAGS="-g -O0" ./configure                                    \
+    --with-debug                                               \
+    --prefix=$(pwd)/../../build/nginx                          \
+    --conf-path=conf/nginx.conf                                \
+    --error-log-path=logs/error.log                            \
+    --http-log-path=logs/access.log                            \
+    --add-module=$(pwd)/../modsecurity-2.8.0/nginx/modsecurity \
     --add-module=../../
 make
 make install

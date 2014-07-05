@@ -1,9 +1,9 @@
 #!/bin/bash
 
 source script/nginx.sh
+source script/modsecurity.sh
 
 set -o nounset
-set -o errexit
 
 BLUE="\033[0;34m"
 GREEN="\033[0;32m"
@@ -39,4 +39,6 @@ if [[ "$#" -eq 1 ]]; then
 else
     setup_local_directories
     install_nginx
+    install_mod_security
+    configure_modsecurity
 fi
