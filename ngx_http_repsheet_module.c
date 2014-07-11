@@ -13,6 +13,7 @@ typedef struct {
   ngx_uint_t timeout;
   ngx_uint_t max_length;
   ngx_uint_t expiry;
+  redisContext *connection;
 
 } repsheet_redis_t;
 
@@ -96,10 +97,15 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
 
   r->main->internal = 1;
 
-  redisContext *context = get_redis_context((const char*)cmcf->redis.host.data, cmcf->redis.port, cmcf->redis.timeout);
+  if (cmcf->redis.connection == NULL) {
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "No Redis connection found, establishing...");
+    redisContext *context = get_redis_context((const char*)cmcf->redis.host.data, cmcf->redis.port, cmcf->redis.timeout);
 
-  if (context == NULL) {
-    return NGX_DECLINED;
+    if (context == NULL) {
+      return NGX_DECLINED;
+    } else {
+      cmcf->redis.connection = context;
+    }
   }
 
   int user_status = OK;
@@ -110,7 +116,7 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "Could not locate %V cookie", &cmcf->cookie);
   } else {
     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "Got value for %V cookie: %V", &cmcf->cookie, &cookie_value);
-    user_status = actor_status(context, (const char *)cookie_value.data, USER);
+    user_status = actor_status(cmcf->redis.connection, (const char *)cookie_value.data, USER);
   }
 
   int ip_status = OK;
@@ -119,29 +125,24 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
 
   if (address[0] == '\0') {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Invalid X-Forwarded-For. Blocking suspected attack");
-    redisFree(context);
     return NGX_HTTP_FORBIDDEN;
   }
 
-  ip_status = actor_status(context, address, IP);
+  ip_status = actor_status(cmcf->redis.connection, address, IP);
 
   if (ip_status == WHITELISTED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "IP %s is whitelisted by repsheet", address);
-    redisFree(context);
     return NGX_DECLINED;
   } else if (user_status == WHITELISTED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "User %V is whitelisted by repsheet", &cookie_value);
-    redisFree(context);
     return NGX_DECLINED;
   }
 
   if (ip_status == BLACKLISTED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "IP %s was blocked by repsheet", address);
-    redisFree(context);
     return NGX_HTTP_FORBIDDEN;
   } else if (user_status == BLACKLISTED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "User %V was blocked by repsheet", &cookie_value);
-    redisFree(context);
     return NGX_HTTP_FORBIDDEN;
   }
 
@@ -164,8 +165,6 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     h->key = label;
     h->value = val;
   }
-
-  redisFree(context);
 
   return NGX_DECLINED;
 }
@@ -258,6 +257,7 @@ ngx_http_repsheet_create_main_conf(ngx_conf_t *cf)
   conf->redis.timeout = NGX_CONF_UNSET_UINT;
   conf->redis.max_length = NGX_CONF_UNSET_UINT;
   conf->redis.expiry = NGX_CONF_UNSET_UINT;
+  conf->redis.connection = NULL;
 
   conf->enabled = NGX_CONF_UNSET;
   conf->record = NGX_CONF_UNSET;
