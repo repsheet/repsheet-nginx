@@ -53,7 +53,12 @@ describe "Integration Specs" do
 
     it "Returns a 200 response if the IP is marked on the repsheet" do
       @redis.set("127.0.0.1:repsheet", "true")
-      expect(Curl.get("http://127.0.0.1:8888").response_code).to eq(200)
+
+      http = Curl.get("http://127.0.0.1:8888") do |http|
+ #       http.headers['User-Agent'] = "Integration Test"
+      end
+
+      expect(http.response_code).to eq(200)
     end
 
     it "Returns a 200 response if the user is marked on the repsheet" do
@@ -61,6 +66,7 @@ describe "Integration Specs" do
 
       http = Curl.get("http://127.0.0.1:8888") do |http|
         http.headers['Cookie'] = "user=repsheet"
+        http.headers['User-Agent'] = "Integration Test"
       end
 
       expect(http.response_code).to eq(200)
@@ -70,7 +76,7 @@ describe "Integration Specs" do
 
   describe "Proxy Filtering" do
     it "Blocks request when invalid addresses are present in X-Forwarded-For" do
-      http = Curl.get("http://127.0.0.1:8888?../../") do |http|
+      http = Curl.get("http://127.0.0.1:8888") do |http|
         http.headers['X-Forwarded-For'] = '\x5000 8.8.8.8, 12.34.56.78, 98.76.54.32'
       end
       expect(http.response_code).to eq(403)

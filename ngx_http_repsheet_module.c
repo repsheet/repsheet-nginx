@@ -2,6 +2,7 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_http.h>
+#include <time.h>
 
 #include "hiredis/hiredis.h"
 
@@ -86,10 +87,38 @@ derive_actor_address(ngx_http_request_t *r, char address[])
 }
 
 
+static void
+set_repsheet_header(ngx_http_request_t *r)
+{
+  ngx_table_elt_t *h;
+  ngx_str_t label = ngx_string("X-Repsheet");
+  ngx_str_t val = ngx_string("true");
+  h = ngx_list_push(&r->headers_in.headers);
+  h->hash = 1;
+  h->key = label;
+  h->value = val;
+}
+
+
+static void
+record_activity(ngx_http_request_t *r, redisContext *connection, char *address)
+{
+  char *user_agent;
+  if (&r->headers_in.user_agent->value.len > 0) {
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "User Agent: %V", &r->headers_in.user_agent->value);
+    user_agent = "-";
+  } else {
+    user_agent = "-";
+    //user_agent = (char*)r->headers_in.user_agent->value.data;
+  }
+
+  record(connection, ctime(&r->start_sec), user_agent, "Method", "URI", "ARGS", 100, 0, address);
+}
+
 static ngx_int_t
 ngx_http_repsheet_handler(ngx_http_request_t *r)
 {
-  repsheet_main_conf_t *cmcf = ngx_http_get_module_main_conf(r,ngx_http_repsheet_module);
+  repsheet_main_conf_t *cmcf = ngx_http_get_module_main_conf(r, ngx_http_repsheet_module);
 
   if (!cmcf->enabled || r->main->internal) {
     return NGX_DECLINED;
@@ -148,23 +177,13 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
 
   if (ip_status == MARKED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "IP %s was found on repsheet. No action taken", address);
-    ngx_table_elt_t *h;
-    ngx_str_t label = ngx_string("X-Repsheet");
-    ngx_str_t val = ngx_string("true");
-    h = ngx_list_push(&r->headers_in.headers);
-    h->hash = 1;
-    h->key = label;
-    h->value = val;
+    set_repsheet_header(r);
   } else if (user_status == MARKED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "User %s was found on repsheet. No action taken", &cookie_value);
-    ngx_table_elt_t *h;
-    ngx_str_t label = ngx_string("X-Repsheet");
-    ngx_str_t val = ngx_string("true");
-    h = ngx_list_push(&r->headers_in.headers);
-    h->hash = 1;
-    h->key = label;
-    h->value = val;
+    set_repsheet_header(r);
   }
+
+  record_activity(r, cmcf->redis.connection, address);
 
   return NGX_DECLINED;
 }
