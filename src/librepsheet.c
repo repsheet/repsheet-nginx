@@ -3,7 +3,6 @@
 
 #include "hiredis/hiredis.h"
 #include "repsheet.h"
-#include "mpc.h"
 
 /**
  * @file librepsheet.c
@@ -563,53 +562,4 @@ int modsecurity_total(const char *waf_score)
   }
 
   return 0;
-}
-
-/**
- * Processes a request content blocking rule. Returns a constructed
- * repsheet_rule_t. If any errors exist on the rule it will populate
- * the error member of the struct.
- *
- * @param rule_string the string representation of the rule
- */
-
-repsheet_rule_t process_rule(char *rule_string)
-{
-  mpc_parser_t *Field = mpc_new("field");
-  mpc_parser_t *Separator = mpc_new("sep");
-  mpc_parser_t *Rule = mpc_new("rule");
-
-  mpca_lang(MPCA_LANG_DEFAULT,
-    " field : /[a-zA-Z]+/;    "
-    " sep : ':' ;             "
-    " rule : /^/ <field><sep><field><sep><field> /$/; ",
-    Field, Separator, Rule, NULL);
-
-  mpc_result_t r;
-  repsheet_rule_t rule;
-
-  if (mpc_parse("input", rule_string, Rule, &r)) {
-    mpc_ast_t *nodes = r.output;
-    rule.part = nodes->children[1]->contents;
-    rule.location = nodes->children[3]->contents;
-    rule.field = nodes->children[5]->contents;
-    rule.error = NULL;
-  } else {
-    rule.part = NULL;
-    rule.location = NULL;
-    rule.field = NULL;
-    rule.error = mpc_err_string(r.error);
-  }
-
-  // TODO: in the future this will get much more advanced. Right now
-  // the only supported part and location is header:cookie
-  if (rule.part && !strcasecmp(rule.part, "header") == 0) {
-    rule.error = "Unsupported request part\n";
-  }
-
-  if (rule.location && !strcasecmp(rule.location, "cookie") == 0) {
-    rule.error = "Unsupported request location\n";
-  }
-
-  return rule;
 }

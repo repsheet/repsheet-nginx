@@ -350,33 +350,6 @@ START_TEST(returns_0_when_no_values_exist) {
 }
 END_TEST
 
-START_TEST(correctly_parses_valid_rule) {
-  char *rule_string = "header:cookie:user";
-  repsheet_rule_t rule = process_rule(rule_string);
-
-  ck_assert_str_eq(rule.part, "header");
-  ck_assert_str_eq(rule.location, "cookie");
-  ck_assert_str_eq(rule.field, "user");
-  ck_assert(rule.error == NULL);
-}
-END_TEST
-
-START_TEST(correctly_parses_invalid_rule) {
-  char *rule_string = "invalid";
-  repsheet_rule_t rule = process_rule(rule_string);
-
-  ck_assert(rule.error != NULL);
-}
-END_TEST
-
-START_TEST(correctly_parses_unsupported_rule) {
-  char *rule_string = "body:tag:id";
-  repsheet_rule_t rule = process_rule(rule_string);
-
-  ck_assert(rule.error != NULL);
-}
-END_TEST
-
 Suite *make_librepsheet_connection_suite(void) {
   Suite *suite = suite_create("librepsheet connection");
 
@@ -431,12 +404,6 @@ Suite *make_librepsheet_connection_suite(void) {
   tcase_add_test(tc_mod_security, correctly_parses_anonmaly_total);
   tcase_add_test(tc_mod_security, returns_0_when_no_values_exist);
   suite_add_tcase(suite, tc_mod_security);
-
-  TCase *tc_rule_processor = tcase_create("Rule Processor");
-  tcase_add_test(tc_rule_processor, correctly_parses_valid_rule);
-  tcase_add_test(tc_rule_processor, correctly_parses_invalid_rule);
-  tcase_add_test(tc_rule_processor, correctly_parses_unsupported_rule);
-  suite_add_tcase(suite, tc_rule_processor);
 
   return suite;
 }
