@@ -104,15 +104,13 @@ static void
 record_activity(ngx_http_request_t *r, redisContext *connection, char *address)
 {
   char *user_agent;
-  if (&r->headers_in.user_agent->value.len > 0) {
-    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "User Agent: %V", &r->headers_in.user_agent->value);
-    user_agent = "-";
+  if (r->headers_in.user_agent) {
+    user_agent = r->headers_in.user_agent->value.data;
   } else {
     user_agent = "-";
-    //user_agent = (char*)r->headers_in.user_agent->value.data;
   }
 
-  record(connection, ctime(&r->start_sec), user_agent, "Method", "URI", "ARGS", 100, 0, address);
+  record(connection, ctime(&r->start_sec), user_agent, r->main->method_name.data, "URI", "ARGS", 100, 0, address);
 }
 
 static ngx_int_t
