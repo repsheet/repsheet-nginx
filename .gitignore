@@ -30,3 +30,4 @@
 dump.rdb
 build
 vendor
+/.bundle/
