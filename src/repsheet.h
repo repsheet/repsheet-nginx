@@ -23,6 +23,7 @@ typedef struct repsheet_rule_t {
 } repsheet_rule_t;
 
 redisContext *get_redis_context(const char *host, int port, int timeout);
+int check_connection(redisContext *context);
 
 void increment_rule_count(redisContext *context, const char *actor, char *rule);
 
