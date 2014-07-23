@@ -33,6 +33,7 @@ typedef struct {
 
 ngx_module_t ngx_http_repsheet_module;
 
+
 static ngx_table_elt_t*
 x_forwarded_for(ngx_http_request_t *r)
 {
@@ -86,37 +87,59 @@ derive_actor_address(ngx_http_request_t *r, char address[])
 }
 
 
+static int
+reset_connection(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
+{
+  redisContext *context = get_redis_context((const char*)main_conf->redis.host.data, main_conf->redis.port, main_conf->redis.timeout);
+
+  if (context == NULL) {
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Could not establish a connection to Redis, bypassing");
+    return NGX_DECLINED;
+  } else {
+    main_conf->redis.connection = context;
+    return NGX_OK;
+  }
+}
+
+
 static ngx_int_t
 ngx_http_repsheet_handler(ngx_http_request_t *r)
 {
-  repsheet_main_conf_t *cmcf = ngx_http_get_module_main_conf(r,ngx_http_repsheet_module);
+  repsheet_main_conf_t *main_conf = ngx_http_get_module_main_conf(r,ngx_http_repsheet_module);
 
-  if (!cmcf->enabled || r->main->internal) {
+  if (!main_conf->enabled || r->main->internal) {
     return NGX_DECLINED;
   }
 
   r->main->internal = 1;
 
-  if (cmcf->redis.connection == NULL) {
-    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "No Redis connection found, establishing...");
-    redisContext *context = get_redis_context((const char*)cmcf->redis.host.data, cmcf->redis.port, cmcf->redis.timeout);
-
-    if (context == NULL) {
+  int status;
+  if (main_conf->redis.connection == NULL) {
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "No Redis connection found, creating a new connection");
+    status = reset_connection(r, main_conf);
+    if (status == NGX_DECLINED) {
       return NGX_DECLINED;
-    } else {
-      cmcf->redis.connection = context;
+    }
+  } else {
+    status = check_connection(main_conf->redis.connection);
+    if (status != OK) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Redis connection has failed, attempting to reconnect");
+      status = reset_connection(r, main_conf);
+      if (status == NGX_DECLINED) {
+        return NGX_DECLINED;
+      }
     }
   }
 
   int user_status = OK;
   ngx_int_t location;
   ngx_str_t cookie_value;
-  location = ngx_http_parse_multi_header_lines(&r->headers_in.cookies, &cmcf->cookie, &cookie_value);
+  location = ngx_http_parse_multi_header_lines(&r->headers_in.cookies, &main_conf->cookie, &cookie_value);
   if (location == NGX_DECLINED) {
-    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "Could not locate %V cookie", &cmcf->cookie);
+    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "Could not locate %V cookie", &main_conf->cookie);
   } else {
-    ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "Got value for %V cookie: %V", &cmcf->cookie, &cookie_value);
-    user_status = actor_status(cmcf->redis.connection, (const char *)cookie_value.data, USER);
+    ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "Got value for %V cookie: %V", &main_conf->cookie, &cookie_value);
+    user_status = actor_status(main_conf->redis.connection, (const char *)cookie_value.data, USER);
   }
 
   int ip_status = OK;
@@ -128,7 +151,7 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     return NGX_HTTP_FORBIDDEN;
   }
 
-  ip_status = actor_status(cmcf->redis.connection, address, IP);
+  ip_status = actor_status(main_conf->redis.connection, address, IP);
 
   if (ip_status == WHITELISTED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "IP %s is whitelisted by repsheet", address);
