@@ -102,6 +102,17 @@ reset_connection(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
 }
 
 
+static void
+set_repsheet_header(ngx_http_request_t *r)
+{
+  ngx_table_elt_t *h;
+  h = ngx_list_push(&r->headers_in.headers);
+  h->hash = 1;
+  ngx_str_set(&h->key, "X-Repsheet");
+  ngx_str_set(&h->value, "true");
+}
+
+
 static ngx_int_t
 ngx_http_repsheet_handler(ngx_http_request_t *r)
 {
@@ -171,22 +182,10 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
 
   if (ip_status == MARKED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "IP %s was found on repsheet. No action taken", address);
-    ngx_table_elt_t *h;
-    ngx_str_t label = ngx_string("X-Repsheet");
-    ngx_str_t val = ngx_string("true");
-    h = ngx_list_push(&r->headers_in.headers);
-    h->hash = 1;
-    h->key = label;
-    h->value = val;
+    set_repsheet_header(r);
   } else if (user_status == MARKED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "User %s was found on repsheet. No action taken", &cookie_value);
-    ngx_table_elt_t *h;
-    ngx_str_t label = ngx_string("X-Repsheet");
-    ngx_str_t val = ngx_string("true");
-    h = ngx_list_push(&r->headers_in.headers);
-    h->hash = 1;
-    h->key = label;
-    h->value = val;
+    set_repsheet_header(r);
   }
 
   return NGX_DECLINED;
