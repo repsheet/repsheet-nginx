@@ -30,6 +30,20 @@ START_TEST(get_redis_context_failure_test)
 }
 END_TEST
 
+START_TEST(check_connection_test)
+{
+  context = get_redis_context("localhost", 6379, 0);
+  ck_assert_int_eq(OK, check_connection(context));
+}
+END_TEST
+
+START_TEST(check_connection_failure_test)
+{
+  context = get_redis_context("localhost", 12345, 0);
+  ck_assert_int_eq(DISCONNECTED, check_connection(context));
+}
+END_TEST
+
 START_TEST(increment_rule_count_test)
 {
   increment_rule_count(context, "1.1.1.1", "950001");
@@ -355,6 +369,8 @@ Suite *make_librepsheet_connection_suite(void) {
 
   TCase *tc_redis_connection = tcase_create("redis connection");
   tcase_add_test(tc_redis_connection, get_redis_context_failure_test);
+  tcase_add_test(tc_redis_connection, check_connection_test);
+  tcase_add_test(tc_redis_connection, check_connection_failure_test);
   suite_add_tcase(suite, tc_redis_connection);
 
   TCase *tc_connection_operations = tcase_create("connection operations");

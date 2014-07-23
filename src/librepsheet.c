@@ -74,6 +74,34 @@ redisContext *get_redis_context(const char *host, int port, int timeout)
 }
 
 /**
+ * Tests the connection to ensure it is working properly
+ *
+ * @param context the Redis connection
+ *
+ * @returns an integer response with the connection status
+ */
+int check_connection(redisContext *context)
+{
+  if (context == NULL || context->err) {
+    return DISCONNECTED;
+  }
+
+  redisReply *reply;
+  reply = redisCommand(context, "PING");
+  if (reply) {
+    if (reply->type == REDIS_REPLY_ERROR) {
+      freeReplyObject(reply);
+      return DISCONNECTED;
+    } else {
+      freeReplyObject(reply);
+      return OK;
+    }
+  } else {
+    return DISCONNECTED;
+  }
+}
+
+/**
  * Adds the actor to the Repsheet
  *
  * @param context the Redis connection

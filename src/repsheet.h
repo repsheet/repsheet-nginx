@@ -13,6 +13,8 @@
 #define IP 7
 #define USER 8
 
+#define DISCONNECTED -1
+
 typedef struct repsheet_rule_t {
   char *part;
   char *location;
