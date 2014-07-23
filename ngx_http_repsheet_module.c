@@ -93,7 +93,6 @@ reset_connection(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
   redisContext *context = get_redis_context((const char*)main_conf->redis.host.data, main_conf->redis.port, main_conf->redis.timeout);
 
   if (context == NULL) {
-    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Could not establish a connection to Redis, bypassing");
     return NGX_DECLINED;
   } else {
     main_conf->redis.connection = context;
@@ -124,21 +123,13 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
 
   r->main->internal = 1;
 
-  int status;
-  if (main_conf->redis.connection == NULL) {
+  int connection_status = check_connection(main_conf->redis.connection);
+  if (connection_status == DISCONNECTED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "No Redis connection found, creating a new connection");
-    status = reset_connection(r, main_conf);
-    if (status == NGX_DECLINED) {
+    connection_status = reset_connection(r, main_conf);
+    if (connection_status == NGX_DECLINED) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Unable to establish a connection to Redis, bypassing Repsheet operations");
       return NGX_DECLINED;
-    }
-  } else {
-    status = check_connection(main_conf->redis.connection);
-    if (status != OK) {
-      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Redis connection has failed, attempting to reconnect");
-      status = reset_connection(r, main_conf);
-      if (status == NGX_DECLINED) {
-        return NGX_DECLINED;
-      }
     }
   }
 
