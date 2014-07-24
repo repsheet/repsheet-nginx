@@ -175,12 +175,13 @@ int is_ip_marked(redisContext *context, const char *actor)
     if (reply->str && strcmp(reply->str, "true") == 0) {
       freeReplyObject(reply);
       return TRUE;
+    } else {
+      freeReplyObject(reply);
+      return FALSE;
     }
   } else {
     return DISCONNECTED;
   }
-
-  return FALSE;
 }
 
 /**
@@ -200,12 +201,13 @@ int is_ip_blacklisted(redisContext *context, const char *actor)
     if (reply->str && strcmp(reply->str, "true") == 0) {
       freeReplyObject(reply);
       return TRUE;
+    } else {
+      freeReplyObject(reply);
+      return FALSE;
     }
   } else {
     return DISCONNECTED;
   }
-
-  return FALSE;
 }
 
 /**
@@ -225,12 +227,13 @@ int is_ip_whitelisted(redisContext *context, const char *actor)
     if (reply->str && strcmp(reply->str, "true") == 0) {
       freeReplyObject(reply);
       return TRUE;
+    } else {
+      freeReplyObject(reply);
+      return FALSE;
     }
   } else {
     return DISCONNECTED;
   }
-
-  return FALSE;
 }
 
 /**
@@ -250,12 +253,13 @@ int is_user_marked(redisContext *context, const char *actor)
     if (reply->integer && reply->integer == 1) {
       freeReplyObject(reply);
       return TRUE;
+    } else {
+      freeReplyObject(reply);
+      return FALSE;
     }
   } else {
     return DISCONNECTED;
   }
-
-  return FALSE;
 }
 
 /**
@@ -275,12 +279,13 @@ int is_user_blacklisted(redisContext *context, const char *actor)
     if (reply->integer && reply->integer == 1) {
       freeReplyObject(reply);
       return TRUE;
+    } else {
+      freeReplyObject(reply);
+      return FALSE;
     }
   } else {
     return DISCONNECTED;
   }
-
-  return FALSE;
 }
 
 /**
@@ -300,12 +305,13 @@ int is_user_whitelisted(redisContext *context, const char *actor)
     if (reply->integer && reply->integer == 1) {
       freeReplyObject(reply);
       return TRUE;
+    } else {
+      freeReplyObject(reply);
+      return FALSE;
     }
   } else {
     return DISCONNECTED;
   }
-
-  return FALSE;
 }
 
 /**
