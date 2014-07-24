@@ -9,7 +9,7 @@ Repsheet. If the actor has been flagged, that information is logged
 and the header `X-Repsheet: true` will be added to the downstream
 request to let the application know that the actor is suspected of
 malicious activity. If the actor has been blacklisted, Repsheet
-instructs NGINX to return a 403.`
+instructs NGINX to return a 403.
 
 An actor can be defined by either an IP address or a cookie value. By
 default Repsheet looks at the IP address of the requesting actor by
