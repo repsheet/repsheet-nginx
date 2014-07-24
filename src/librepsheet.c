@@ -171,9 +171,13 @@ int is_ip_marked(redisContext *context, const char *actor)
   redisReply *reply;
 
   reply = redisCommand(context, "GET %s:repsheet", actor);
-  if (reply->str && strcmp(reply->str, "true") == 0) {
-    freeReplyObject(reply);
-    return TRUE;
+  if (reply) {
+    if (reply->str && strcmp(reply->str, "true") == 0) {
+      freeReplyObject(reply);
+      return TRUE;
+    }
+  } else {
+    return DISCONNECTED;
   }
 
   return FALSE;
@@ -192,9 +196,13 @@ int is_ip_blacklisted(redisContext *context, const char *actor)
   redisReply *reply;
 
   reply = redisCommand(context, "GET %s:repsheet:blacklist", actor);
-  if (reply->str && strcmp(reply->str, "true") == 0) {
-    freeReplyObject(reply);
-    return TRUE;
+  if (reply) {
+    if (reply->str && strcmp(reply->str, "true") == 0) {
+      freeReplyObject(reply);
+      return TRUE;
+    }
+  } else {
+    return DISCONNECTED;
   }
 
   return FALSE;
@@ -213,9 +221,13 @@ int is_ip_whitelisted(redisContext *context, const char *actor)
   redisReply *reply;
 
   reply = redisCommand(context, "GET %s:repsheet:whitelist", actor);
-  if (reply->str && strcmp(reply->str, "true") == 0) {
-    freeReplyObject(reply);
-    return TRUE;
+  if (reply) {
+    if (reply->str && strcmp(reply->str, "true") == 0) {
+      freeReplyObject(reply);
+      return TRUE;
+    }
+  } else {
+    return DISCONNECTED;
   }
 
   return FALSE;
@@ -234,9 +246,13 @@ int is_user_marked(redisContext *context, const char *actor)
   redisReply *reply;
 
   reply = redisCommand(context, "SISMEMBER repsheet:users %s", actor);
-  if (reply->integer && reply->integer == 1) {
-    freeReplyObject(reply);
-    return TRUE;
+  if (reply) {
+    if (reply->integer && reply->integer == 1) {
+      freeReplyObject(reply);
+      return TRUE;
+    }
+  } else {
+    return DISCONNECTED;
   }
 
   return FALSE;
@@ -255,9 +271,13 @@ int is_user_blacklisted(redisContext *context, const char *actor)
   redisReply *reply;
 
   reply = redisCommand(context, "SISMEMBER repsheet:users:blacklist %s", actor);
-  if (reply->integer && reply->integer == 1) {
-    freeReplyObject(reply);
-    return TRUE;
+  if (reply) {
+    if (reply->integer && reply->integer == 1) {
+      freeReplyObject(reply);
+      return TRUE;
+    }
+  } else {
+    return DISCONNECTED;
   }
 
   return FALSE;
@@ -276,9 +296,13 @@ int is_user_whitelisted(redisContext *context, const char *actor)
   redisReply *reply;
 
   reply = redisCommand(context, "SISMEMBER repsheet:users:whitelist %s", actor);
-  if (reply->integer && reply->integer == 1) {
-    freeReplyObject(reply);
-    return TRUE;
+  if (reply) {
+    if (reply->integer && reply->integer == 1) {
+      freeReplyObject(reply);
+      return TRUE;
+    }
+  } else {
+    return DISCONNECTED;
   }
 
   return FALSE;
@@ -295,16 +319,34 @@ int is_user_whitelisted(redisContext *context, const char *actor)
  */
 int actor_status(redisContext *context, const char *actor, int type)
 {
+  int response;
+
   switch(type) {
   case IP:
-    if (is_ip_whitelisted(context, actor)) { return WHITELISTED; }
-    if (is_ip_blacklisted(context, actor)) { return BLACKLISTED; }
-    if (is_ip_marked(context, actor))      { return MARKED; }
+    response = is_ip_whitelisted(context, actor);
+    if (response == DISCONNECTED) { return DISCONNECTED; }
+    if (response == TRUE)         { return WHITELISTED; }
+
+    response = is_ip_blacklisted(context, actor);
+    if (response == DISCONNECTED) { return DISCONNECTED; }
+    if (response == TRUE)         { return BLACKLISTED; }
+
+    response = is_ip_marked(context, actor);
+    if (response == DISCONNECTED) { return DISCONNECTED; }
+    if (response == TRUE)         { return MARKED; }
     break;
   case USER:
-    if (is_user_whitelisted(context, actor)) { return WHITELISTED; }
-    if (is_user_blacklisted(context, actor)) { return BLACKLISTED; }
-    if (is_user_marked(context, actor))      { return MARKED; }
+    response = is_user_whitelisted(context, actor);
+    if (response == DISCONNECTED) { return DISCONNECTED; }
+    if (response == TRUE)         { return WHITELISTED; }
+
+    response = is_user_blacklisted(context, actor);
+    if (response == DISCONNECTED) { return DISCONNECTED; }
+    if (response == TRUE)         { return BLACKLISTED; }
+
+    response = is_user_marked(context, actor);
+    if (response == DISCONNECTED) { return DISCONNECTED; }
+    if (response == TRUE)         { return MARKED; }
     break;
   }
 
