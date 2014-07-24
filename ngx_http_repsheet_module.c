@@ -14,7 +14,6 @@ typedef struct {
   ngx_uint_t max_length;
   ngx_uint_t expiry;
   redisContext *connection;
-
 } repsheet_redis_t;
 
 typedef struct {
@@ -22,17 +21,10 @@ typedef struct {
   ngx_flag_t enabled;
   ngx_flag_t record;
   ngx_flag_t proxy_headers;
-
   ngx_str_t cookie;
-
 } repsheet_main_conf_t;
 
-typedef struct {
-
-} repsheet_loc_conf_t;
-
 ngx_module_t ngx_http_repsheet_module;
-
 
 static ngx_table_elt_t*
 x_forwarded_for(ngx_http_request_t *r)
@@ -280,20 +272,6 @@ ngx_http_repsheet_create_main_conf(ngx_conf_t *cf)
 }
 
 
-static void*
-ngx_http_repsheet_create_loc_conf(ngx_conf_t *cf)
-{
-  repsheet_loc_conf_t *conf;
-
-  conf = ngx_pcalloc(cf->pool, sizeof(repsheet_loc_conf_t));
-  if (conf == NULL) {
-    return NULL;
-  }
-
-  return conf;
-}
-
-
 static ngx_http_module_t ngx_http_repsheet_module_ctx = {
   NULL,                               /* preconfiguration */
   ngx_http_repsheet_init,             /* postconfiguration */
@@ -301,7 +279,7 @@ static ngx_http_module_t ngx_http_repsheet_module_ctx = {
   NULL,                               /* init main configuration */
   NULL,                               /* create server configuration */
   NULL,                               /* merge server configuration */
-  ngx_http_repsheet_create_loc_conf,  /* create location configuration */
+  NULL,                               /* create location configuration */
   NULL                                /* merge location configuration */
 };
 
