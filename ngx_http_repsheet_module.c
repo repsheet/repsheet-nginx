@@ -107,7 +107,7 @@ set_repsheet_header(ngx_http_request_t *r)
 static ngx_int_t
 ngx_http_repsheet_handler(ngx_http_request_t *r)
 {
-  repsheet_main_conf_t *main_conf = ngx_http_get_module_main_conf(r,ngx_http_repsheet_module);
+  repsheet_main_conf_t *main_conf = ngx_http_get_module_main_conf(r, ngx_http_repsheet_module);
 
   if (!main_conf->enabled || r->main->internal) {
     return NGX_DECLINED;
@@ -146,6 +146,11 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
   }
 
   ip_status = actor_status(main_conf->redis.connection, address, IP);
+
+  if (ip_status == DISCONNECTED || user_status == DISCONNECTED) {
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "The Redis request failed, bypassing further operations");
+    return NGX_DECLINED;
+  }
 
   if (ip_status == WHITELISTED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "IP %s is whitelisted by repsheet", address);
