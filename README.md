@@ -89,3 +89,30 @@ compiles NGINX, and then configures everything to work
 together. Running `rake` launches some curl based tests that hit the
 site and exercise Repsheet, then test that everything is working as
 expected.
+
+## Feature Differences from the Apache Version
+
+The concept of what Repsheet should do is constantly evolving. There
+are some differences between the NGINX and Apache modules and it is
+important to make them as clear as possible.
+
+#### The Good
+
+* This module has much better performance characteristics than the
+  Apache version. This is due to the connection recycling code that is
+  present. The Apache version will eventually get this feature as well
+  but doesn't at this time.
+
+* This module supports user cookie values for detecting and blocking actors.
+
+#### The Unsupported
+
+* This module does not have the recorder feature that the Apache
+  version does. It will be implemented, but doesn't currently exist.
+
+* This module does not support ModSecurity. The development of this
+  support is blocked due to an incomplete implementation of
+  ModSecurity for NGINX. The issue tracking this is
+  https://github.com/SpiderLabs/ModSecurity/issues/660. Once this is
+  resolved or the feature can be implemented in another way it will
+  be.
