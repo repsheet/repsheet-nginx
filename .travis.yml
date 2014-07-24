@@ -7,3 +7,6 @@ rvm:
   2.0
 services:
   - redis-server
+branches:
+  only:
+    - master
