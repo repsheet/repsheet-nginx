@@ -25,11 +25,11 @@ typedef struct repsheet_rule_t {
 redisContext *get_redis_context(const char *host, int port, int timeout);
 int check_connection(redisContext *context);
 
-void increment_rule_count(redisContext *context, const char *actor, char *rule);
+int increment_rule_count(redisContext *context, const char *actor, char *rule);
 
-void mark_actor(redisContext *context, const char *actor, int type);
-void blacklist_actor(redisContext *context, const char *actor, int type);
-void whitelist_actor(redisContext *context, const char *actor, int type);
+int mark_actor(redisContext *context, const char *actor, int type);
+int blacklist_actor(redisContext *context, const char *actor, int type);
+int whitelist_actor(redisContext *context, const char *actor, int type);
 
 int is_ip_marked(redisContext *context, const char *actor);
 int is_ip_blacklisted(redisContext *context, const char *actor);
@@ -41,10 +41,10 @@ int actor_status(redisContext *context, const char *actor, int type);
 
 int is_historical_offender(redisContext *context, const char *actor);
 
-void expire(redisContext *context, const char *actor, char *label, int expiry);
-void blacklist_and_expire(redisContext *context, const char *actor, int expiry, char *reason);
+int expire(redisContext *context, const char *actor, char *label, int expiry);
+int blacklist_and_expire(redisContext *context, const char *actor, int expiry, char *reason);
 
-void record(redisContext *context, char *timestamp, const char *user_agent,
+int record(redisContext *context, char *timestamp, const char *user_agent,
             const char *http_method, char *uri, char *arguments, int redis_max_length,
             int redis_expiry, const char *actor);
 

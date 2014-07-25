@@ -107,15 +107,34 @@ int check_connection(redisContext *context)
  * @param context the Redis connection
  * @param actor the actors user data or ip address
  * @param type IP or USER
+ *
+ * @returns an integer result
  */
-void mark_actor(redisContext *context, const char *actor, int type)
+int mark_actor(redisContext *context, const char *actor, int type)
 {
+  redisReply *reply;
+
   switch(type) {
   case IP:
-    freeReplyObject(redisCommand(context, "SET %s:repsheet true", actor));
+    reply = redisCommand(context, "SET %s:repsheet true", actor);
+    if (reply) {
+      freeReplyObject(reply);
+      return OK;
+    } else {
+      return DISCONNECTED;
+    }
     break;
   case USER:
-    freeReplyObject(redisCommand(context, "SADD repsheet:users %s", actor));
+    reply = redisCommand(context, "SADD repsheet:users %s", actor);
+    if (reply) {
+      freeReplyObject(reply);
+      return OK;
+    } else {
+      return DISCONNECTED;
+    }
+    break;
+  default:
+    return UNSUPPORTED;
     break;
   }
 }
@@ -126,15 +145,34 @@ void mark_actor(redisContext *context, const char *actor, int type)
  * @param context the Redis connection
  * @param actor the actors user data or ip address
  * @param type IP or USER
+ *
+ * @returns an integer result
  */
-void blacklist_actor(redisContext *context, const char *actor, int type)
+int blacklist_actor(redisContext *context, const char *actor, int type)
 {
+  redisReply *reply;
+
   switch(type) {
   case IP:
-    freeReplyObject(redisCommand(context, "SET %s:repsheet:blacklist true", actor));
+    reply = redisCommand(context, "SET %s:repsheet:blacklist true", actor);
+    if (reply) {
+      freeReplyObject(reply);
+      return OK;
+    } else {
+      return DISCONNECTED;
+    }
     break;
   case USER:
-    freeReplyObject(redisCommand(context, "SADD repsheet:users:blacklist %s", actor));
+    reply = redisCommand(context, "SADD repsheet:users:blacklist %s", actor);
+    if (reply) {
+      freeReplyObject(reply);
+      return OK;
+    } else {
+      return DISCONNECTED;
+    }
+    break;
+  default:
+    return UNSUPPORTED;
     break;
   }
 }
@@ -145,15 +183,34 @@ void blacklist_actor(redisContext *context, const char *actor, int type)
  * @param context the Redis connection
  * @param actor the actors user data or ip address
  * @param type IP or USER
+ *
+ * @returns an integer result
  */
-void whitelist_actor(redisContext *context, const char *actor, int type)
+int whitelist_actor(redisContext *context, const char *actor, int type)
 {
+  redisReply *reply;
+
   switch(type) {
   case IP:
-    freeReplyObject(redisCommand(context, "SET %s:repsheet:whitelist true", actor));
+    reply = redisCommand(context, "SET %s:repsheet:whitelist true", actor);
+    if (reply) {
+      freeReplyObject(reply);
+      return OK;
+    } else {
+      return DISCONNECTED;
+    }
     break;
   case USER:
-    freeReplyObject(redisCommand(context, "SADD repsheet:users:whitelist %s", actor));
+    reply = redisCommand(context, "SADD repsheet:users:whitelist %s", actor);
+    if (reply) {
+      freeReplyObject(reply);
+      return OK;
+    } else {
+      return DISCONNECTED;
+    }
+    break;
+  default:
+    return UNSUPPORTED;
     break;
   }
 }
@@ -164,7 +221,7 @@ void whitelist_actor(redisContext *context, const char *actor, int type)
  * @param context the Redis connection
  * @param actor the IP address of the actor
  *
- * @returns TRUE if yes, FALSE if no
+ * @returns TRUE if yes, FALSE if no, DISCONNECTED if error
  */
 int is_ip_marked(redisContext *context, const char *actor)
 {
@@ -190,7 +247,7 @@ int is_ip_marked(redisContext *context, const char *actor)
  * @param context the Redis connection
  * @param actor the IP address of the actor
  *
- * @returns TRUE if yes, FALSE if no
+ * @returns TRUE if yes, FALSE if no, DISCONNECTED if error
  */
 int is_ip_blacklisted(redisContext *context, const char *actor)
 {
@@ -216,7 +273,7 @@ int is_ip_blacklisted(redisContext *context, const char *actor)
  * @param context the Redis connection
  * @param actor the IP address of the actor
  *
- * @returns TRUE if yes, FALSE if no
+ * @returns TRUE if yes, FALSE if no, DISCONNECTED if error
  */
 int is_ip_whitelisted(redisContext *context, const char *actor)
 {
@@ -242,7 +299,7 @@ int is_ip_whitelisted(redisContext *context, const char *actor)
  * @param context the Redis connection
  * @param actor the user
  *
- * @returns TRUE if yes, FALSE if no
+ * @returns TRUE if yes, FALSE if no, DISCONNECTED if error
  */
 int is_user_marked(redisContext *context, const char *actor)
 {
@@ -268,7 +325,7 @@ int is_user_marked(redisContext *context, const char *actor)
  * @param context the Redis connection
  * @param actor the user
  *
- * @returns TRUE if yes, FALSE if no
+ * @returns TRUE if yes, FALSE if no, DISCONNECTED if error
  */
 int is_user_blacklisted(redisContext *context, const char *actor)
 {
@@ -294,7 +351,7 @@ int is_user_blacklisted(redisContext *context, const char *actor)
  * @param context the Redis connection
  * @param actor the user
  *
- * @returns TRUE if yes, FALSE if no
+ * @returns TRUE if yes, FALSE if no, DISCONNECTED if error
  */
 int is_user_whitelisted(redisContext *context, const char *actor)
 {
@@ -364,6 +421,8 @@ int actor_status(redisContext *context, const char *actor, int type)
  *
  * @param context the Redis connection
  * @param actor the addres of the actor in question
+ *
+ * @returns an integer response
  */
 
 int is_historical_offender(redisContext *context, const char *actor)
@@ -374,14 +433,14 @@ int is_historical_offender(redisContext *context, const char *actor)
   if (reply) {
     if (reply->integer == 1) {
       freeReplyObject(reply);
-      return 1;
+      return TRUE;
     } else {
       freeReplyObject(reply);
-      return 0;
+      return FALSE;
     }
+  } else {
+    return DISCONNECTED;
   }
-
-  return 0;
 }
 
 /**
@@ -391,10 +450,20 @@ int is_historical_offender(redisContext *context, const char *actor)
  * @param actor the IP address of the actor
  * @param label the label associated with the actor
  * @param expiry the length until the record expires
+ *
+ * @returns an integer response
  */
-void expire(redisContext *context, const char *actor, char *label, int expiry)
+int expire(redisContext *context, const char *actor, char *label, int expiry)
 {
-  freeReplyObject(redisCommand(context, "EXPIRE %s:%s %d", actor, label, expiry));
+  redisReply *reply;
+
+  reply = redisCommand(context, "EXPIRE %s:%s %d", actor, label, expiry);
+  if (reply) {
+    freeReplyObject(reply);
+    return OK;
+  } else {
+    return DISCONNECTED;
+  }
 }
 
 /**
@@ -405,12 +474,25 @@ void expire(redisContext *context, const char *actor, char *label, int expiry)
  * @param actor the IP address of the actor
  * @param expiry the length until the record expires
  * @param reason the reason for blacklisting the actor
+ *
+ * @returns an integer response
  */
-void blacklist_and_expire(redisContext *context, const char *actor, int expiry, char *reason)
+int blacklist_and_expire(redisContext *context, const char *actor, int expiry, char *reason)
 {
-  freeReplyObject(redisCommand(context, "SETEX %s:repsheet:blacklist %d true", actor, expiry));
-  freeReplyObject(redisCommand(context, "SETEX %s:repsheet:blacklist:reason %d %s", actor, expiry, reason));
-  freeReplyObject(redisCommand(context, "SADD repsheet:blacklist:history %s", actor));
+  redisReply *reply;
+
+  redisCommand(context, "MULTI");
+  redisCommand(context, "SETEX %s:repsheet:blacklist %d true", actor, expiry);
+  redisCommand(context, "SETEX %s:repsheet:blacklist:reason %d %s", actor, expiry, reason);
+  redisCommand(context, "SADD repsheet:blacklist:history %s", actor);
+  reply = redisCommand(context, "EXEC");
+
+  if (reply) {
+    freeReplyObject(reply);
+    return OK;
+  } else {
+    return DISCONNECTED;
+  }
 }
 
 /**
@@ -425,8 +507,10 @@ void blacklist_and_expire(redisContext *context, const char *actor, int expiry, 
  * @param redis_max_length the maximum number of requests to keep in Redis
  * @param redis_expiry the time to live for the entry
  * @param actor the ip address of the actor
+ *
+ * @returns an integer response
  */
-void record(redisContext *context, char *timestamp, const char *user_agent,
+int record(redisContext *context, char *timestamp, const char *user_agent,
             const char *http_method, char *uri, char *arguments, int redis_max_length,
             int redis_expiry, const char *actor)
 {
@@ -485,13 +569,24 @@ void record(redisContext *context, char *timestamp, const char *user_agent,
   free(u);
   free(args);
 
-  freeReplyObject(redisCommand(context, "LPUSH %s:requests %s", actor, rec));
-  freeReplyObject(redisCommand(context, "LTRIM %s:requests 0 %d", actor, (redis_max_length - 1)));
-  if (redis_expiry > 0) {
-    freeReplyObject(redisCommand(context, "EXPIRE %s:requests %d", actor, redis_expiry));
-  }
+  redisReply * reply;
 
-  free(rec);
+  redisCommand(context, "MULTI");
+  redisCommand(context, "LPUSH %s:requests %s", actor, rec);
+  redisCommand(context, "LTRIM %s:requests 0 %d", actor, (redis_max_length - 1));
+  if (redis_expiry > 0) {
+    redisCommand(context, "EXPIRE %s:requests %d", actor, redis_expiry);
+  }
+  reply = redisCommand(context, "EXEC");
+
+  if (reply) {
+    free(rec);
+    freeReplyObject(reply);
+    return OK;
+  } else {
+    return DISCONNECTED;
+    free(rec);
+  }
 }
 
 /**
@@ -604,10 +699,20 @@ void process_mod_security_headers(const char *waf_events, char *events[])
  * @param context the Redis connection
  * @param actor the IP address of the actor
  * @param rule the ModSecurity rule number
+ *
+ * @returns an integer response
  */
-void increment_rule_count(redisContext *context, const char *actor, char *rule)
+int increment_rule_count(redisContext *context, const char *actor, char *rule)
 {
-  freeReplyObject(redisCommand(context, "ZINCRBY %s:detected 1 %s", actor, rule));
+  redisReply *reply;
+
+  reply = redisCommand(context, "ZINCRBY %s:detected 1 %s", actor, rule);
+  if (reply) {
+    freeReplyObject(reply);
+    return OK;
+  } else {
+    return DISCONNECTED;
+  }
 }
 
 /**
