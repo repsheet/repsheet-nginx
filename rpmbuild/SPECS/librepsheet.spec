@@ -1,5 +1,5 @@
 Name: repsheet
-Version: 1.0.0
+Version: 2.0.0
 Release: 1
 Summary: Core library
 License: ASL 2.0
@@ -10,7 +10,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 Requires: hiredis
 BuildRequires: pcre-devel hiredis-devel gcc automake autoconf libtool check check-devel
 
-%description 
+%description
 This library contains the business logic for Repsheet
 
 %package devel
@@ -72,5 +72,7 @@ rm -rf $RPM_BUILD_ROOT
 %doc LICENSE
 
 %changelog
+* Fri Jul 25 2014 Aaron Bedra <aaron@aaronbedra.com> - 2.0.0-1
+- Updated API, error handling, and additional functionality
 * Mon May 19 2014 Aaron Bedra <aaron@aaronbedra.com> - 1.0.0-1
 - Initial Release
