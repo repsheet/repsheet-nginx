@@ -1,0 +1,14 @@
+2014-07-25  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 2.0.0: A number of changes to the library including API breaking changes.
+	  - Added support for looking up a user
+	  - Added actor_status() which returns the state of an actor in Repsheet
+	  - Added several integer codes for signaling status
+	  - Added check_connect() which ensures the connection to Redis is stil alive.
+	  - Added error handling to all Redis functions to ensure that requests
+	    with no Reply don't cause segfaults.
+
+2014-05-19  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 1.0.0: First publicly consumable release
+
