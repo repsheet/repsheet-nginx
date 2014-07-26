@@ -584,8 +584,8 @@ int record(redisContext *context, char *timestamp, const char *user_agent,
     freeReplyObject(reply);
     return OK;
   } else {
-    return DISCONNECTED;
     free(rec);
+    return DISCONNECTED;
   }
 }
 
