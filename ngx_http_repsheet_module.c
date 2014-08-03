@@ -45,8 +45,8 @@ x_forwarded_for(ngx_http_request_t *r)
 }
 
 
-static void
-derive_actor_address(ngx_http_request_t *r, char address[])
+static int
+derive_actor_address(ngx_http_request_t *r, char *address)
 {
   int length;
   ngx_table_elt_t *xff = x_forwarded_for(r);
@@ -61,20 +61,20 @@ derive_actor_address(ngx_http_request_t *r, char address[])
       }
     }
 
-    // Validate the address
     length = p - xff->value.data;
     addr = ngx_inet_addr(xff->value.data, length);
     if (addr != INADDR_NONE && length <= INET_ADDRSTRLEN) {
       strncpy(address, (char *)xff->value.data, length);
       address[length] = '\0';
+      return NGX_OK;
     } else {
-      // Address was invalid, clear the array to signal the error
-      memset(address, '\0', INET_ADDRSTRLEN);
+      return NGX_DECLINED;
     }
   } else {
     length = r->connection->addr_text.len;
     strncpy(address, (char *)r->connection->addr_text.data, length);
     address[length] = '\0';
+    return NGX_OK;
   }
 }
 
@@ -136,15 +136,16 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     user_status = actor_status(main_conf->redis.connection, (const char *)cookie_value.data, USER);
   }
 
-  int ip_status = OK;
+  int address_code;
   char address[INET_ADDRSTRLEN];
-  derive_actor_address(r, address);
+  address_code = derive_actor_address(r, address);
 
-  if (address[0] == '\0') {
+  if (address_code == NGX_DECLINED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Invalid X-Forwarded-For. Blocking suspected attack");
     return NGX_HTTP_FORBIDDEN;
   }
 
+  int ip_status = OK;
   ip_status = actor_status(main_conf->redis.connection, address, IP);
 
   if (ip_status == DISCONNECTED || user_status == DISCONNECTED) {
