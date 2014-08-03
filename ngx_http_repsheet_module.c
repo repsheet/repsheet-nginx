@@ -172,7 +172,7 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     }
     return NGX_HTTP_FORBIDDEN;
   } else if (user_status == BLACKLISTED) {
-    reason_response = blacklist_reason(main_conf->redis.connection, cookie_value.data, reason_code);
+    reason_response = blacklist_reason(main_conf->redis.connection, (const char*)cookie_value.data, reason_code);
     if (reason_response == OK) {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "User %V was blocked by repsheet. Reason: %s", &cookie_value, reason_code);
     } else {
