@@ -1,5 +1,5 @@
 Name: repsheet
-Version: 2.0.0
+Version: 2.1.0
 Release: 1
 Summary: Core library
 License: ASL 2.0
@@ -72,6 +72,8 @@ rm -rf $RPM_BUILD_ROOT
 %doc LICENSE
 
 %changelog
+* Sun Aug 03 2014 Aaron Bedra <aaron@aaronbedra.com> - 2.1.0-1
+- Small fix, new functionality
 * Fri Jul 25 2014 Aaron Bedra <aaron@aaronbedra.com> - 2.0.0-1
 - Updated API, error handling, and additional functionality
 * Mon May 19 2014 Aaron Bedra <aaron@aaronbedra.com> - 1.0.0-1
