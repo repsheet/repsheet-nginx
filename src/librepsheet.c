@@ -512,8 +512,9 @@ int blacklist_reason(redisContext *context, const char *actor, char *value)
   reply = redisCommand(context, "GET %s:repsheet:blacklist:reason", actor);
   if (reply) {
     if (reply->type == REDIS_REPLY_STRING) {
-      size_t s = sizeof(reply->str) > MAX_REASON_LENGTH ? MAX_REASON_LENGTH : sizeof(reply->str);
+      size_t s = reply->len > MAX_REASON_LENGTH ? MAX_REASON_LENGTH : reply->len;
       strncpy(value, reply->str, s);
+      value[s] = '\0';
       freeReplyObject(reply);
       return OK;
     } else {
