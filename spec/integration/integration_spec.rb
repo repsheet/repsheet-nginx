@@ -22,13 +22,15 @@ describe "Integration Specs" do
   describe "Actions" do
     it "Returns a 403 response if the IP is on the blacklist" do
       @redis.set("127.0.0.1:repsheet:blacklist", "true")
+      @redis.set("127.0.0.1:repsheet:blacklist:reason", "Integration Spec")
       expect(Curl.get("http://127.0.0.1:8888").response_code).to eq(403)
     end
 
     it "Returns a 403 response if the user is on the blacklist" do
-      @redis.sadd("repsheet:users:blacklist", "repsheet")
+      @redis.sadd("repsheet:users:blacklist", "integration")
+      @redis.set("integration:repsheet:blacklist:reason", "Integration Spec")
       http = Curl.get("http://127.0.0.1:8888") do |http|
-        http.headers['Cookie'] = "user=repsheet"
+        http.headers['Cookie'] = "user=integration"
       end
 
       expect(http.response_code).to eq(403)
