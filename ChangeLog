@@ -1,3 +1,9 @@
+2014-08-03  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 2.1.0: Small fix and new functionality
+	  - Added blacklist_reason() for reason code lookup
+	  - Fixed clause order in record() to remove dangling free().
+
 2014-07-25  Aaron Bedra  <aaron@aaronbedra.com>
 
 	* 2.0.0: A number of changes to the library including API breaking changes.
