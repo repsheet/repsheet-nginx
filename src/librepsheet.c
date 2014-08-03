@@ -496,6 +496,36 @@ int blacklist_and_expire(redisContext *context, const char *actor, int expiry, c
 }
 
 /**
+ * Fetches the reason code for the actor. Works with both IP and user
+ * data.
+ *
+ * @param context the Redis connection
+ * @param actor the IP address of the actor
+ * @param value the variable to store the reason code
+ *
+ * @returns an integer response and sets value if found
+ */
+int blacklist_reason(redisContext *context, const char *actor, char *value)
+{
+  redisReply *reply;
+
+  reply = redisCommand(context, "GET %s:repsheet:blacklist:reason", actor);
+  if (reply) {
+    if (reply->type == REDIS_REPLY_STRING) {
+      size_t s = sizeof(reply->str) > MAX_REASON_LENGTH ? MAX_REASON_LENGTH : sizeof(reply->str);
+      strncpy(value, reply->str, s);
+      freeReplyObject(reply);
+      return OK;
+    } else {
+      freeReplyObject(reply);
+      return NIL;
+    }
+  } else {
+    return DISCONNECTED;
+  }
+}
+
+/**
  * Records details about the request and stores them in Redis
  *
  * @param context the redis connection

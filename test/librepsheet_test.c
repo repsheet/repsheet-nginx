@@ -215,6 +215,29 @@ START_TEST(blacklist_and_expire_test)
 }
 END_TEST
 
+START_TEST(blacklist_reason_ip_found_test)
+{
+  blacklist_and_expire(context, "1.1.1.1", 200, "test");
+  int reason_response;
+  char value[MAX_REASON_LENGTH];
+  reason_response = blacklist_reason(context, "1.1.1.1", value);
+
+  ck_assert_int_eq(reason_response, OK);
+  ck_assert_str_eq(value, "test");
+}
+END_TEST
+
+START_TEST(blacklist_reason_ip_not_found_test)
+{
+  blacklist_and_expire(context, "1.1.1.1", 200, "test");
+  int reason_response;
+  char value[MAX_REASON_LENGTH];
+  reason_response = blacklist_reason(context, "1.1.1.2", value);
+
+  ck_assert_int_eq(reason_response, NIL);
+}
+END_TEST
+
 START_TEST(record_test)
 {
   record(context, "4/23/2014", "airpair", "GET", "/airpair", NULL, 5, 10000, "1.1.1.1");
@@ -394,6 +417,8 @@ Suite *make_librepsheet_connection_suite(void) {
 
   tcase_add_test(tc_connection_operations, expire_test);
   tcase_add_test(tc_connection_operations, blacklist_and_expire_test);
+  tcase_add_test(tc_connection_operations, blacklist_reason_ip_found_test);
+  tcase_add_test(tc_connection_operations, blacklist_reason_ip_not_found_test);
 
   tcase_add_test(tc_connection_operations, record_test);
   tcase_add_test(tc_connection_operations, record_handles_null_values);

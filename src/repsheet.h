@@ -14,6 +14,9 @@
 #define USER 8
 
 #define DISCONNECTED -1
+#define NIL -2
+
+#define MAX_REASON_LENGTH 1024
 
 typedef struct repsheet_rule_t {
   char *part;
@@ -43,6 +46,7 @@ int is_historical_offender(redisContext *context, const char *actor);
 
 int expire(redisContext *context, const char *actor, char *label, int expiry);
 int blacklist_and_expire(redisContext *context, const char *actor, int expiry, char *reason);
+int blacklist_reason(redisContext *context, const char *actor, char *value);
 
 int record(redisContext *context, char *timestamp, const char *user_agent,
             const char *http_method, char *uri, char *arguments, int redis_max_length,
