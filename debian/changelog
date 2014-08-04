@@ -1,3 +1,9 @@
+librepsheet (2.2.0) unstable-security; urgency=low
+
+  * Renamed OK to LIBREPSHEET_OK
+
+ -- Aaron Bedra <abedra@debian.repsheet>  Mon, 04 Aug 2014 11:17:01 -0500
+
 librepsheet (2.1.0) unstable-security; urgency=low
 
   * Small fix, new functionality
