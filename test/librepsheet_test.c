@@ -33,7 +33,7 @@ END_TEST
 START_TEST(check_connection_test)
 {
   context = get_redis_context("localhost", 6379, 0);
-  ck_assert_int_eq(OK, check_connection(context));
+  ck_assert_int_eq(LIBREPSHEET_OK, check_connection(context));
 }
 END_TEST
 
@@ -222,7 +222,7 @@ START_TEST(blacklist_reason_ip_found_test)
   char value[MAX_REASON_LENGTH];
   reason_response = blacklist_reason(context, "1.1.1.1", value);
 
-  ck_assert_int_eq(reason_response, OK);
+  ck_assert_int_eq(reason_response, LIBREPSHEET_OK);
   ck_assert_str_eq(value, "test");
 }
 END_TEST

@@ -94,7 +94,7 @@ int check_connection(redisContext *context)
       return DISCONNECTED;
     } else {
       freeReplyObject(reply);
-      return OK;
+      return LIBREPSHEET_OK;
     }
   } else {
     return DISCONNECTED;
@@ -119,7 +119,7 @@ int mark_actor(redisContext *context, const char *actor, int type)
     reply = redisCommand(context, "SET %s:repsheet true", actor);
     if (reply) {
       freeReplyObject(reply);
-      return OK;
+      return LIBREPSHEET_OK;
     } else {
       return DISCONNECTED;
     }
@@ -128,7 +128,7 @@ int mark_actor(redisContext *context, const char *actor, int type)
     reply = redisCommand(context, "SADD repsheet:users %s", actor);
     if (reply) {
       freeReplyObject(reply);
-      return OK;
+      return LIBREPSHEET_OK;
     } else {
       return DISCONNECTED;
     }
@@ -157,7 +157,7 @@ int blacklist_actor(redisContext *context, const char *actor, int type)
     reply = redisCommand(context, "SET %s:repsheet:blacklist true", actor);
     if (reply) {
       freeReplyObject(reply);
-      return OK;
+      return LIBREPSHEET_OK;
     } else {
       return DISCONNECTED;
     }
@@ -166,7 +166,7 @@ int blacklist_actor(redisContext *context, const char *actor, int type)
     reply = redisCommand(context, "SADD repsheet:users:blacklist %s", actor);
     if (reply) {
       freeReplyObject(reply);
-      return OK;
+      return LIBREPSHEET_OK;
     } else {
       return DISCONNECTED;
     }
@@ -195,7 +195,7 @@ int whitelist_actor(redisContext *context, const char *actor, int type)
     reply = redisCommand(context, "SET %s:repsheet:whitelist true", actor);
     if (reply) {
       freeReplyObject(reply);
-      return OK;
+      return LIBREPSHEET_OK;
     } else {
       return DISCONNECTED;
     }
@@ -204,7 +204,7 @@ int whitelist_actor(redisContext *context, const char *actor, int type)
     reply = redisCommand(context, "SADD repsheet:users:whitelist %s", actor);
     if (reply) {
       freeReplyObject(reply);
-      return OK;
+      return LIBREPSHEET_OK;
     } else {
       return DISCONNECTED;
     }
@@ -460,7 +460,7 @@ int expire(redisContext *context, const char *actor, char *label, int expiry)
   reply = redisCommand(context, "EXPIRE %s:%s %d", actor, label, expiry);
   if (reply) {
     freeReplyObject(reply);
-    return OK;
+    return LIBREPSHEET_OK;
   } else {
     return DISCONNECTED;
   }
@@ -489,7 +489,7 @@ int blacklist_and_expire(redisContext *context, const char *actor, int expiry, c
 
   if (reply) {
     freeReplyObject(reply);
-    return OK;
+    return LIBREPSHEET_OK;
   } else {
     return DISCONNECTED;
   }
@@ -516,7 +516,7 @@ int blacklist_reason(redisContext *context, const char *actor, char *value)
       strncpy(value, reply->str, s);
       value[s] = '\0';
       freeReplyObject(reply);
-      return OK;
+      return LIBREPSHEET_OK;
     } else {
       freeReplyObject(reply);
       return NIL;
@@ -613,7 +613,7 @@ int record(redisContext *context, char *timestamp, const char *user_agent,
   if (reply) {
     free(rec);
     freeReplyObject(reply);
-    return OK;
+    return LIBREPSHEET_OK;
   } else {
     free(rec);
     return DISCONNECTED;
@@ -740,7 +740,7 @@ int increment_rule_count(redisContext *context, const char *actor, char *rule)
   reply = redisCommand(context, "ZINCRBY %s:detected 1 %s", actor, rule);
   if (reply) {
     freeReplyObject(reply);
-    return OK;
+    return LIBREPSHEET_OK;
   } else {
     return DISCONNECTED;
   }

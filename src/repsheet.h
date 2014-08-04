@@ -8,7 +8,7 @@
 #define MARKED 3
 #define BLACKLISTED 4
 #define UNSUPPORTED 5
-#define OK 6
+#define LIBREPSHEET_OK 6
 
 #define IP 7
 #define USER 8
