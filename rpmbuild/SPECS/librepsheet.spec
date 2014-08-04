@@ -1,5 +1,5 @@
 Name: repsheet
-Version: 2.1.0
+Version: 2.2.0
 Release: 1
 Summary: Core library
 License: ASL 2.0
@@ -72,6 +72,8 @@ rm -rf $RPM_BUILD_ROOT
 %doc LICENSE
 
 %changelog
+* Mon Aug 04 2014 Aaron Bedra <aaron@aaronbedra.com> - 2.2.0-1
+- Rename OK to LIBREPSHEET_OK
 * Sun Aug 03 2014 Aaron Bedra <aaron@aaronbedra.com> - 2.1.0-1
 - Small fix, new functionality
 * Fri Jul 25 2014 Aaron Bedra <aaron@aaronbedra.com> - 2.0.0-1
