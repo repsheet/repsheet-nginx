@@ -1,3 +1,7 @@
+2014-08-04  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 2.2.0: Rename OK to LIBREPSHEET_OK
+
 2014-08-03  Aaron Bedra  <aaron@aaronbedra.com>
 
 	* 2.1.0: Small fix and new functionality
