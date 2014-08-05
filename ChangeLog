@@ -1,3 +1,8 @@
+2014-08-05  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 1.2.0 - Updates from librepsheet to use LIBREPSHEET_OK instead
+	          of the removed OK variable.
+
 2014-08-03  Aaron Bedra  <aaron@aaronbedra.com>
 
 	* 1.1.0 - Adds blacklist reason to logs

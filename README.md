@@ -22,7 +22,7 @@ each request to see if that cookie has been blacklisted.
 ## Dependencies
 
 This module requires [hiredis](https://github.com/redis/hiredis) and
-[librepsheet](https://github.com/repsheet/librepsheet) >= 2.1.0 for
+[librepsheet](https://github.com/repsheet/librepsheet) >= 2.2.0 for
 compilation and [Redis](http://redis.io) for its runtime.
 
 #### Installation
