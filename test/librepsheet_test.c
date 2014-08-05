@@ -387,6 +387,32 @@ START_TEST(returns_0_when_no_values_exist) {
 }
 END_TEST
 
+START_TEST(is_country_marked_true_test)
+{
+  redisCommand(context, "SADD repsheet:countries:marked KP");
+  ck_assert_int_eq(is_country_marked(context, "KP"), TRUE);
+}
+END_TEST
+
+START_TEST(is_country_marked_false_test)
+{
+  ck_assert_int_eq(is_country_marked(context, "KP"), FALSE);
+}
+END_TEST
+
+START_TEST(is_country_blacklisted_true_test)
+{
+  redisCommand(context, "SADD repsheet:countries:blacklisted KP");
+  ck_assert_int_eq(is_country_blacklisted(context, "KP"), TRUE);
+}
+END_TEST
+
+START_TEST(is_country_blacklisted_false_test)
+{
+  ck_assert_int_eq(is_country_blacklisted(context, "KP"), FALSE);
+}
+END_TEST
+
 Suite *make_librepsheet_connection_suite(void) {
   Suite *suite = suite_create("librepsheet connection");
 
@@ -427,6 +453,12 @@ Suite *make_librepsheet_connection_suite(void) {
   tcase_add_test(tc_connection_operations, record_properly_records_timestamp);
   tcase_add_test(tc_connection_operations, record_properly_records_user_agent);
   tcase_add_test(tc_connection_operations, record_properly_records_http_method);
+
+  tcase_add_test(tc_connection_operations, is_country_marked_true_test);
+  tcase_add_test(tc_connection_operations, is_country_marked_false_test);
+  tcase_add_test(tc_connection_operations, is_country_blacklisted_true_test);
+  tcase_add_test(tc_connection_operations, is_country_blacklisted_false_test);
+
   suite_add_tcase(suite, tc_connection_operations);
 
   TCase *tc_proxy = tcase_create("Standard");
