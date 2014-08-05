@@ -125,7 +125,7 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     }
   }
 
-  int user_status = OK;
+  int user_status = LIBREPSHEET_OK;
   ngx_int_t location;
   ngx_str_t cookie_value;
   location = ngx_http_parse_multi_header_lines(&r->headers_in.cookies, &main_conf->cookie, &cookie_value);
@@ -145,7 +145,7 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     return NGX_HTTP_FORBIDDEN;
   }
 
-  int ip_status = OK;
+  int ip_status = LIBREPSHEET_OK;
   ip_status = actor_status(main_conf->redis.connection, address, IP);
 
   if (ip_status == DISCONNECTED || user_status == DISCONNECTED) {
@@ -166,7 +166,7 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
 
   if (ip_status == BLACKLISTED) {
     reason_response = blacklist_reason(main_conf->redis.connection, address, reason_code);
-    if (reason_response == OK) {
+    if (reason_response == LIBREPSHEET_OK) {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "IP %s was blocked by repsheet. Reason: %s", address, reason_code);
     } else {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "IP %s was blocked by repsheet. No reason provided", address);
@@ -174,7 +174,7 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     return NGX_HTTP_FORBIDDEN;
   } else if (user_status == BLACKLISTED) {
     reason_response = blacklist_reason(main_conf->redis.connection, (const char*)cookie_value.data, reason_code);
-    if (reason_response == OK) {
+    if (reason_response == LIBREPSHEET_OK) {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "User %V was blocked by repsheet. Reason: %s", &cookie_value, reason_code);
     } else {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "User %V was blocked by repsheet. No reason provided", &cookie_value);
