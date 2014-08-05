@@ -542,8 +542,8 @@ int blacklist_reason(redisContext *context, const char *actor, char *value)
  * @returns an integer response
  */
 int record(redisContext *context, char *timestamp, const char *user_agent,
-            const char *http_method, char *uri, char *arguments, int redis_max_length,
-            int redis_expiry, const char *actor)
+           const char *http_method, char *uri, char *arguments, int redis_max_length,
+           int redis_expiry, const char *actor)
 {
   char *t, *ua, *method, *u, *args, *rec;
 
@@ -824,4 +824,28 @@ int is_country_blacklisted(redisContext *context, const char *country_code)
   } else {
     return DISCONNECTED;
   }
+}
+
+
+/**
+ * Top level API for determining the status of a country
+ *
+ * @param context the Redis connection
+ * @param country_code the 2 digit ISO country code
+ *
+ * @returns an integer response
+ */
+int country_status(redisContext *context, const char *country_code)
+{
+  int response;
+
+  response = is_country_blacklisted(context, country_code);
+  if (response == DISCONNECTED) { return DISCONNECTED; }
+  if (response == TRUE)         { return BLACKLISTED; }
+
+  response = is_country_marked(context, country_code);
+  if (response == DISCONNECTED) { return DISCONNECTED; }
+  if (response == TRUE)         { return MARKED; }
+
+  return LIBREPSHEET_OK;
 }

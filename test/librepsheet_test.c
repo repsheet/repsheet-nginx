@@ -413,6 +413,20 @@ START_TEST(is_country_blacklisted_false_test)
 }
 END_TEST
 
+START_TEST(country_status_marked_test)
+{
+  redisCommand(context, "SADD repsheet:countries:marked KP");
+  ck_assert_int_eq(country_status(context, "KP"), MARKED);
+}
+END_TEST
+
+START_TEST(country_status_blacklisted_test)
+{
+  redisCommand(context, "SADD repsheet:countries:blacklisted KP");
+  ck_assert_int_eq(country_status(context, "KP"), BLACKLISTED);
+}
+END_TEST
+
 Suite *make_librepsheet_connection_suite(void) {
   Suite *suite = suite_create("librepsheet connection");
 
@@ -458,6 +472,9 @@ Suite *make_librepsheet_connection_suite(void) {
   tcase_add_test(tc_connection_operations, is_country_marked_false_test);
   tcase_add_test(tc_connection_operations, is_country_blacklisted_true_test);
   tcase_add_test(tc_connection_operations, is_country_blacklisted_false_test);
+
+  tcase_add_test(tc_connection_operations, country_status_marked_test);
+  tcase_add_test(tc_connection_operations, country_status_blacklisted_test);
 
   suite_add_tcase(suite, tc_connection_operations);
 
