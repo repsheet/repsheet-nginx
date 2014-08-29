@@ -1,6 +1,8 @@
 #include "hiredis/hiredis.h"
 #include "../src/repsheet.h"
 #include "test_suite.h"
+#include "assert.h"
+#include "check.h"
 
 redisContext *context;
 redisReply *reply;
@@ -57,48 +59,48 @@ END_TEST
 
 START_TEST(mark_actor_test)
 {
-  mark_actor(context, "1.1.1.1", IP);
-  mark_actor(context, "repsheet", USER);
+  mark_actor(context, "1.1.1.1", IP, "IP Mark Actor Test");
+  mark_actor(context, "repsheet", USER, "User Mark Actor Test");
 
-  reply = redisCommand(context, "GET 1.1.1.1:repsheet");
-  ck_assert_str_eq(reply->str, "true");
+  reply = redisCommand(context, "GET 1.1.1.1:repsheet:ip");
+  ck_assert_str_eq(reply->str, "IP Mark Actor Test");
 
-  reply = redisCommand(context, "SISMEMBER repsheet:users repsheet");
-  ck_assert_int_eq(reply->integer, 1);
+  reply = redisCommand(context, "GET repsheet:repsheet:users");
+  ck_assert_str_eq(reply->str, "User Mark Actor Test");
 }
 END_TEST
 
 START_TEST(blacklist_actor_test)
 {
-  blacklist_actor(context, "1.1.1.1", IP);
-  blacklist_actor(context, "repsheet", USER);
+  blacklist_actor(context, "1.1.1.1", IP, "IP Blacklist Actor Test");
+  blacklist_actor(context, "repsheet", USER, "Users Blacklist Actor Test");
 
-  reply = redisCommand(context, "GET 1.1.1.1:repsheet:blacklist");
-  ck_assert_str_eq(reply->str, "true");
+  reply = redisCommand(context, "GET 1.1.1.1:repsheet:ip:blacklist");
+  ck_assert_str_eq(reply->str, "IP Blacklist Actor Test");
 
-  reply = redisCommand(context, "SISMEMBER repsheet:users:blacklist repsheet");
-  ck_assert_int_eq(reply->integer, 1);
+  reply = redisCommand(context, "GET repsheet:repsheet:users:blacklist");
+  ck_assert_str_eq(reply->str, "Users Blacklist Actor Test");
 }
 END_TEST
 
 START_TEST(whitelist_actor_test)
 {
-  whitelist_actor(context, "1.1.1.1", IP);
-  whitelist_actor(context, "repsheet", USER);
+  whitelist_actor(context, "1.1.1.1", IP, "IP Whitelist Actor Test");
+  whitelist_actor(context, "repsheet", USER, "User Whitelist Actor Test");
 
-  reply = redisCommand(context, "GET 1.1.1.1:repsheet:whitelist");
-  ck_assert_str_eq(reply->str, "true");
+  reply = redisCommand(context, "GET 1.1.1.1:repsheet:ip:whitelist");
+  ck_assert_str_eq(reply->str, "IP Whitelist Actor Test");
 
-  reply = redisCommand(context, "SISMEMBER repsheet:users:whitelist repsheet");
-  ck_assert_int_eq(reply->integer, 1);
+  reply = redisCommand(context, "GET repsheet:repsheet:users:whitelist");
+  ck_assert_str_eq(reply->str, "User Whitelist Actor Test");
 }
 END_TEST
 
 START_TEST(expire_test)
 {
-  mark_actor(context, "1.1.1.1", IP);
-  expire(context, "1.1.1.1", "repsheet", 200);
-  reply = redisCommand(context, "TTL 1.1.1.1:repsheet");
+  mark_actor(context, "1.1.1.1", IP, "Expire Test");
+  expire(context, "1.1.1.1", "repsheet:ip", 200);
+  reply = redisCommand(context, "TTL 1.1.1.1:repsheet:ip");
 
   ck_assert_int_eq(reply->integer, 200);
 }
@@ -106,8 +108,11 @@ END_TEST
 
 START_TEST(is_ip_marked_test)
 {
-  mark_actor(context, "1.1.1.1", IP);
-  int response = is_ip_marked(context, "1.1.1.1");
+  char value[MAX_REASON_LENGTH];
+
+  mark_actor(context, "1.1.1.1", IP, "Is IP Marked Test");
+  int response = is_ip_marked(context, "1.1.1.1", value);
+  ck_assert_str_eq(value, "Is IP Marked Test");
 
   ck_assert_int_eq(response, TRUE);
 }
@@ -115,8 +120,11 @@ END_TEST
 
 START_TEST(is_user_marked_test)
 {
-  mark_actor(context, "repsheet", USER);
-  int response = is_user_marked(context, "repsheet");
+  char value[MAX_REASON_LENGTH];
+
+  mark_actor(context, "repsheet", USER, "Is User Marked Test");
+  int response = is_user_marked(context, "repsheet", value);
+  ck_assert_str_eq(value, "Is User Marked Test");
 
   ck_assert_int_eq(response, TRUE);
 }
@@ -124,8 +132,11 @@ END_TEST
 
 START_TEST(is_ip_blacklisted_test)
 {
-  blacklist_actor(context, "1.1.1.1", IP);
-  int response = is_ip_blacklisted(context, "1.1.1.1");
+  char value[MAX_REASON_LENGTH];
+
+  blacklist_actor(context, "1.1.1.1", IP, "Is IP Blacklisted Test");
+  int response = is_ip_blacklisted(context, "1.1.1.1", value);
+  ck_assert_str_eq(value, "Is IP Blacklisted Test");
 
   ck_assert_int_eq(response, TRUE);
 }
@@ -133,56 +144,73 @@ END_TEST
 
 START_TEST(is_user_blacklisted_test)
 {
-  blacklist_actor(context, "repsheet", USER);
-  int response = is_user_blacklisted(context, "repsheet");
+  char value[MAX_REASON_LENGTH];
 
+  blacklist_actor(context, "repsheet", USER, "Is User Blacklisted Test");
+  int response = is_user_blacklisted(context, "repsheet", value);
+
+  ck_assert_str_eq(value, "Is User Blacklisted Test");
   ck_assert_int_eq(response, TRUE);
 }
 END_TEST
 
 START_TEST(is_ip_whitelisted_test)
 {
-  whitelist_actor(context, "1.1.1.1", IP);
-  int response = is_ip_whitelisted(context, "1.1.1.1");
+  char value[MAX_REASON_LENGTH];
 
+  whitelist_actor(context, "1.1.1.1", IP, "Is IP Whitelisted Test");
+  int response = is_ip_whitelisted(context, "1.1.1.1", value);
+
+  ck_assert_str_eq(value, "Is IP Whitelisted Test");
   ck_assert_int_eq(response, TRUE);
 }
 END_TEST
 
 START_TEST(is_user_whitelisted_test)
 {
-  whitelist_actor(context, "repsheet", USER);
-  int response = is_user_whitelisted(context, "repsheet");
+  char value[MAX_REASON_LENGTH];
 
+  whitelist_actor(context, "repsheet", USER, "Is User Whitelisted Test");
+  int response = is_user_whitelisted(context, "repsheet", value);
+
+  ck_assert_str_eq(value, "Is User Whitelisted Test");
   ck_assert_int_eq(response, TRUE);
 }
 END_TEST
 
 START_TEST(actor_status_test)
 {
-  whitelist_actor(context, "1.1.1.1", IP);
-  whitelist_actor(context, "whitelist", USER);
-  blacklist_actor(context, "1.1.1.2", IP);
-  blacklist_actor(context, "blacklist", USER);
-  mark_actor(context, "1.1.1.3", IP);
-  mark_actor(context, "marked", USER);
+  char value[MAX_REASON_LENGTH];
 
-  ck_assert_int_eq(actor_status(context, "1.1.1.1", IP), WHITELISTED);
-  ck_assert_int_eq(actor_status(context, "1.1.1.2", IP), BLACKLISTED);
-  ck_assert_int_eq(actor_status(context, "1.1.1.3", IP), MARKED);
+  whitelist_actor(context, "1.1.1.1", IP, "IP Whitelist Actor Status");
+  whitelist_actor(context, "whitelist", USER, "User Whitelist Actor Status");
+  blacklist_actor(context, "1.1.1.2", IP, "IP Blacklist Actor Status");
+  blacklist_actor(context, "blacklist", USER, "User Blacklist Actor Status");
+  mark_actor(context, "1.1.1.3", IP, "IP Marked Actor Status");
+  mark_actor(context, "marked", USER, "User Marked Actor Status");
 
-  ck_assert_int_eq(actor_status(context, "whitelist", USER), WHITELISTED);
-  ck_assert_int_eq(actor_status(context, "blacklist", USER), BLACKLISTED);
-  ck_assert_int_eq(actor_status(context, "marked", USER), MARKED);
+  ck_assert_int_eq(actor_status(context, "1.1.1.1", IP, value), WHITELISTED);
+  ck_assert_str_eq(value, "IP Whitelist Actor Status");
+  ck_assert_int_eq(actor_status(context, "1.1.1.2", IP, value), BLACKLISTED);
+  ck_assert_str_eq(value, "IP Blacklist Actor Status");
+  ck_assert_int_eq(actor_status(context, "1.1.1.3", IP, value), MARKED);
+  ck_assert_str_eq(value, "IP Marked Actor Status");
 
-  ck_assert_int_eq(actor_status(context, "good", UNSUPPORTED), UNSUPPORTED);
+  ck_assert_int_eq(actor_status(context, "whitelist", USER, value), WHITELISTED);
+  ck_assert_str_eq(value, "User Whitelist Actor Status");
+  ck_assert_int_eq(actor_status(context, "blacklist", USER, value), BLACKLISTED);
+  ck_assert_str_eq(value, "User Blacklist Actor Status");
+  ck_assert_int_eq(actor_status(context, "marked", USER, value), MARKED);
+  ck_assert_str_eq(value, "User Marked Actor Status");
+
+  ck_assert_int_eq(actor_status(context, "good", UNSUPPORTED, value), UNSUPPORTED);
 }
 END_TEST
 
 START_TEST(is_historical_offender_test)
 {
-  redisCommand(context, "SADD repsheet:blacklist:history 1.1.1.1");
-  int response = is_historical_offender(context, "1.1.1.1");
+  redisCommand(context, "SADD repsheet:ip:blacklist:history 1.1.1.1");
+  int response = is_historical_offender(context, IP, "1.1.1.1");
 
   ck_assert_int_eq(response, TRUE);
 }
@@ -190,8 +218,8 @@ END_TEST
 
 START_TEST(is_not_historical_offender_test)
 {
-  redisCommand(context, "SADD repsheet:blacklist:history 1.1.1.2");
-  int response = is_historical_offender(context, "1.1.1.1");
+  redisCommand(context, "SADD repsheet:ip:blacklist:history 1.1.1.2");
+  int response = is_historical_offender(context, IP, "1.1.1.1");
 
   ck_assert_int_eq(response, FALSE);
 }
@@ -199,42 +227,39 @@ END_TEST
 
 START_TEST(blacklist_and_expire_test)
 {
-  blacklist_and_expire(context, "1.1.1.1", 200, "test");
+  blacklist_and_expire(context, IP, "1.1.1.1", 200, "IP Blacklist And Expire Test");
 
-  reply = redisCommand(context, "TTL 1.1.1.1:repsheet:blacklist");
+  reply = redisCommand(context, "TTL 1.1.1.1:repsheet:ip:blacklist");
   ck_assert_int_eq(reply->integer, 200);
 
-  reply = redisCommand(context, "GET 1.1.1.1:repsheet:blacklist");
-  ck_assert_str_eq(reply->str, "true");
+  reply = redisCommand(context, "GET 1.1.1.1:repsheet:ip:blacklist");
+  ck_assert_str_eq(reply->str, "IP Blacklist And Expire Test");
 
-  reply = redisCommand(context, "GET 1.1.1.1:repsheet:blacklist:reason");
-  ck_assert_str_eq(reply->str, "test");
-
-  reply = redisCommand(context, "SISMEMBER repsheet:blacklist:history 1.1.1.1");
+  reply = redisCommand(context, "SISMEMBER repsheet:ip:blacklist:history 1.1.1.1");
   ck_assert_int_eq(reply->integer, 1);
 }
 END_TEST
 
 START_TEST(blacklist_reason_ip_found_test)
 {
-  blacklist_and_expire(context, "1.1.1.1", 200, "test");
-  int reason_response;
   char value[MAX_REASON_LENGTH];
-  reason_response = blacklist_reason(context, "1.1.1.1", value);
+  int response;
 
-  ck_assert_int_eq(reason_response, LIBREPSHEET_OK);
-  ck_assert_str_eq(value, "test");
+  blacklist_and_expire(context, IP, "1.1.1.1", 200, "Blacklist Reason IP Found Test");
+  response = is_ip_blacklisted(context, "1.1.1.1", value);
+  ck_assert_int_eq(response, TRUE);
+  ck_assert_str_eq(value, "Blacklist Reason IP Found Test");
 }
 END_TEST
 
 START_TEST(blacklist_reason_ip_not_found_test)
 {
-  blacklist_and_expire(context, "1.1.1.1", 200, "test");
-  int reason_response;
   char value[MAX_REASON_LENGTH];
-  reason_response = blacklist_reason(context, "1.1.1.2", value);
+  int response;
 
-  ck_assert_int_eq(reason_response, NIL);
+  blacklist_and_expire(context, IP, "1.1.1.1", 200, "Blacklist Reason IP Not Found Test");
+  response = is_ip_blacklisted(context, "1.1.1.2", value);
+  ck_assert_int_eq(response, FALSE);
 }
 END_TEST
 
