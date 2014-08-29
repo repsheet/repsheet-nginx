@@ -121,9 +121,13 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     connection_status = reset_connection(r, main_conf);
     if (connection_status == NGX_DECLINED) {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Unable to establish a connection to Redis, bypassing Repsheet operations");
+      if (main_conf->redis.connection != NULL && main_conf->redis.connection->errstr != NULL)
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Redis error: %s", main_conf->redis.connection->errstr);
       return NGX_DECLINED;
     }
   }
+
+  char reason_user[MAX_REASON_LENGTH];
 
   int user_status = LIBREPSHEET_OK;
   ngx_int_t location;
@@ -133,11 +137,34 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "Could not locate %V cookie", &main_conf->cookie);
   } else {
     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "Got value for %V cookie: %V", &main_conf->cookie, &cookie_value);
-    user_status = actor_status(main_conf->redis.connection, (const char *)cookie_value.data, USER);
+    user_status = actor_status(main_conf->redis.connection, (const char *)cookie_value.data, USER, reason_user);
+  }
+
+  if (user_status == DISCONNECTED) {
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "The Redis request failed, bypassing further operations");
+    if (main_conf->redis.connection != NULL && main_conf->redis.connection->errstr != NULL)
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Redis error: %s", main_conf->redis.connection->errstr);
+    return NGX_DECLINED;
+  } else if (user_status == WHITELISTED) {
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "User %V is whitelisted by repsheet. Reason: %s", &cookie_value, reason_user);
+    return NGX_DECLINED;
+  } else if (user_status == BLACKLISTED) {
+    if (reason_user != NULL) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "User %V was blocked by repsheet. Reason: %s", &cookie_value, reason_user);
+    } else {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "User %V was blocked by repsheet. No reason provided", &cookie_value);
+    }
+    return NGX_HTTP_FORBIDDEN;
+  } else if (user_status == MARKED) {
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "User %s was found on repsheet. No action taken", &cookie_value);
+    set_repsheet_header(r);
   }
 
   int address_code;
+  int ip_status = LIBREPSHEET_OK;
   char address[INET_ADDRSTRLEN];
+  char reason_ip[MAX_REASON_LENGTH];
+
   address_code = derive_actor_address(r, address);
 
   if (address_code == NGX_DECLINED) {
@@ -145,48 +172,25 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     return NGX_HTTP_FORBIDDEN;
   }
 
-  int ip_status = LIBREPSHEET_OK;
-  ip_status = actor_status(main_conf->redis.connection, address, IP);
+  ip_status = actor_status(main_conf->redis.connection, address, IP, reason_ip);
 
-  if (ip_status == DISCONNECTED || user_status == DISCONNECTED) {
+  if (ip_status == DISCONNECTED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "The Redis request failed, bypassing further operations");
+    if (main_conf->redis.connection != NULL && main_conf->redis.connection->errstr != NULL)
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Redis error: %s", main_conf->redis.connection->errstr);
     return NGX_DECLINED;
-  }
-
-  int reason_response;
-  char reason_code[MAX_REASON_LENGTH];
-
-  if (ip_status == WHITELISTED) {
-    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "IP %s is whitelisted by repsheet", address);
+  } else if (ip_status == WHITELISTED) {
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "IP %s is whitelisted by repsheet. Reason: %s", address, reason_ip);
     return NGX_DECLINED;
-  } else if (user_status == WHITELISTED) {
-    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "User %V is whitelisted by repsheet", &cookie_value);
-    return NGX_DECLINED;
-  }
-
-  if (ip_status == BLACKLISTED) {
-    reason_response = blacklist_reason(main_conf->redis.connection, address, reason_code);
-    if (reason_response == LIBREPSHEET_OK) {
-      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "IP %s was blocked by repsheet. Reason: %s", address, reason_code);
+  } else if (ip_status == BLACKLISTED) {
+    if (reason_ip != NULL) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "IP %s was blocked by repsheet. Reason: %s", address, reason_ip);
     } else {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "IP %s was blocked by repsheet. No reason provided", address);
     }
     return NGX_HTTP_FORBIDDEN;
-  } else if (user_status == BLACKLISTED) {
-    reason_response = blacklist_reason(main_conf->redis.connection, (const char*)cookie_value.data, reason_code);
-    if (reason_response == LIBREPSHEET_OK) {
-      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "User %V was blocked by repsheet. Reason: %s", &cookie_value, reason_code);
-    } else {
-      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "User %V was blocked by repsheet. No reason provided", &cookie_value);
-    }
-    return NGX_HTTP_FORBIDDEN;
-  }
-
-  if (ip_status == MARKED) {
+  } else if (ip_status == MARKED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "IP %s was found on repsheet. No action taken", address);
-    set_repsheet_header(r);
-  } else if (user_status == MARKED) {
-    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "User %s was found on repsheet. No action taken", &cookie_value);
     set_repsheet_header(r);
   }
 
