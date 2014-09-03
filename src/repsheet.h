@@ -30,23 +30,22 @@ int check_connection(redisContext *context);
 
 int increment_rule_count(redisContext *context, const char *actor, char *rule);
 
-int mark_actor(redisContext *context, const char *actor, int type);
-int blacklist_actor(redisContext *context, const char *actor, int type);
-int whitelist_actor(redisContext *context, const char *actor, int type);
+int mark_actor(redisContext *context, const char *actor, int type, const char *reason);
+int blacklist_actor(redisContext *context, const char *actor, int type, const char *reason);
+int whitelist_actor(redisContext *context, const char *actor, int type, const char *reason);
 
-int is_ip_marked(redisContext *context, const char *actor);
-int is_ip_blacklisted(redisContext *context, const char *actor);
-int is_ip_whitelisted(redisContext *context, const char *actor);
-int is_user_marked(redisContext *context, const char *actor);
-int is_user_blacklisted(redisContext *context, const char *actor);
-int is_user_whitelisted(redisContext *context, const char *actor);
-int actor_status(redisContext *context, const char *actor, int type);
+int is_ip_marked(redisContext *context, const char *actor, char *reason);
+int is_ip_blacklisted(redisContext *context, const char *actor, char *reason);
+int is_ip_whitelisted(redisContext *context, const char *actor, char *reason);
+int is_user_marked(redisContext *context, const char *actor, char *reason);
+int is_user_blacklisted(redisContext *context, const char *actor, char *reason);
+int is_user_whitelisted(redisContext *context, const char *actor, char *reason);
+int actor_status(redisContext *context, const char *actor, int type, char *reason);
 
-int is_historical_offender(redisContext *context, const char *actor);
+int is_historical_offender(redisContext *context, int type, const char *actor);
 
 int expire(redisContext *context, const char *actor, char *label, int expiry);
-int blacklist_and_expire(redisContext *context, const char *actor, int expiry, char *reason);
-int blacklist_reason(redisContext *context, const char *actor, char *value);
+int blacklist_and_expire(redisContext *context, int type, const char *actor, int expiry, char *reason);
 
 int record(redisContext *context, char *timestamp, const char *user_agent,
             const char *http_method, char *uri, char *arguments, int redis_max_length,
