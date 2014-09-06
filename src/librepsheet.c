@@ -218,6 +218,13 @@ int whitelist_actor(redisContext *context, const char *actor, int type, const ch
   }
 }
 
+void _populate_reason(redisReply *reply, char *reason)
+{
+  size_t s = reply->len > MAX_REASON_LENGTH ? MAX_REASON_LENGTH : reply->len;
+  strncpy(reason, reply->str, s);
+  reason[s] = '\0';
+}
+
 /**
  * Checks to see if an ip is on the Repsheet
  *
@@ -234,9 +241,7 @@ int is_ip_marked(redisContext *context, const char *actor, char *reason)
   reply = redisCommand(context, "GET %s:repsheet:ip", actor);
   if (reply) {
     if (reply->type == REDIS_REPLY_STRING) {
-      size_t s = reply->len > MAX_REASON_LENGTH ? MAX_REASON_LENGTH : reply->len;
-      strncpy(reason, reply->str, s);
-      reason[s] = '\0';
+      _populate_reason(reply, reason);
       freeReplyObject(reply);
       return TRUE;
     } else {
@@ -264,9 +269,7 @@ int is_ip_blacklisted(redisContext *context, const char *actor, char *reason)
   reply = redisCommand(context, "GET %s:repsheet:ip:blacklist", actor);
   if (reply) {
     if (reply->type == REDIS_REPLY_STRING) {
-      size_t s = reply->len > MAX_REASON_LENGTH ? MAX_REASON_LENGTH : reply->len;
-      strncpy(reason, reply->str, s);
-      reason[s] = '\0';
+      _populate_reason(reply, reason);
       freeReplyObject(reply);
       return TRUE;
     } else {
@@ -294,9 +297,7 @@ int is_ip_whitelisted(redisContext *context, const char *actor, char *reason)
   reply = redisCommand(context, "GET %s:repsheet:ip:whitelist", actor);
   if (reply) {
     if (reply->type == REDIS_REPLY_STRING) {
-      size_t s = reply->len > MAX_REASON_LENGTH ? MAX_REASON_LENGTH : reply->len;
-      strncpy(reason, reply->str, s);
-      reason[s] = '\0';
+      _populate_reason(reply, reason);
       freeReplyObject(reply);
       return TRUE;
     } else {
@@ -324,9 +325,7 @@ int is_user_marked(redisContext *context, const char *actor, char *reason)
   reply = redisCommand(context, "GET %s:repsheet:users", actor);
   if (reply) {
     if (reply->type == REDIS_REPLY_STRING) {
-      size_t s = reply->len > MAX_REASON_LENGTH ? MAX_REASON_LENGTH : reply->len;
-      strncpy(reason, reply->str, s);
-      reason[s] = '\0';
+      _populate_reason(reply, reason);
       freeReplyObject(reply);
       return TRUE;
     } else {
@@ -354,9 +353,7 @@ int is_user_blacklisted(redisContext *context, const char *actor, char *reason)
   reply = redisCommand(context, "GET %s:repsheet:users:blacklist", actor);
   if (reply) {
     if (reply->type == REDIS_REPLY_STRING) {
-      size_t s = reply->len > MAX_REASON_LENGTH ? MAX_REASON_LENGTH : reply->len;
-      strncpy(reason, reply->str, s);
-      reason[s] = '\0';
+      _populate_reason(reply, reason);
       freeReplyObject(reply);
       return TRUE;
     } else {
@@ -384,9 +381,7 @@ int is_user_whitelisted(redisContext *context, const char *actor, char *reason)
   reply = redisCommand(context, "GET %s:repsheet:users:whitelist", actor);
   if (reply) {
     if (reply->type == REDIS_REPLY_STRING) {
-      size_t s = reply->len > MAX_REASON_LENGTH ? MAX_REASON_LENGTH : reply->len;
-      strncpy(reason, reply->str, s);
-      reason[s] = '\0';
+      _populate_reason(reply, reason);
       freeReplyObject(reply);
       return TRUE;
     } else {
@@ -408,7 +403,6 @@ int is_user_whitelisted(redisContext *context, const char *actor, char *reason)
  *
  * @returns an integer status
  */
-/* HERE - entry point */
 int actor_status(redisContext *context, const char *actor, int type, char *reason)
 {
   int response;
