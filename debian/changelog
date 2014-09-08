@@ -1,3 +1,9 @@
+librepsheet (3.0.0) unstable-security; urgency=low
+
+  * Performance improvements, breaking API changes
+
+ -- Aaron Bedra <abedra@debian64>  Mon, 08 Sep 2014 10:13:49 -0500
+
 librepsheet (2.2.0) unstable-security; urgency=low
 
   * Renamed OK to LIBREPSHEET_OK
