@@ -2,6 +2,8 @@
 #include <pcre.h>
 
 #include "hiredis/hiredis.h"
+
+#include "config.h"
 #include "repsheet.h"
 
 /**
@@ -411,30 +413,44 @@ int actor_status(redisContext *context, const char *actor, int type, char *reaso
 
   switch(type) {
   case IP:
+#if WHITELIST_ENABLED
     response = is_ip_whitelisted(context, actor, reason);
     if (response == DISCONNECTED) { return DISCONNECTED; }
     if (response == TRUE)         { return WHITELISTED; }
+#endif
 
+#if BLACKLIST_ENABLED
     response = is_ip_blacklisted(context, actor, reason);
     if (response == DISCONNECTED) { return DISCONNECTED; }
     if (response == TRUE)         { return BLACKLISTED; }
+#endif
 
+#if MARKED_ENABLED
     response = is_ip_marked(context, actor, reason);
     if (response == DISCONNECTED) { return DISCONNECTED; }
     if (response == TRUE)         { return MARKED; }
+#endif
+
     break;
   case USER:
+#if WHITELIST_ENABLED
     response = is_user_whitelisted(context, actor, reason);
     if (response == DISCONNECTED) { return DISCONNECTED; }
     if (response == TRUE)         { return WHITELISTED; }
+#endif
 
+#if BLACKLIST_ENABLED
     response = is_user_blacklisted(context, actor, reason);
     if (response == DISCONNECTED) { return DISCONNECTED; }
     if (response == TRUE)         { return BLACKLISTED; }
+#endif
 
+#if MARKED_ENABLED
     response = is_user_marked(context, actor, reason);
     if (response == DISCONNECTED) { return DISCONNECTED; }
     if (response == TRUE)         { return MARKED; }
+#endif
+
     break;
   }
 
