@@ -889,17 +889,23 @@ int country_status(redisContext *context, const char *country_code)
 {
   int response;
 
+#if WHITELIST_ENABLED
   response = is_country_whitelisted(context, country_code);
   if (response == DISCONNECTED) { return DISCONNECTED; }
   if (response == TRUE)         { return WHITELISTED; }
+#endif
 
+#if BLACKLIST_ENABLED
   response = is_country_blacklisted(context, country_code);
   if (response == DISCONNECTED) { return DISCONNECTED; }
   if (response == TRUE)         { return BLACKLISTED; }
+#endif
 
+#if MARKED_ENABLED
   response = is_country_marked(context, country_code);
   if (response == DISCONNECTED) { return DISCONNECTED; }
   if (response == TRUE)         { return MARKED; }
+#endif
 
   return LIBREPSHEET_OK;
 }
