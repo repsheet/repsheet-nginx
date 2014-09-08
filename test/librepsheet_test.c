@@ -118,6 +118,16 @@ START_TEST(is_ip_marked_test)
 }
 END_TEST
 
+START_TEST(is_ip_marked_false_test)
+{
+  char value[MAX_REASON_LENGTH];
+
+
+  int response = is_ip_marked(context, "1.1.1.1", value);
+  ck_assert_int_eq(response, FALSE);
+}
+END_TEST
+
 START_TEST(is_user_marked_test)
 {
   char value[MAX_REASON_LENGTH];
@@ -127,6 +137,15 @@ START_TEST(is_user_marked_test)
   ck_assert_str_eq(value, "Is User Marked Test");
 
   ck_assert_int_eq(response, TRUE);
+}
+END_TEST
+
+START_TEST(is_user_marked_false_test)
+{
+  char value[MAX_REASON_LENGTH];
+
+  int response = is_user_marked(context, "repsheet", value);
+  ck_assert_int_eq(response, FALSE);
 }
 END_TEST
 
@@ -207,7 +226,7 @@ START_TEST(actor_status_test)
 }
 END_TEST
 
-START_TEST(is_historical_offender_test)
+START_TEST(is_historical_offender_ip_test)
 {
   redisCommand(context, "SADD repsheet:ip:blacklist:history 1.1.1.1");
   int response = is_historical_offender(context, IP, "1.1.1.1");
@@ -216,7 +235,7 @@ START_TEST(is_historical_offender_test)
 }
 END_TEST
 
-START_TEST(is_not_historical_offender_test)
+START_TEST(is_not_historical_offender_ip_test)
 {
   redisCommand(context, "SADD repsheet:ip:blacklist:history 1.1.1.2");
   int response = is_historical_offender(context, IP, "1.1.1.1");
@@ -225,7 +244,24 @@ START_TEST(is_not_historical_offender_test)
 }
 END_TEST
 
-START_TEST(blacklist_and_expire_test)
+START_TEST(is_historical_offender_user_test)
+{
+  redisCommand(context, "SADD repsheet:user:blacklist:history test");
+  int response = is_historical_offender(context, USER, "test");
+
+  ck_assert_int_eq(response, TRUE);
+}
+END_TEST
+
+START_TEST(is_not_historical_offender_user_test)
+{
+  int response = is_historical_offender(context, USER, "test");
+
+  ck_assert_int_eq(response, FALSE);
+}
+END_TEST
+
+START_TEST(blacklist_and_expire_ip_test)
 {
   blacklist_and_expire(context, IP, "1.1.1.1", 200, "IP Blacklist And Expire Test");
 
@@ -236,6 +272,21 @@ START_TEST(blacklist_and_expire_test)
   ck_assert_str_eq(reply->str, "IP Blacklist And Expire Test");
 
   reply = redisCommand(context, "SISMEMBER repsheet:ip:blacklist:history 1.1.1.1");
+  ck_assert_int_eq(reply->integer, 1);
+}
+END_TEST
+
+START_TEST(blacklist_and_expire_user_test)
+{
+  blacklist_and_expire(context, USER, "test", 200, "IP Blacklist And Expire Test");
+
+  reply = redisCommand(context, "TTL test:repsheet:users:blacklist");
+  ck_assert_int_eq(reply->integer, 200);
+
+  reply = redisCommand(context, "GET test:repsheet:users:blacklist");
+  ck_assert_str_eq(reply->str, "IP Blacklist And Expire Test");
+
+  reply = redisCommand(context, "SISMEMBER repsheet:users:blacklist:history test");
   ck_assert_int_eq(reply->integer, 1);
 }
 END_TEST
@@ -452,6 +503,12 @@ START_TEST(country_status_blacklisted_test)
 }
 END_TEST
 
+START_TEST(country_status_good_test)
+{
+  ck_assert_int_eq(country_status(context, "US"), LIBREPSHEET_OK);
+}
+END_TEST
+
 Suite *make_librepsheet_connection_suite(void) {
   Suite *suite = suite_create("librepsheet connection");
 
@@ -471,17 +528,22 @@ Suite *make_librepsheet_connection_suite(void) {
   tcase_add_test(tc_connection_operations, whitelist_actor_test);
 
   tcase_add_test(tc_connection_operations, is_ip_marked_test);
+  tcase_add_test(tc_connection_operations, is_ip_marked_false_test);
   tcase_add_test(tc_connection_operations, is_user_marked_test);
+  tcase_add_test(tc_connection_operations, is_user_marked_false_test);
   tcase_add_test(tc_connection_operations, is_ip_blacklisted_test);
   tcase_add_test(tc_connection_operations, is_user_blacklisted_test);
   tcase_add_test(tc_connection_operations, is_ip_whitelisted_test);
   tcase_add_test(tc_connection_operations, is_user_whitelisted_test);
   tcase_add_test(tc_connection_operations, actor_status_test);
-  tcase_add_test(tc_connection_operations, is_historical_offender_test);
-  tcase_add_test(tc_connection_operations, is_not_historical_offender_test);
+  tcase_add_test(tc_connection_operations, is_historical_offender_ip_test);
+  tcase_add_test(tc_connection_operations, is_not_historical_offender_ip_test);
+  tcase_add_test(tc_connection_operations, is_historical_offender_user_test);
+  tcase_add_test(tc_connection_operations, is_not_historical_offender_user_test);
 
   tcase_add_test(tc_connection_operations, expire_test);
-  tcase_add_test(tc_connection_operations, blacklist_and_expire_test);
+  tcase_add_test(tc_connection_operations, blacklist_and_expire_ip_test);
+  tcase_add_test(tc_connection_operations, blacklist_and_expire_user_test);
   tcase_add_test(tc_connection_operations, blacklist_reason_ip_found_test);
   tcase_add_test(tc_connection_operations, blacklist_reason_ip_not_found_test);
 
@@ -500,6 +562,7 @@ Suite *make_librepsheet_connection_suite(void) {
 
   tcase_add_test(tc_connection_operations, country_status_marked_test);
   tcase_add_test(tc_connection_operations, country_status_blacklisted_test);
+  tcase_add_test(tc_connection_operations, country_status_good_test);
 
   suite_add_tcase(suite, tc_connection_operations);
 

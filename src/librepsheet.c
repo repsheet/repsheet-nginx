@@ -852,7 +852,6 @@ int is_country_blacklisted(redisContext *context, const char *country_code)
   }
 }
 
-
 /**
  * Top level API for determining the status of a country
  *
