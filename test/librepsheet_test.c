@@ -478,7 +478,7 @@ END_TEST
 
 START_TEST(is_country_blacklisted_true_test)
 {
-  redisCommand(context, "SADD repsheet:countries:blacklisted KP");
+  redisCommand(context, "SADD repsheet:countries:blacklist KP");
   ck_assert_int_eq(is_country_blacklisted(context, "KP"), TRUE);
 }
 END_TEST
@@ -486,6 +486,19 @@ END_TEST
 START_TEST(is_country_blacklisted_false_test)
 {
   ck_assert_int_eq(is_country_blacklisted(context, "KP"), FALSE);
+}
+END_TEST
+
+START_TEST(is_country_whitelisted_true_test)
+{
+  redisCommand(context, "SADD repsheet:countries:whitelist AU");
+  ck_assert_int_eq(is_country_whitelisted(context, "AU"), TRUE);
+}
+END_TEST
+
+START_TEST(is_country_whitelisted_false_test)
+{
+  ck_assert_int_eq(is_country_whitelisted(context, "KP"), FALSE);
 }
 END_TEST
 
@@ -498,8 +511,15 @@ END_TEST
 
 START_TEST(country_status_blacklisted_test)
 {
-  redisCommand(context, "SADD repsheet:countries:blacklisted KP");
+  redisCommand(context, "SADD repsheet:countries:blacklist KP");
   ck_assert_int_eq(country_status(context, "KP"), BLACKLISTED);
+}
+END_TEST
+
+START_TEST(country_status_whitelisted_test)
+{
+  redisCommand(context, "SADD repsheet:countries:whitelist AU");
+  ck_assert_int_eq(country_status(context, "AU"), WHITELISTED);
 }
 END_TEST
 
@@ -559,9 +579,12 @@ Suite *make_librepsheet_connection_suite(void) {
   tcase_add_test(tc_connection_operations, is_country_marked_false_test);
   tcase_add_test(tc_connection_operations, is_country_blacklisted_true_test);
   tcase_add_test(tc_connection_operations, is_country_blacklisted_false_test);
+  tcase_add_test(tc_connection_operations, is_country_whitelisted_true_test);
+  tcase_add_test(tc_connection_operations, is_country_whitelisted_false_test);
 
   tcase_add_test(tc_connection_operations, country_status_marked_test);
   tcase_add_test(tc_connection_operations, country_status_blacklisted_test);
+  tcase_add_test(tc_connection_operations, country_status_whitelisted_test);
   tcase_add_test(tc_connection_operations, country_status_good_test);
 
   suite_add_tcase(suite, tc_connection_operations);

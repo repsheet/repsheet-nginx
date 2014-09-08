@@ -838,7 +838,32 @@ int is_country_marked(redisContext *context, const char *country_code)
 int is_country_blacklisted(redisContext *context, const char *country_code)
 {
   redisReply *reply;
-  reply = redisCommand(context, "SISMEMBER repsheet:countries:blacklisted %s", country_code);
+  reply = redisCommand(context, "SISMEMBER repsheet:countries:blacklist %s", country_code);
+  if (reply) {
+    if (reply->type == REDIS_REPLY_INTEGER) {
+      freeReplyObject(reply);
+      return reply->integer;
+    } else {
+      freeReplyObject(reply);
+      return NIL;
+    }
+  } else {
+    return DISCONNECTED;
+  }
+}
+
+/**
+ * Looks up the country to see if it is whitelisted.
+ *
+ * @param context the Redis connection
+ * @param country_code the 2 digit ISO country code
+ *
+ * @returns an integer response
+ */
+int is_country_whitelisted(redisContext *context, const char *country_code)
+{
+  redisReply *reply;
+  reply = redisCommand(context, "SISMEMBER repsheet:countries:whitelist %s", country_code);
   if (reply) {
     if (reply->type == REDIS_REPLY_INTEGER) {
       freeReplyObject(reply);
@@ -863,6 +888,10 @@ int is_country_blacklisted(redisContext *context, const char *country_code)
 int country_status(redisContext *context, const char *country_code)
 {
   int response;
+
+  response = is_country_whitelisted(context, country_code);
+  if (response == DISCONNECTED) { return DISCONNECTED; }
+  if (response == TRUE)         { return WHITELISTED; }
 
   response = is_country_blacklisted(context, country_code);
   if (response == DISCONNECTED) { return DISCONNECTED; }
