@@ -105,33 +105,13 @@ set_repsheet_header(ngx_http_request_t *r)
 
 
 static ngx_int_t
-ngx_http_repsheet_handler(ngx_http_request_t *r)
+lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
 {
-  repsheet_main_conf_t *main_conf = ngx_http_get_module_main_conf(r, ngx_http_repsheet_module);
-
-  if (!main_conf->enabled || r->main->internal) {
-    return NGX_DECLINED;
-  }
-
-  r->main->internal = 1;
-
-  int connection_status = check_connection(main_conf->redis.connection);
-  if (connection_status == DISCONNECTED) {
-    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "No Redis connection found, creating a new connection");
-    connection_status = reset_connection(r, main_conf);
-    if (connection_status == NGX_DECLINED) {
-      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Unable to establish a connection to Redis, bypassing Repsheet operations");
-      if (main_conf->redis.connection != NULL && main_conf->redis.connection->errstr != NULL)
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Redis error: %s", main_conf->redis.connection->errstr);
-      return NGX_DECLINED;
-    }
-  }
-
+  int user_status = NGX_DECLINED;
   char reason_user[MAX_REASON_LENGTH];
-
-  int user_status = LIBREPSHEET_OK;
   ngx_int_t location;
   ngx_str_t cookie_value;
+
   location = ngx_http_parse_multi_header_lines(&r->headers_in.cookies, &main_conf->cookie, &cookie_value);
   if (location == NGX_DECLINED) {
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "Could not locate %V cookie", &main_conf->cookie);
@@ -142,8 +122,6 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
 
   if (user_status == DISCONNECTED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "The Redis request failed, bypassing further operations");
-    if (main_conf->redis.connection != NULL && main_conf->redis.connection->errstr != NULL)
-      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Redis error: %s", main_conf->redis.connection->errstr);
     return NGX_DECLINED;
   } else if (user_status == WHITELISTED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "User %V is whitelisted by repsheet. Reason: %s", &cookie_value, reason_user);
@@ -160,6 +138,12 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     set_repsheet_header(r);
   }
 
+  return NGX_DECLINED;
+}
+
+static ngx_int_t
+lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
+{
   int address_code;
   int ip_status = LIBREPSHEET_OK;
   char address[INET_ADDRSTRLEN];
@@ -176,8 +160,6 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
 
   if (ip_status == DISCONNECTED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "The Redis request failed, bypassing further operations");
-    if (main_conf->redis.connection != NULL && main_conf->redis.connection->errstr != NULL)
-      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Redis error: %s", main_conf->redis.connection->errstr);
     return NGX_DECLINED;
   } else if (ip_status == WHITELISTED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "IP %s is whitelisted by repsheet. Reason: %s", address, reason_ip);
@@ -192,6 +174,40 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
   } else if (ip_status == MARKED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "IP %s was found on repsheet. No action taken", address);
     set_repsheet_header(r);
+  }
+
+  return NGX_DECLINED;
+}
+
+static ngx_int_t
+ngx_http_repsheet_handler(ngx_http_request_t *r)
+{
+  repsheet_main_conf_t *main_conf = ngx_http_get_module_main_conf(r, ngx_http_repsheet_module);
+
+  if (!main_conf->enabled || r->main->internal) {
+    return NGX_DECLINED;
+  }
+
+  r->main->internal = 1;
+
+  int connection_status = check_connection(main_conf->redis.connection);
+  if (connection_status == DISCONNECTED) {
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "No Redis connection found, creating a new connection");
+    connection_status = reset_connection(r, main_conf);
+    if (connection_status == NGX_DECLINED) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Unable to establish a connection to Redis, bypassing Repsheet operations");
+      return NGX_DECLINED;
+    }
+  }
+
+  int user_status = lookup_user(r, main_conf);
+  if (user_status != NGX_DECLINED) {
+    return user_status;
+  }
+
+  int ip_status = lookup_ip(r, main_conf);
+  if (ip_status != NGX_DECLINED) {
+    return ip_status;
   }
 
   return NGX_DECLINED;
