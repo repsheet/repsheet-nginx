@@ -1,15 +1,9 @@
 #!/bin/bash
 
-source script/nginx.sh
-
 set -o nounset
 set -o errexit
 
-BLUE="\033[0;34m"
-GREEN="\033[0;32m"
-YELLOW="\033[1;33m"
-RED="\033[0;31m"
-RESET="\033[0;m"
+NGINX_VERSION=1.4.7
 
 DIR=$(pwd)
 BUILDDIR=$DIR/build
@@ -30,11 +24,52 @@ clean () {
     rm -rf build vendor
 }
 
+install_nginx () {
+    if [ ! -d "vendor/nginx-$NGINX_VERSION" ]; then
+        pushd vendor > /dev/null 2>&1
+        curl -s -L -O "http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz"
+        tar xzf "nginx-$NGINX_VERSION.tar.gz"
+        pushd "nginx-$NGINX_VERSION" > /dev/null 2>&1
+        ./configure                           \
+            --with-debug                      \
+            --prefix=$(pwd)/../../build/nginx \
+            --conf-path=conf/nginx.conf       \
+            --error-log-path=logs/error.log   \
+            --http-log-path=logs/access.log   \
+            --add-module=../../
+        make
+        make install
+        popd > /dev/null 2>&1
+        popd > /dev/null 2>&1
+        ln -sf $(pwd)/nginx.conf $(pwd)/build/nginx/conf/nginx.conf
+    else
+        printf "NGINX $NGINX_VERSION is already installed\n"
+    fi
+}
+
+compile () {
+    pushd "vendor" > /dev/null 2>&1
+    pushd "nginx-$NGINX_VERSION" > /dev/null 2>&1
+    CFLAGS="-g -O0 -Wall -Werror" ./configure \
+        --with-debug                          \
+        --prefix=$(pwd)/../../build/nginx     \
+        --conf-path=conf/nginx.conf           \
+        --error-log-path=logs/error.log       \
+        --http-log-path=logs/access.log       \
+        --add-module=../../
+    make
+    make install
+    popd
+    popd
+}
+
 if [[ "$#" -eq 1 ]]; then
     if [[ "$1" == "clean" ]]; then
-	clean
+        clean
+    elif [[ "$1" == "compile" ]]; then
+	compile
     else
-	echo "clean is the only option"
+        echo "The options are clean or compile"
     fi
 else
     setup_local_directories

@@ -17,15 +17,14 @@ namespace :nginx do
   end
 
   task :compile do
-    sh "script/nginx_compile"
+    sh "script/bootstrap compile"
   end
 end
 
 namespace :repsheet do
   task :bootstrap do
     unless Dir.exists?("build") and Dir.exists?("vendor")
-      puts "Run script/bootstrap to setup local development environment"
-      exit(1)
+      sh "script/bootstrap"
     end
   end
 end
