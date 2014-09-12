@@ -19,6 +19,8 @@ typedef struct {
 typedef struct {
   repsheet_redis_t redis;
   ngx_flag_t enabled;
+  ngx_flag_t user_lookup;
+  ngx_flag_t ip_lookup;
   ngx_flag_t record;
   ngx_flag_t proxy_headers;
   ngx_str_t cookie;
@@ -200,14 +202,18 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     }
   }
 
-  int user_status = lookup_user(r, main_conf);
-  if (user_status != NGX_DECLINED) {
-    return user_status;
+  if (main_conf->user_lookup) {
+    int user_status = lookup_user(r, main_conf);
+    if (user_status != NGX_DECLINED) {
+      return user_status;
+    }
   }
 
-  int ip_status = lookup_ip(r, main_conf);
-  if (ip_status != NGX_DECLINED) {
-    return ip_status;
+  if (main_conf->ip_lookup) {
+    int ip_status = lookup_ip(r, main_conf);
+    if (ip_status != NGX_DECLINED) {
+      return ip_status;
+    }
   }
 
   return NGX_DECLINED;
@@ -240,6 +246,22 @@ static ngx_command_t ngx_http_repsheet_commands[] = {
     ngx_conf_set_flag_slot,
     NGX_HTTP_MAIN_CONF_OFFSET,
     offsetof(repsheet_main_conf_t, enabled),
+    NULL
+  },
+  {
+    ngx_string("repsheet_user_lookup"),
+    NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
+    ngx_conf_set_flag_slot,
+    NGX_HTTP_MAIN_CONF_OFFSET,
+    offsetof(repsheet_main_conf_t, user_lookup),
+    NULL
+  },
+  {
+    ngx_string("repsheet_ip_lookup"),
+    NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
+    ngx_conf_set_flag_slot,
+    NGX_HTTP_MAIN_CONF_OFFSET,
+    offsetof(repsheet_main_conf_t, ip_lookup),
     NULL
   },
   {
@@ -304,8 +326,12 @@ ngx_http_repsheet_create_main_conf(ngx_conf_t *cf)
   conf->redis.connection = NULL;
 
   conf->enabled = NGX_CONF_UNSET;
+  conf->ip_lookup = NGX_CONF_UNSET;
+  conf->user_lookup = NGX_CONF_UNSET;
+
   conf->record = NGX_CONF_UNSET;
   conf->proxy_headers = NGX_CONF_UNSET;
+
 
   return conf;
 }
