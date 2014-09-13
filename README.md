@@ -37,11 +37,15 @@ directives. The following list explains what each directive is and
 what is does. At the moment, the Repsheet directives all live under
 the main configuration section of `nginx.conf`.
 
+* `repsheet <on|off>` - Determines if Repsheet will do any processing
+* `repsheet_ip_lookup <on|off>` - Determines if Repsheet will lookup actors by IP address
+* `repsheet_user_lookup <on|off>` - Determines if Repsheet will lookup actors by user cookie
+* `repsheet_proxy_headers <on|off>` - Determines if Repsheet will use the X-Forwarded-For header
+
 * `repsheet_redis_host <host>` - Sets the host for the Redis connection
 * `repsheet_redis_port <port>` - Sets the port for the Redis connection
-* `repsheet_redis_timeout <n>` - Sets the time (in milliseconds) before the attempt to connect to redis will timeout
-* `repsheet <on|off>` - Determines if Repsheet will do any processing
-* `repsheet_proxy_headers <on|off>` - Determines if Repsheet will look for the X-Forwarded-For header to determine remote IP
+* `repsheet_redis_timeout <n>` - Sets the Redis connection timeout (in milliseconds)
+
 * `repsheet_user_cookie <name>` - Sets the cookie that holds the user value to be examined
 
 Here's a simple example NGINX config:
@@ -52,11 +56,15 @@ events {
 }
 
 http {
+  repsheet on;
+  repsheet_ip_lookup on;
+  repsheet_user_lookup on;
+  repsheet_proxy_headers on;
+
   repsheet_redis_host localhost;
   repsheet_redis_port 6379;
   repsheet_redis_timeout 5;
-  repsheet on;
-  repsheet_proxy_headers on;
+
   repsheet_user_cookie "user"
 
   server {
@@ -96,15 +104,6 @@ The concept of what Repsheet should do is constantly evolving. There
 are some differences between the NGINX and Apache modules and it is
 important to make them as clear as possible.
 
-#### The Good
-
-* This module has much better performance characteristics than the
-  Apache version. This is due to the connection recycling code that is
-  present. The Apache version will eventually get this feature as well
-  but doesn't at this time.
-
-* This module supports user cookie values for detecting and blocking actors.
-
 #### The Unsupported
 
 * This module does not have the recorder feature that the Apache
@@ -116,3 +115,7 @@ important to make them as clear as possible.
   https://github.com/SpiderLabs/ModSecurity/issues/660. Once this is
   resolved or the feature can be implemented in another way it will
   be.
+
+* This module does not currently support GeoIP based lookups. There is
+  nothing blocking this from happening, it just has not been
+  implemented yet.
