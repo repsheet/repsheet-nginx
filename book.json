@@ -1,0 +1,15 @@
+{
+  "title": "Repsheet NGINX Module",
+  "description": "Documentation for the Repsheet NGINX Module",
+  "github": "repsheet/repsheet-nginx",
+  "githubHost": "https://github.com",
+  "links": {
+    "sharing": {
+      "twitter": "@getrepsheet",
+      "google": false,
+      "facebook": false,
+      "weibo": false,
+      "all": false
+    }
+  }
+}
