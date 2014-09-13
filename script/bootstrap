@@ -30,12 +30,13 @@ install_nginx () {
         curl -s -L -O "http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz"
         tar xzf "nginx-$NGINX_VERSION.tar.gz"
         pushd "nginx-$NGINX_VERSION" > /dev/null 2>&1
-        ./configure                           \
-            --with-debug                      \
-            --prefix=$(pwd)/../../build/nginx \
-            --conf-path=conf/nginx.conf       \
-            --error-log-path=logs/error.log   \
-            --http-log-path=logs/access.log   \
+        ./configure                                       \
+	    --with-cc-opt="-Wno-deprecated-declarations"  \
+            --with-debug                                  \
+            --prefix=$(pwd)/../../build/nginx             \
+            --conf-path=conf/nginx.conf                   \
+            --error-log-path=logs/error.log               \
+            --http-log-path=logs/access.log               \
             --add-module=../../
         make
         make install
@@ -50,12 +51,13 @@ install_nginx () {
 compile () {
     pushd "vendor" > /dev/null 2>&1
     pushd "nginx-$NGINX_VERSION" > /dev/null 2>&1
-    CFLAGS="-g -O0 -Wall -Werror" ./configure \
-        --with-debug                          \
-        --prefix=$(pwd)/../../build/nginx     \
-        --conf-path=conf/nginx.conf           \
-        --error-log-path=logs/error.log       \
-        --http-log-path=logs/access.log       \
+    CFLAGS="-g -O0 -Wall -Werror" ./configure        \
+	--with-cc-opt="-Wno-deprecated-declarations" \
+        --with-debug                                 \
+        --prefix=$(pwd)/../../build/nginx            \
+        --conf-path=conf/nginx.conf                  \
+        --error-log-path=logs/error.log              \
+        --http-log-path=logs/access.log              \
         --add-module=../../
     make
     make install
