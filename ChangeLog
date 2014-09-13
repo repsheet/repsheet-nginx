@@ -1,3 +1,7 @@
+2014-09-12  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 2.0.0 - Performance improvements. Now relies on librepsheet >= 3.0.0
+
 2014-08-05  Aaron Bedra  <aaron@aaronbedra.com>
 
 	* 1.2.0 - Updates from librepsheet to use LIBREPSHEET_OK instead
