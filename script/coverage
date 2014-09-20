@@ -7,12 +7,14 @@ then
     exit 1
 fi
 
-./autogen.sh
-./configure
-make clean
-make
-make check
+echo "Building"
+./autogen.sh > /dev/null 2>&1
+./configure > /dev/null 2>&1
+make clean > /dev/null 2>&1
+make > /dev/null 2>&1
+make check > /dev/null 2>&1
 
+echo "Generating Coverage Report"
 lcov --base-directory src --directory src -c -o librepsheet_test.info
 lcov --remove librepsheet_test.info "/usr*" -o librepsheet_test.info
 lcov --remove librepsheet_test.info "src/mpc.*" -o librepsheet_test.info
