@@ -87,3 +87,4 @@ debian/librepsheet-dev
 
 test
 test.c
+config.h.in~
