@@ -1,6 +1,7 @@
-# Repsheet NGINX Module
+# Summary
 
-* [Prerequisites](prerequisites.md)
+* [Introduction](README.md)
+* [Dependencies](prerequisites.md)
 * [Installation](installation.md)
 * [Configuration](configuration.md)
 * [Developing](developing.md)
