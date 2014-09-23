@@ -186,7 +186,7 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
 {
   repsheet_main_conf_t *main_conf = ngx_http_get_module_main_conf(r, ngx_http_repsheet_module);
 
-  if (!main_conf->enabled || r->main->internal) {
+  if (!main_conf->enabled || main_conf->enabled == NGX_CONF_UNSET || r->main->internal) {
     return NGX_DECLINED;
   }
 
