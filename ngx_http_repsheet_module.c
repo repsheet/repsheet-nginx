@@ -18,13 +18,15 @@ typedef struct {
 
 typedef struct {
   repsheet_redis_t redis;
-  ngx_flag_t enabled;
   ngx_flag_t user_lookup;
   ngx_flag_t ip_lookup;
-  ngx_flag_t record;
   ngx_flag_t proxy_headers;
   ngx_str_t cookie;
 } repsheet_main_conf_t;
+
+typedef struct {
+  ngx_flag_t enabled;
+} repsheet_loc_conf_t;
 
 ngx_module_t ngx_http_repsheet_module;
 
@@ -184,13 +186,13 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
 static ngx_int_t
 ngx_http_repsheet_handler(ngx_http_request_t *r)
 {
-  repsheet_main_conf_t *main_conf = ngx_http_get_module_main_conf(r, ngx_http_repsheet_module);
+  repsheet_loc_conf_t  *loc_conf  = ngx_http_get_module_loc_conf(r, ngx_http_repsheet_module);
 
-  if (!main_conf->enabled || main_conf->enabled == NGX_CONF_UNSET || r->main->internal) {
+  if (!loc_conf->enabled || loc_conf->enabled == NGX_CONF_UNSET || r->main->internal) {
     return NGX_DECLINED;
   }
 
-  r->main->internal = 1;
+  repsheet_main_conf_t *main_conf = ngx_http_get_module_main_conf(r, ngx_http_repsheet_module);
 
   int connection_status = check_connection(main_conf->redis.connection);
   if (connection_status == DISCONNECTED) {
@@ -242,10 +244,10 @@ ngx_http_repsheet_init(ngx_conf_t *cf)
 static ngx_command_t ngx_http_repsheet_commands[] = {
   {
     ngx_string("repsheet"),
-    NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
+    NGX_HTTP_MAIN_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
     ngx_conf_set_flag_slot,
-    NGX_HTTP_MAIN_CONF_OFFSET,
-    offsetof(repsheet_main_conf_t, enabled),
+    NGX_HTTP_LOC_CONF_OFFSET,
+    offsetof(repsheet_loc_conf_t, enabled),
     NULL
   },
   {
@@ -325,15 +327,40 @@ ngx_http_repsheet_create_main_conf(ngx_conf_t *cf)
   conf->redis.expiry = NGX_CONF_UNSET_UINT;
   conf->redis.connection = NULL;
 
-  conf->enabled = NGX_CONF_UNSET;
   conf->ip_lookup = NGX_CONF_UNSET;
   conf->user_lookup = NGX_CONF_UNSET;
 
-  conf->record = NGX_CONF_UNSET;
   conf->proxy_headers = NGX_CONF_UNSET;
 
+  return conf;
+}
+
+
+static void*
+ngx_http_repsheet_create_loc_conf(ngx_conf_t *cf)
+{
+  repsheet_loc_conf_t *conf;
+
+  conf = ngx_pcalloc(cf->pool, sizeof(repsheet_loc_conf_t));
+  if (conf == NULL) {
+    return NULL;
+  }
+
+  conf->enabled = NGX_CONF_UNSET;
 
   return conf;
+}
+
+
+static char*
+ngx_http_repsheet_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
+{
+  repsheet_loc_conf_t *prev = (repsheet_loc_conf_t *)parent;
+  repsheet_loc_conf_t *conf = (repsheet_loc_conf_t *)child;
+
+  ngx_conf_merge_value(conf->enabled, prev->enabled, 0);
+
+  return NGX_CONF_OK;
 }
 
 
@@ -344,8 +371,8 @@ static ngx_http_module_t ngx_http_repsheet_module_ctx = {
   NULL,                               /* init main configuration */
   NULL,                               /* create server configuration */
   NULL,                               /* merge server configuration */
-  NULL,                               /* create location configuration */
-  NULL                                /* merge location configuration */
+  ngx_http_repsheet_create_loc_conf,  /* create location configuration */
+  ngx_http_repsheet_merge_loc_conf    /* merge location configuration */
 };
 
 
