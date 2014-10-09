@@ -1,26 +1,32 @@
-librepsheet (3.0.0) unstable-security; urgency=low
+librepsheet (3.1.0-1) unstable-security; urgency=low
+
+  * Adds CIDR support
+
+ -- Aaron Bedra <aaron@aaronbedra.com>  Thu, 09 Oct 2014 13:49:20 -0500
+
+librepsheet (3.0.0-1) unstable-security; urgency=low
 
   * Performance improvements, breaking API changes
 
- -- Aaron Bedra <abedra@debian64>  Mon, 08 Sep 2014 10:13:49 -0500
+ -- Aaron Bedra <aaron@aaronbedra.com>  Mon, 08 Sep 2014 10:13:49 -0500
 
-librepsheet (2.2.0) unstable-security; urgency=low
+librepsheet (2.2.0-1) unstable-security; urgency=low
 
   * Renamed OK to LIBREPSHEET_OK
 
- -- Aaron Bedra <abedra@debian.repsheet>  Mon, 04 Aug 2014 11:17:01 -0500
+ -- Aaron Bedra <aaron@aaronbedra.com>  Mon, 04 Aug 2014 11:17:01 -0500
 
-librepsheet (2.1.0) unstable-security; urgency=low
+librepsheet (2.1.0-1) unstable-security; urgency=low
 
   * Small fix, new functionality
 
- -- Aaron Bedra <abedra@debian64>  Mon, 23 Jun 2014 07:46:18 -0500
+ -- Aaron Bedra <aaron@aaronbedra.com>  Mon, 23 Jun 2014 07:46:18 -0500
 
 librepsheet (2.0.0-1) unstable-security; urgency=low
 
   * Updated API, better error handling, new functionality
 
- -- Aaron Bedra <abedra@debian64>  Sat, 14 Jun 2014 14:22:51 -0500
+ -- Aaron Bedra <aaron@aaronbedra.com>  Sat, 14 Jun 2014 14:22:51 -0500
 
 librepsheet (1.0.0-1) unstable-security; urgency=low
 
