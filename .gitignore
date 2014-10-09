@@ -57,6 +57,7 @@ config.status
 libtool
 stamp-h1
 dump.rdb
+config.h.in~
 
 src/Makefile
 src/Makefile.in
@@ -85,6 +86,4 @@ debian/tmp
 debian/librepsheet
 debian/librepsheet-dev
 
-test
-test.c
-config.h.in~
+
