@@ -1,3 +1,7 @@
+2014-10-09  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 3.1.0: Added CIDR support
+
 2014-09-08  Aaron Bedra  <aaron@aaronbedra.com>
 
 	* 3.0.0: Performance improvements and breaking API changes
