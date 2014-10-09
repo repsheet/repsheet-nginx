@@ -530,7 +530,10 @@ int is_historical_offender(redisContext *context, int type, const char *actor)
   case USER:
     reply = redisCommand(context, "SISMEMBER repsheet:user:blacklist:history %s", actor);
     break;
+  default:
+    return UNSUPPORTED;
   }
+
   if (reply) {
     if (reply->integer == 1) {
       freeReplyObject(reply);
