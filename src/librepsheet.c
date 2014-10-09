@@ -32,16 +32,20 @@
  *
  * The library can be built and installed using the following commands:
  *
- * $ ./autogen.sh
- * $ ./configure
- * $ make
- * $ make check # optional
+ * <code>
+ * $ ./autogen.sh <br />
+ * $ ./configure <br />
+ * $ make <br />
+ * $ make check # optional <br />
  * $ sudo make install
+ * </code>
  *
  * You can verify that the install succeeded by checking package config:
  *
+ * <code>
  * $ pkg-config --list-all | grep repsheet
  * repsheet                  repsheet - The Repsheet core logic library
+ * </code>
  */
 
 #include "repsheet.h"

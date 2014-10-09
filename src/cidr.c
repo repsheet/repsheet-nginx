@@ -5,9 +5,23 @@
 #include "repsheet.h"
 #include "cidr.h"
 
+/**
+ * @file cidr.c
+ * @author Aaron Bedra
+ * @date 10/09/2014
+ */
+
 int _string_to_integer(char *address);
 int _string_to_cidr(CIDR *cidr, char *block);
 
+/**
+ * Test an IP to see if it is contained in the CIDR block
+ *
+ * @param block the CIDR block string
+ * @param address the IP address string
+ *
+ * @returns 1 if in the block, 0 if not
+ */
 int cidr_contains(char *block, char *address)
 {
   if (block == NULL || address == NULL) {
