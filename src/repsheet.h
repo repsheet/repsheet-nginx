@@ -20,13 +20,6 @@
 
 #include "hiredis/hiredis.h"
 
-typedef struct repsheet_rule_t {
-  char *part;
-  char *location;
-  char *field;
-  char *error;
-} repsheet_rule_t;
-
 redisContext *get_redis_context(const char *host, int port, int timeout);
 int check_connection(redisContext *context);
 
@@ -62,7 +55,5 @@ int matches(const char *waf_events);
 int is_country_marked(redisContext *context, const char *country_code);
 int is_country_blacklisted(redisContext *context, const char *country_code);
 int country_status(redisContext *context, const char *country_code);
-
-repsheet_rule_t process_rule(char *rule_string);
 
 #endif
