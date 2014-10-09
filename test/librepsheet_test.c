@@ -161,6 +161,17 @@ START_TEST(is_ip_blacklisted_test)
 }
 END_TEST
 
+START_TEST(is_ip_blacklisted_in_cidr_test)
+{
+  char value[MAX_REASON_LENGTH];
+
+  redisCommand(context, "SET %s:repsheet:cidr:blacklist %s", "10.0.0.0/24", "CIDR Test");
+  int response = is_ip_blacklisted(context, "10.0.0.15", value);
+  ck_assert_int_eq(response, TRUE);
+  ck_assert_str_eq(value, "CIDR Test");
+}
+END_TEST
+
 START_TEST(is_user_blacklisted_test)
 {
   char value[MAX_REASON_LENGTH];
@@ -182,6 +193,17 @@ START_TEST(is_ip_whitelisted_test)
 
   ck_assert_str_eq(value, "Is IP Whitelisted Test");
   ck_assert_int_eq(response, TRUE);
+}
+END_TEST
+
+START_TEST(is_ip_whitelisted_in_cidr_test)
+{
+  char value[MAX_REASON_LENGTH];
+
+  redisCommand(context, "SET %s:repsheet:cidr:whitelist %s", "10.0.0.0/24", "CIDR Test");
+  int response = is_ip_whitelisted(context, "10.0.0.15", value);
+  ck_assert_int_eq(response, TRUE);
+  ck_assert_str_eq(value, "CIDR Test");
 }
 END_TEST
 
@@ -552,8 +574,10 @@ Suite *make_librepsheet_connection_suite(void) {
   tcase_add_test(tc_connection_operations, is_user_marked_test);
   tcase_add_test(tc_connection_operations, is_user_marked_false_test);
   tcase_add_test(tc_connection_operations, is_ip_blacklisted_test);
+  tcase_add_test(tc_connection_operations, is_ip_blacklisted_in_cidr_test);
   tcase_add_test(tc_connection_operations, is_user_blacklisted_test);
   tcase_add_test(tc_connection_operations, is_ip_whitelisted_test);
+  tcase_add_test(tc_connection_operations, is_ip_whitelisted_in_cidr_test);
   tcase_add_test(tc_connection_operations, is_user_whitelisted_test);
   tcase_add_test(tc_connection_operations, actor_status_test);
   tcase_add_test(tc_connection_operations, is_historical_offender_ip_test);

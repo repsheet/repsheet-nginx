@@ -270,21 +270,45 @@ int is_ip_marked(redisContext *context, const char *actor, char *reason)
  */
 int is_ip_blacklisted(redisContext *context, const char *actor, char *reason)
 {
-  redisReply *reply;
-
-  reply = redisCommand(context, "GET %s:repsheet:ip:blacklist", actor);
-  if (reply) {
-    if (reply->type == REDIS_REPLY_STRING) {
-      _populate_reason(reply, reason);
-      freeReplyObject(reply);
+  redisReply *ip = redisCommand(context, "GET %s:repsheet:ip:blacklist", actor);
+  if (ip) {
+    if (ip->type == REDIS_REPLY_STRING) {
+      _populate_reason(ip, reason);
+      freeReplyObject(ip);
       return TRUE;
     } else {
-      freeReplyObject(reply);
-      return FALSE;
+      freeReplyObject(ip);
     }
   } else {
     return DISCONNECTED;
   }
+
+  redisReply *blacklist = redisCommand(context, "KEYS *:repsheet:cidr:blacklist");
+  if (blacklist) {
+    if (blacklist->type == REDIS_REPLY_ARRAY) {
+      int i;
+      redisReply *value;
+      char *block;
+      for(i = 0; i < blacklist->elements; i++) {
+        block = strtok(blacklist->element[i]->str, ":");
+        if (cidr_contains(block, actor)) {
+          value = redisCommand(context, "GET %s:repsheet:cidr:blacklist", block);
+          if (value) {
+            _populate_reason(value, reason);
+            freeReplyObject(value);
+          }
+          freeReplyObject(blacklist);
+          return TRUE;
+        }
+      }
+    } else{
+      freeReplyObject(blacklist);
+    }
+  } else {
+    return DISCONNECTED;
+  }
+
+  return FALSE;
 }
 
 /**
@@ -298,21 +322,45 @@ int is_ip_blacklisted(redisContext *context, const char *actor, char *reason)
  */
 int is_ip_whitelisted(redisContext *context, const char *actor, char *reason)
 {
-  redisReply *reply;
-
-  reply = redisCommand(context, "GET %s:repsheet:ip:whitelist", actor);
-  if (reply) {
-    if (reply->type == REDIS_REPLY_STRING) {
-      _populate_reason(reply, reason);
-      freeReplyObject(reply);
+  redisReply *ip = redisCommand(context, "GET %s:repsheet:ip:whitelist", actor);
+  if (ip) {
+    if (ip->type == REDIS_REPLY_STRING) {
+      _populate_reason(ip, reason);
+      freeReplyObject(ip);
       return TRUE;
     } else {
-      freeReplyObject(reply);
-      return FALSE;
+      freeReplyObject(ip);
     }
   } else {
     return DISCONNECTED;
   }
+
+  redisReply *whitelist = redisCommand(context, "KEYS *:repsheet:cidr:whitelist");
+  if (whitelist) {
+    if (whitelist->type == REDIS_REPLY_ARRAY) {
+      int i;
+      redisReply *value;
+      char *block;
+      for(i = 0; i < whitelist->elements; i++) {
+        block = strtok(whitelist->element[i]->str, ":");
+        if (cidr_contains(block, actor)) {
+          value = redisCommand(context, "GET %s:repsheet:cidr:whitelist", block);
+          if (value) {
+            _populate_reason(value, reason);
+            freeReplyObject(value);
+          }
+          freeReplyObject(whitelist);
+          return TRUE;
+        }
+      }
+    } else{
+      freeReplyObject(whitelist);
+    }
+  } else {
+    return DISCONNECTED;
+  }
+
+  return FALSE;
 }
 
 /**
