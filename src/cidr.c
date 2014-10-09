@@ -2,19 +2,23 @@
 #include <string.h>
 #include <math.h>
 
+#include "repsheet.h"
 #include "cidr.h"
 
-int  _string_to_integer(char *address);
-void _string_to_cidr(CIDR *cidr, char *block);
+int _string_to_integer(char *address);
+int _string_to_cidr(CIDR *cidr, char *block);
 
 int cidr_contains(char *block, char *address)
 {
   if (block == NULL || address == NULL) {
-    return -1;
+    return NIL;
   }
 
   CIDR *cidr = malloc(sizeof(*cidr));
-  _string_to_cidr(cidr, block);
+  int result = _string_to_cidr(cidr, block);
+  if (result == BAD_ADDRESS || result == BAD_CIDR_BLOCK) {
+    return result;
+  }
 
   int lower = cidr->address;
   int upper = lower + (pow(2, (32 - cidr->mask)) -1);
@@ -22,20 +26,34 @@ int cidr_contains(char *block, char *address)
 
   free(cidr);
 
+  if (cidr->address == BAD_ADDRESS || ip == BAD_ADDRESS) {
+    return BAD_ADDRESS;
+  }
+
   return ((lower <= ip) && (ip <= upper));
 }
 
-void _string_to_cidr(CIDR *cidr, char *block)
+int _string_to_cidr(CIDR *cidr, char *block)
 {
   char dup[strlen(block)];
   memcpy(dup, block, strlen(block));
 
-  //TODO: validate that the string is at least 8 and no more than 16 characters
   cidr->address_string = strtok(dup,"/");
-  //TODO: validate that the mask is a positive number less than 33
+  if (strlen(cidr->address_string) < 8 || strlen(cidr->address_string) > 16) {
+    return BAD_CIDR_BLOCK;
+  }
+
   cidr->mask = strtol(strtok(NULL,"/"), 0, 10);
-  //TODO: validate that the conversion didn't fail (BAD_ADDRESS)
+  if (cidr->mask < 0 || cidr->mask > 32) {
+    return BAD_CIDR_BLOCK;
+  }
+
   cidr->address = _string_to_integer(cidr->address_string);
+  if (cidr->address == BAD_ADDRESS) {
+    return BAD_ADDRESS;
+  }
+
+  return LIBREPSHEET_OK;
 }
 
 int _string_to_integer(char *address)
@@ -43,12 +61,26 @@ int _string_to_integer(char *address)
   char dup[strlen(address)];
   memcpy(dup, address, strlen(address));
 
-  //TODO: validate each octet to ensure they are within range and
-  //return BAD_ADDRESS if invalid
-  int ip_integer = ((strtol(strtok(dup, "."), 0, 10) << 24) & 0xFF000000)
-    | ((strtol(strtok(NULL, "."), 0, 10) << 16) & 0xFF0000)
-    | ((strtol(strtok(NULL, "."), 0, 10) << 8)  & 0xFF00)
-    |  (strtol(strtok(NULL, "."), 0, 10)        & 0xFF);
+  int first, second, third, fourth;
+
+  first = strtol(strtok(dup, "."), 0, 10);
+  second = strtol(strtok(NULL, "."), 0, 10);
+  third = strtol(strtok(NULL, "."), 0, 10);
+  fourth = strtol(strtok(NULL, "."), 0, 10);
+
+  int i;
+  int octets[] = {first, second, third, fourth};
+
+  for (i = 0; i < 4; i++) {
+    if (octets[i] < 0 || octets[i] > 256) {
+      return BAD_ADDRESS;
+    }
+  }
+
+  int ip_integer = ((first << 24) & 0xFF000000)
+    | ((second << 16) & 0xFF0000)
+    | ((third << 8)   & 0xFF00)
+    |  (fourth        & 0xFF);
 
   return ip_integer;
 }

@@ -18,6 +18,8 @@
 
 #define MAX_REASON_LENGTH 1024
 
+#include "hiredis/hiredis.h"
+
 typedef struct repsheet_rule_t {
   char *part;
   char *location;
