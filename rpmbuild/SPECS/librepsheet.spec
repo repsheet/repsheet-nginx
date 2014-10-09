@@ -1,5 +1,5 @@
 Name: repsheet
-Version: 3.0.0
+Version: 3.1.0
 Release: 1
 Summary: Core library
 License: ASL 2.0
@@ -72,6 +72,8 @@ rm -rf $RPM_BUILD_ROOT
 %doc LICENSE
 
 %changelog
+* Thu Oct 09 2014 Aaron Bedra <aaron@aaronbedra.com> - 3.1.0-1
+- Adds CIDR support
 * Mon Sep 08 2014 Aaron Bedra <aaron@aaronbedra.com> - 3.0.0-1
 - Performance improvements and breaking API changes
 * Mon Aug 04 2014 Aaron Bedra <aaron@aaronbedra.com> - 2.2.0-1
