@@ -34,6 +34,15 @@ describe "Integration Specs" do
       expect(http.response_code).to eq(403)
     end
 
+    it "Returns a 403 response if the user is in a blacklisted CIDR block" do
+      @redis.set("10.0.0.0/24:repsheet:cidr:blacklist", "Integration Spec")
+      http = Curl.get("http://127.0.0.1:8888") do |http|
+        http.headers['X-Forwarded-For'] = '10.0.0.15'
+      end
+
+      expect(http.response_code).to eq(403)
+    end
+
     it "Returns a 200 response if the IP is on the whitelist" do
       @redis.set("127.0.0.1:repsheet:ip:blacklist", "Integration Spec")
       @redis.set("127.0.0.1:repsheet:ip:whitelist", "Integration Spec")
@@ -46,6 +55,17 @@ describe "Integration Specs" do
 
       http = Curl.get("http://127.0.0.1:8888") do |http|
         http.headers['Cookie'] = "user=repsheet"
+      end
+
+      expect(http.response_code).to eq(200)
+    end
+
+    it "Returns a 200 response if the user is in a blacklisted CIDR block" do
+      @redis.set("10.0.0.50:repsheet:ip:blacklist", "Integration Spec")
+      @redis.set("10.0.0.0/24:repsheet:cidr:whitelist", "Integration Spec")
+
+      http = Curl.get("http://127.0.0.1:8888") do |http|
+        http.headers['X-Forwarded-For'] = '10.0.0.50'
       end
 
       expect(http.response_code).to eq(200)
