@@ -7,7 +7,7 @@
         <title>Installation | Repsheet NGINX Module</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
-        <meta name="generator" content="GitBook 1.0.3">
+        <meta name="generator" content="GitBook 1.1.0">
         <meta name="HandheldFriendly" content="true"/>
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
         <meta name="apple-mobile-web-app-capable" content="yes">
@@ -17,13 +17,11 @@
         
     
     
-    <meta name="author" content="repsheet">
-    
     
     <link rel="next" href="./configuration.html" />
     
     
-    <link rel="prev" href="./prerequisites.html" />
+    <link rel="prev" href="./dependencies.html" />
     
 
         
@@ -35,7 +33,7 @@
 
 
         
-    <div class="book" data-github="repsheet/repsheet-nginx" data-level="2" data-basepath="." data-revision="1411357482561">
+    <div class="book" data-level="2" data-basepath="." data-revision="1412953809727">
     
 
 <div class="book-summary">
@@ -67,10 +65,10 @@
         </li>
     
         
-        <li class="chapter " data-level="1" data-path="prerequisites.html">
+        <li class="chapter " data-level="1" data-path="dependencies.html">
             
                 
-                    <a href="./prerequisites.html">
+                    <a href="./dependencies.html">
                         <i class="fa fa-check"></i>
                         
                             <b>1.</b>
@@ -213,9 +211,29 @@
                 <div class="page-inner">
                 
                 
-                    <section class="normal" id="section-gitbook_5">
+                    <section class="normal" id="section-gitbook_6">
                     
                         <h1 id="installation">Installation</h1>
+<p>NGINX does not support dynamically loadable modules. This means that
+<code>repsheet-nginx</code> has to be compiled with NGINX. Adding modules to the
+NGINX build requires one additional argument to the configuration
+script.</p>
+<pre><code>--add-module=&lt;path_to_module&gt;
+</code></pre><p>Where <code>path_to_module</code> is the location of this module. The script
+attempts to locate the <code>config</code> file of the module, so the folder you
+specify must contain that file. An example installation looks like
+this:</p>
+<pre><code>$ git clone git://github.com/repsheet/repsheet-nginx
+$ curl -s -L -O &quot;http://nginx.org/download/nginx-1.6.2.tar.gz&quot;
+$ tar xzf nginx-1.6.2
+$ cd nginx-1.6.2
+$ ./configure --add-module=../repsheet-nginx
+$ make
+$ sudo make install
+</code></pre><p>You might want to modify your NGINX install further. The compile
+options can be found <a href="http://wiki.nginx.org/InstallOptions" target="_blank">here</a>. The
+example above is the only thing you need to install the
+<code>repsheet-nginx</code> module.</p>
 
                     
                     </section>
@@ -226,7 +244,7 @@
         </div>
 
         
-        <a href="./prerequisites.html" class="navigation navigation-prev " aria-label="Previous page: Dependencies"><i class="fa fa-angle-left"></i></a>
+        <a href="./dependencies.html" class="navigation navigation-prev " aria-label="Previous page: Dependencies"><i class="fa fa-angle-left"></i></a>
         
         
         <a href="./configuration.html" class="navigation navigation-next " aria-label="Next page: Configuration"><i class="fa fa-angle-right"></i></a>

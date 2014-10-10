@@ -1,7 +1,7 @@
 # Summary
 
 * [Introduction](README.md)
-* [Dependencies](prerequisites.md)
+* [Dependencies](dependencies.md)
 * [Installation](installation.md)
 * [Configuration](configuration.md)
 * [Developing](developing.md)

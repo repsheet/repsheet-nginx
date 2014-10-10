@@ -1,6 +1,8 @@
 # Dependencies
 
-The Repsheet NGINX module requires a few libraries. They are broken down by compile and runtime requirements so you can install the proper set for your needs.
+The Repsheet NGINX module requires a few libraries. They are broken
+down by compile and runtime requirements so you can install the proper
+set for your needs.
 
 ## Runtime
 

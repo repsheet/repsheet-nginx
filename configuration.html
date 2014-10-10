@@ -7,7 +7,7 @@
         <title>Configuration | Repsheet NGINX Module</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
-        <meta name="generator" content="GitBook 1.0.3">
+        <meta name="generator" content="GitBook 1.1.0">
         <meta name="HandheldFriendly" content="true"/>
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
         <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,8 +16,6 @@
         <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
         
     
-    
-    <meta name="author" content="repsheet">
     
     
     <link rel="next" href="./developing.html" />
@@ -35,7 +33,7 @@
 
 
         
-    <div class="book" data-github="repsheet/repsheet-nginx" data-level="3" data-basepath="." data-revision="1411357482561">
+    <div class="book" data-level="3" data-basepath="." data-revision="1412953809727">
     
 
 <div class="book-summary">
@@ -67,10 +65,10 @@
         </li>
     
         
-        <li class="chapter " data-level="1" data-path="prerequisites.html">
+        <li class="chapter " data-level="1" data-path="dependencies.html">
             
                 
-                    <a href="./prerequisites.html">
+                    <a href="./dependencies.html">
                         <i class="fa fa-check"></i>
                         
                             <b>1.</b>
@@ -213,10 +211,47 @@
                 <div class="page-inner">
                 
                 
-                    <section class="normal" id="section-gitbook_3">
+                    <section class="normal" id="section-gitbook_2">
                     
                         <h1 id="configuration">Configuration</h1>
+<p>To activate and configure Repsheet you will need to set some
+directives. The following list explains what each directive is and
+what is does. At the moment, the Repsheet directives all live under
+the main configuration section of <code>nginx.conf</code>.</p>
+<ul>
+<li><code>repsheet &lt;on|off&gt;</code> - [en|dis]able the module</li>
+<li><code>repsheet_ip_lookup &lt;on|off&gt;</code> - [en|dis]able lookup by IP address</li>
+<li><code>repsheet_user_lookup &lt;on|off&gt;</code> - [en|dis]able lookup by cookie</li>
+<li><code>repsheet_proxy_headers &lt;on|off&gt;</code> - [en|dis]able use of the X-Forwarded-For header</li>
+<li><code>repsheet_redis_host &lt;host&gt;</code> - Redis host</li>
+<li><code>repsheet_redis_port &lt;port&gt;</code> - Redis port</li>
+<li><code>repsheet_redis_timeout &lt;n&gt;</code> - Redis connection timeout (in milliseconds)</li>
+<li><code>repsheet_user_cookie &lt;name&gt;</code> - Cookie that holds actor value</li>
+</ul>
+<p>Here&#39;s a simple example NGINX config:</p>
+<pre><code>events {
+  worker_connections  1024;
+}
 
+http {
+  repsheet on;
+  repsheet_proxy_headers on;
+
+  repsheet_redis_host localhost;
+  repsheet_redis_port 6379;
+  repsheet_redis_timeout 5;
+
+  repsheet_ip_lookup on;
+  repsheet_user_lookup on;
+  repsheet_user_cookie &quot;user&quot;
+
+  server {
+    location / {
+
+    }
+  }
+}
+</code></pre>
                     
                     </section>
                 

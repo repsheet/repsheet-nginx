@@ -7,7 +7,7 @@
         <title>Developing | Repsheet NGINX Module</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
-        <meta name="generator" content="GitBook 1.0.3">
+        <meta name="generator" content="GitBook 1.1.0">
         <meta name="HandheldFriendly" content="true"/>
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
         <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,8 +16,6 @@
         <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
         
     
-    
-    <meta name="author" content="repsheet">
     
     
     <link rel="next" href="./contributing.html" />
@@ -35,7 +33,7 @@
 
 
         
-    <div class="book" data-github="repsheet/repsheet-nginx" data-level="4" data-basepath="." data-revision="1411357482561">
+    <div class="book" data-level="4" data-basepath="." data-revision="1412953809727">
     
 
 <div class="book-summary">
@@ -67,10 +65,10 @@
         </li>
     
         
-        <li class="chapter " data-level="1" data-path="prerequisites.html">
+        <li class="chapter " data-level="1" data-path="dependencies.html">
             
                 
-                    <a href="./prerequisites.html">
+                    <a href="./dependencies.html">
                         <i class="fa fa-check"></i>
                         
                             <b>1.</b>
@@ -213,9 +211,38 @@
                 <div class="page-inner">
                 
                 
-                    <section class="normal" id="section-gitbook_4">
+                    <section class="normal" id="section-gitbook_5">
                     
                         <h1 id="developing">Developing</h1>
+<h2 id="developer-setup">Developer Setup</h2>
+<p>In order to develop the module without interfering with other NGINX
+installs, a completely isolated development environment is provided
+with this module. A bootstrap script is provided to setup the
+environment.</p>
+<pre><code class="lang-sh">$ script/bootstrap
+</code></pre>
+<p>The <code>script/bootstrap</code> task will take some time. It downloads and
+compiles NGINX, and then configures everything to work
+together. Running this will give you a ready to test NGINX environment
+linked to the <code>nginx.conf</code> file in the root of the project.</p>
+<p>To use the rest of the provided automation you need to have
+<a href="http://www.ruby-lang.org/en/" target="_blank">Ruby</a>,
+<a href="http://rubygems.org/" target="_blank">RubyGems</a>, and <a href="http://bundler.io/" target="_blank">Bundler</a>
+installed. This allows you to build the module and run the
+tests. Before executing any of the tasks, make sure to run <code>bundle</code>.</p>
+<h2 id="building-the-module">Building the module</h2>
+<p>To compile the module simply run:</p>
+<pre><code class="lang-sh">$ rake nginx:compile
+</code></pre>
+<p>This will rebuild NGINX along with the module.</p>
+<h2 id="running-the-integration-tests">Running the Integration Tests</h2>
+<p>This project comes with a basic set of integration tests to ensure
+that things are working. To run the integration tests, use the
+following command:</p>
+<pre><code class="lang-sh">rake
+</code></pre>
+<p>Running <code>rake</code> launches some curl based tests that hit NGINX and
+exercise Repsheet, then test that everything is working as expected.</p>
 
                     
                     </section>

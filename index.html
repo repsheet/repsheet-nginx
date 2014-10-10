@@ -7,7 +7,7 @@
         <title>Introduction | Repsheet NGINX Module</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="Documentation for the Repsheet NGINX Module">
-        <meta name="generator" content="GitBook 1.0.3">
+        <meta name="generator" content="GitBook 1.1.0">
         <meta name="HandheldFriendly" content="true"/>
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
         <meta name="apple-mobile-web-app-capable" content="yes">
@@ -17,10 +17,8 @@
         
     
     
-    <meta name="author" content="repsheet">
     
-    
-    <link rel="next" href="./prerequisites.html" />
+    <link rel="next" href="./dependencies.html" />
     
     
 
@@ -33,7 +31,7 @@
 
 
         
-    <div class="book" data-github="repsheet/repsheet-nginx" data-level="0" data-basepath="." data-revision="1410585835178">
+    <div class="book" data-level="0" data-basepath="." data-revision="1412953809727">
     
 
 <div class="book-summary">
@@ -65,15 +63,15 @@
         </li>
     
         
-        <li class="chapter " data-level="1" data-path="prerequisites.html">
+        <li class="chapter " data-level="1" data-path="dependencies.html">
             
                 
-                    <a href="./prerequisites.html">
+                    <a href="./dependencies.html">
                         <i class="fa fa-check"></i>
                         
                             <b>1.</b>
                         
-                         Prerequisites
+                         Dependencies
                     </a>
                 
             
@@ -211,55 +209,58 @@
                 <div class="page-inner">
                 
                 
-                    <section class="normal" id="section-gitbook_1">
+                    <section class="normal" id="section-gitbook_3">
                     
                         <h1 id="repsheet-nginx-module">Repsheet NGINX Module</h1>
-
-                    
-                    </section>
-                
-                
-                </div>
-            </div>
-        </div>
-
-        
-        
-        <a href="./prerequisites.html" class="navigation navigation-next navigation-unique" aria-label="Next page: Prerequisites"><i class="fa fa-angle-right"></i></a>
-        
-    </div>
-</div>
-
-        
-<script src="gitbook/app.js"></script>
-
-    
-    <script src="https://cdn.mathjax.org/mathjax/2.4-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    
-
-    
-    <script src="gitbook/plugins/gitbook-plugin-mathjax/plugin.js"></script>
-    
-
-<script>
-require(["gitbook"], function(gitbook) {
-    var config = {"fontSettings":{"theme":null,"family":"sans","size":2}};
-    gitbook.start(config);
-});
-</script>
-
-        
-    </body>
-    
-</html>
- cache. It is capable of looking up actors by IP address or by cookie. If Repsheet finds the actor in the cache, it will act in one of the following ways:</p>
+<blockquote>
+<p><strong>noun</strong>  <em>Slang.</em>
+A record kept by web site authorities of a machine&#39;s wrongdoings.</p>
+<p><strong>noun</strong>  <em>Slang.</em>
+A necessary tool in your web defense arsenal.</p>
+<p><strong>Origin:</strong>
+[2013]</p>
+</blockquote>
+<h2 id="what-problem-does-it-solve">What problem does it solve?</h2>
+<p>Repsheet is a collection of tools to help improve awareness of robots
+and bad actors visiting your web applications. It is primarily
+composed of a core library, web server module, a backend automation
+tool, and a web based visualization application.</p>
+<p>Repsheet attempts to solve the problem of automated defenses against
+robots and noisy attackers. Essentially, it is a local reputation
+engine. As actors visit your application, the Repsheet module looks
+them up in the cache. It is capable of looking up actors by IP address
+or by cookie. If Repsheet finds the actor in the cache, it will act in
+one of the following ways:</p>
 <ul>
 <li>Whitelist - allows the actor to proceed</li>
 <li>Blacklist - returns a <code>403</code> response</li>
 <li>Marked - notifies the downstream application of suspect behavior</li>
 </ul>
-<p>The following diagram shows a complete Repsheet installation system diagram. The backend and external reputation feeds are optional components.</p>
+<p>The following diagram shows a complete Repsheet installation system
+diagram. The backend, external reputation feeds, GeoIP, and
+ModSecurity are optional components.</p>
 <p><img src="Repsheet.png" alt="Repsheet.png"></p>
+<h2 id="feature-differences-from-the-apache-version">Feature Differences from the Apache Version</h2>
+<p>The concept of what Repsheet should do is constantly evolving. There
+are some differences between the NGINX and Apache modules and it is
+important to make them as clear as possible.</p>
+<h4 id="the-unsupported">The Unsupported</h4>
+<ul>
+<li><p>This module does not have the recorder feature that the Apache
+version does. It will be implemented, but doesn&#39;t currently exist.</p>
+</li>
+<li><p>This module does not support ModSecurity. The development of this
+support is blocked due to an incomplete implementation of
+ModSecurity for NGINX. The issue tracking this is
+<a href="https://github.com/SpiderLabs/ModSecurity/issues/660" target="_blank">https://github.com/SpiderLabs/ModSecurity/issues/660</a>. Once this is
+resolved or the feature can be implemented in another way it will
+be.</p>
+</li>
+<li><p>This module does not currently support GeoIP based lookups. There is
+nothing blocking this from happening, it just has not been
+implemented yet.</p>
+</li>
+</ul>
 
                     
                     </section>
@@ -271,7 +272,7 @@ require(["gitbook"], function(gitbook) {
 
         
         
-        <a href="./prerequisites.html" class="navigation navigation-next navigation-unique" aria-label="Next page: Dependencies"><i class="fa fa-angle-right"></i></a>
+        <a href="./dependencies.html" class="navigation navigation-next navigation-unique" aria-label="Next page: Dependencies"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>
