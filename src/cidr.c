@@ -11,7 +11,7 @@
  * @date 10/09/2014
  */
 
-int _string_to_integer(char *address);
+int _string_to_integer(const char *address);
 int _string_to_cidr(CIDR *cidr, char *block);
 
 /**
@@ -22,7 +22,7 @@ int _string_to_cidr(CIDR *cidr, char *block);
  *
  * @returns 1 if in the block, 0 if not
  */
-int cidr_contains(char *block, char *address)
+int cidr_contains(char *block, const char *address)
 {
   if (block == NULL || address == NULL) {
     return NIL;
@@ -72,7 +72,7 @@ int _string_to_cidr(CIDR *cidr, char *block)
   return LIBREPSHEET_OK;
 }
 
-int _string_to_integer(char *address)
+int _string_to_integer(const char *address)
 {
   char dup[strlen(address) + 1];
   memcpy(dup, address, strlen(address) + 1);

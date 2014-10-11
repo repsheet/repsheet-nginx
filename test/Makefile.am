@@ -6,6 +6,10 @@ test_runner_SOURCES = librepsheet_test.c   \
                       ../src/librepsheet.c \
                       ../src/librepsheet.h \
                       ../src/cidr.h        \
-                      ../src/cidr.c
+                      ../src/cidr.c        \
+                      ../src/blacklist.c   \
+                      ../src/blacklist.h   \
+                      ../src/whitelist.c   \
+                      ../src/whitelist.h
 test_runner_CFLAGS = -g -O0 --coverage $(CHECK_CFLAGS)
 test_runner_LDADD = $(CHECK_LIBS) -lhiredis -lpcre -lm

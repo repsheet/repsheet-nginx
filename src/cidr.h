@@ -10,6 +10,6 @@ typedef struct {
   char *address_string;
 } CIDR;
 
-int cidr_contains(char *block, char *address);
+int cidr_contains(char *block, const char *address);
 
 #endif
