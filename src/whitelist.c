@@ -1,6 +1,8 @@
 #include <string.h>
 #include "repsheet.h"
+#include "common.h"
 #include "cidr.h"
+
 #include "whitelist.h"
 
 /**
@@ -19,22 +21,10 @@ int whitelist_actor(redisContext *context, const char *actor, int type, const ch
 
   switch(type) {
   case IP:
-    reply = redisCommand(context, "SET %s:repsheet:ip:whitelist %s", actor, reason);
-    if (reply) {
-      freeReplyObject(reply);
-      return LIBREPSHEET_OK;
-    } else {
-      return DISCONNECTED;
-    }
+    return set_list(context, actor, "ip", "whitelist", reason);
     break;
   case USER:
-    reply = redisCommand(context, "SET %s:repsheet:users:whitelist %s", actor, reason);
-    if (reply) {
-      freeReplyObject(reply);
-      return LIBREPSHEET_OK;
-    } else {
-      return DISCONNECTED;
-    }
+    return set_list(context, actor, "users", "whitelist", reason);
     break;
   default:
     return UNSUPPORTED;

@@ -5,6 +5,8 @@ test_runner_SOURCES = librepsheet_test.c   \
                       test_runner.c        \
                       ../src/librepsheet.c \
                       ../src/librepsheet.h \
+                      ../src/common.c      \
+                      ../src/common.h      \
                       ../src/cidr.h        \
                       ../src/cidr.c        \
                       ../src/blacklist.c   \

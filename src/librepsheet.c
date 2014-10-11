@@ -123,22 +123,10 @@ int mark_actor(redisContext *context, const char *actor, int type, const char *r
 
   switch(type) {
   case IP:
-    reply = redisCommand(context, "SET %s:repsheet:ip %s", actor, reason);
-    if (reply) {
-      freeReplyObject(reply);
-      return LIBREPSHEET_OK;
-    } else {
-      return DISCONNECTED;
-    }
+    return set(context, actor, "ip", reason);
     break;
   case USER:
-    reply = redisCommand(context, "SET %s:repsheet:users %s", actor, reason);
-    if (reply) {
-      freeReplyObject(reply);
-      return LIBREPSHEET_OK;
-    } else {
-      return DISCONNECTED;
-    }
+    return set(context, actor, "users", reason);
     break;
   default:
     return UNSUPPORTED;
