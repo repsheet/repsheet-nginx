@@ -2,6 +2,7 @@ TESTS = test_runner
 check_PROGRAMS = $(TESTS)
 test_runner_SOURCES = librepsheet_test.c   \
                       cidr_test.c          \
+                      blacklist_test.c     \
                       test_runner.c        \
                       ../src/librepsheet.c \
                       ../src/librepsheet.h \

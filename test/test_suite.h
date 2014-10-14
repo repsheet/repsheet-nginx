@@ -5,5 +5,6 @@
 
 Suite *make_librepsheet_connection_suite();
 Suite *make_cidr_suite();
+Suite *make_blacklist_suite();
 
 #endif
