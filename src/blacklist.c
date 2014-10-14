@@ -26,6 +26,9 @@ int blacklist_actor(redisContext *context, const char *actor, int type, const ch
   case USER:
     return set_list(context, actor, "users", "blacklist", reason);
     break;
+  case BLOCK:
+    return set_list(context, actor, "cidr", "blacklist", reason);
+    break;
   default:
     return UNSUPPORTED;
     break;

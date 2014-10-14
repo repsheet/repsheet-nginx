@@ -12,6 +12,7 @@
 
 #define IP 7
 #define USER 8
+#define BLOCK 9
 
 #define DISCONNECTED -1
 #define NIL -2

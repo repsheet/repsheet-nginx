@@ -42,6 +42,15 @@ START_TEST(blacklist_user_test)
 }
 END_TEST
 
+START_TEST(blacklist_cidr_test)
+{
+  blacklist_actor(context, "10.0.0.0/24", BLOCK, "Users Blacklist CIDR Test");
+
+  reply = redisCommand(context, "GET 10.0.0.0/24:repsheet:cidr:blacklist");
+  ck_assert_str_eq(reply->str, "Users Blacklist CIDR Test");
+}
+END_TEST
+
 START_TEST(is_ip_blacklisted_test)
 {
   char value[MAX_REASON_LENGTH];
@@ -149,6 +158,7 @@ Suite *make_blacklist_suite(void) {
 
   TCase *tc_cidr_blacklist = tcase_create("CIDR list");
   tcase_add_checked_fixture(tc_cidr_blacklist, blacklist_setup, blacklist_teardown);
+  tcase_add_test(tc_cidr_blacklist, blacklist_cidr_test);
   tcase_add_test(tc_cidr_blacklist, is_ip_blacklisted_in_cidr_test);
   suite_add_tcase(suite, tc_cidr_blacklist);
 
