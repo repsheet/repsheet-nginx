@@ -18,6 +18,8 @@ test_runner_SOURCES = librepsheet_test.c   \
                       ../src/modsecurity.c \
                       ../src/modsecurity.h \
                       ../src/recorder.c    \
-                      ../src/recorder.h
+                      ../src/recorder.h    \
+                      ../src/xff.c         \
+                      ../src/xff.h
 test_runner_CFLAGS = -g -O0 --coverage $(CHECK_CFLAGS)
 test_runner_LDADD = $(CHECK_LIBS) -lhiredis -lpcre -lm
