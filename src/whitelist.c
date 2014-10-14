@@ -46,7 +46,7 @@ int is_ip_whitelisted(redisContext *context, const char *actor, char *reason)
   redisReply *ip = redisCommand(context, "GET %s:repsheet:ip:whitelist", actor);
   if (ip) {
     if (ip->type == REDIS_REPLY_STRING) {
-      _populate_reason(ip, reason);
+      populate_reason(ip, reason);
       freeReplyObject(ip);
       return TRUE;
     } else {
@@ -67,7 +67,7 @@ int is_ip_whitelisted(redisContext *context, const char *actor, char *reason)
         if (cidr_contains(block, actor)) {
           value = redisCommand(context, "GET %s:repsheet:cidr:whitelist", block);
           if (value) {
-            _populate_reason(value, reason);
+            populate_reason(value, reason);
             freeReplyObject(value);
           }
           freeReplyObject(whitelist);
@@ -100,7 +100,7 @@ int is_user_whitelisted(redisContext *context, const char *actor, char *reason)
   reply = redisCommand(context, "GET %s:repsheet:users:whitelist", actor);
   if (reply) {
     if (reply->type == REDIS_REPLY_STRING) {
-      _populate_reason(reply, reason);
+      populate_reason(reply, reason);
       freeReplyObject(reply);
       return TRUE;
     } else {

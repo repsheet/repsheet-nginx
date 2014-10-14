@@ -12,6 +12,12 @@ test_runner_SOURCES = librepsheet_test.c   \
                       ../src/blacklist.c   \
                       ../src/blacklist.h   \
                       ../src/whitelist.c   \
-                      ../src/whitelist.h
+                      ../src/whitelist.h   \
+                      ../src/marked.c      \
+                      ../src/marked.h      \
+                      ../src/modsecurity.c \
+                      ../src/modsecurity.h \
+                      ../src/recorder.c    \
+                      ../src/recorder.h
 test_runner_CFLAGS = -g -O0 --coverage $(CHECK_CFLAGS)
 test_runner_LDADD = $(CHECK_LIBS) -lhiredis -lpcre -lm

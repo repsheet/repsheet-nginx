@@ -46,7 +46,7 @@ int is_ip_blacklisted(redisContext *context, const char *actor, char *reason)
   redisReply *ip = redisCommand(context, "GET %s:repsheet:ip:blacklist", actor);
   if (ip) {
     if (ip->type == REDIS_REPLY_STRING) {
-      _populate_reason(ip, reason);
+      populate_reason(ip, reason);
       freeReplyObject(ip);
       return TRUE;
     } else {
@@ -67,7 +67,7 @@ int is_ip_blacklisted(redisContext *context, const char *actor, char *reason)
         if (cidr_contains(block, actor)) {
           value = redisCommand(context, "GET %s:repsheet:cidr:blacklist", block);
           if (value) {
-            _populate_reason(value, reason);
+            populate_reason(value, reason);
             freeReplyObject(value);
           }
           freeReplyObject(blacklist);
@@ -100,7 +100,7 @@ int is_user_blacklisted(redisContext *context, const char *actor, char *reason)
   reply = redisCommand(context, "GET %s:repsheet:users:blacklist", actor);
   if (reply) {
     if (reply->type == REDIS_REPLY_STRING) {
-      _populate_reason(reply, reason);
+      populate_reason(reply, reason);
       freeReplyObject(reply);
       return TRUE;
     } else {
@@ -131,6 +131,44 @@ int is_country_blacklisted(redisContext *context, const char *country_code)
     } else {
       freeReplyObject(reply);
       return NIL;
+    }
+  } else {
+    return DISCONNECTED;
+  }
+}
+
+/**
+ * Checks to see if an actor has been previously blacklisted
+ *
+ * @param context the Redis connection
+ * @param type IP or USER
+ * @param actor the addres of the actor in question
+ *
+ * @returns an integer response
+ */
+
+int is_historical_offender(redisContext *context, int type, const char *actor)
+{
+  redisReply *reply;
+
+  switch(type) {
+  case IP:
+    reply = redisCommand(context, "SISMEMBER repsheet:ip:blacklist:history %s", actor);
+    break;
+  case USER:
+    reply = redisCommand(context, "SISMEMBER repsheet:user:blacklist:history %s", actor);
+    break;
+  default:
+    return UNSUPPORTED;
+  }
+
+  if (reply) {
+    if (reply->integer == 1) {
+      freeReplyObject(reply);
+      return TRUE;
+    } else {
+      freeReplyObject(reply);
+      return FALSE;
     }
   } else {
     return DISCONNECTED;
