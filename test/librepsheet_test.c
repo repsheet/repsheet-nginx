@@ -71,18 +71,6 @@ START_TEST(mark_actor_test)
 END_TEST
 
 
-START_TEST(whitelist_actor_test)
-{
-  whitelist_actor(context, "1.1.1.1", IP, "IP Whitelist Actor Test");
-  whitelist_actor(context, "repsheet", USER, "User Whitelist Actor Test");
-
-  reply = redisCommand(context, "GET 1.1.1.1:repsheet:ip:whitelist");
-  ck_assert_str_eq(reply->str, "IP Whitelist Actor Test");
-
-  reply = redisCommand(context, "GET repsheet:repsheet:users:whitelist");
-  ck_assert_str_eq(reply->str, "User Whitelist Actor Test");
-}
-END_TEST
 
 START_TEST(expire_test)
 {
@@ -134,41 +122,6 @@ START_TEST(is_user_marked_false_test)
 
   int response = is_user_marked(context, "repsheet", value);
   ck_assert_int_eq(response, FALSE);
-}
-END_TEST
-
-START_TEST(is_ip_whitelisted_test)
-{
-  char value[MAX_REASON_LENGTH];
-
-  whitelist_actor(context, "1.1.1.1", IP, "Is IP Whitelisted Test");
-  int response = is_ip_whitelisted(context, "1.1.1.1", value);
-
-  ck_assert_str_eq(value, "Is IP Whitelisted Test");
-  ck_assert_int_eq(response, TRUE);
-}
-END_TEST
-
-START_TEST(is_ip_whitelisted_in_cidr_test)
-{
-  char value[MAX_REASON_LENGTH];
-
-  redisCommand(context, "SET %s:repsheet:cidr:whitelist %s", "10.0.0.0/24", "CIDR Test");
-  int response = is_ip_whitelisted(context, "10.0.0.15", value);
-  ck_assert_int_eq(response, TRUE);
-  ck_assert_str_eq(value, "CIDR Test");
-}
-END_TEST
-
-START_TEST(is_user_whitelisted_test)
-{
-  char value[MAX_REASON_LENGTH];
-
-  whitelist_actor(context, "repsheet", USER, "Is User Whitelisted Test");
-  int response = is_user_whitelisted(context, "repsheet", value);
-
-  ck_assert_str_eq(value, "Is User Whitelisted Test");
-  ck_assert_int_eq(response, TRUE);
 }
 END_TEST
 
@@ -416,30 +369,10 @@ START_TEST(is_country_marked_false_test)
 }
 END_TEST
 
-START_TEST(is_country_whitelisted_true_test)
-{
-  redisCommand(context, "SADD repsheet:countries:whitelist AU");
-  ck_assert_int_eq(is_country_whitelisted(context, "AU"), TRUE);
-}
-END_TEST
-
-START_TEST(is_country_whitelisted_false_test)
-{
-  ck_assert_int_eq(is_country_whitelisted(context, "KP"), FALSE);
-}
-END_TEST
-
 START_TEST(country_status_marked_test)
 {
   redisCommand(context, "SADD repsheet:countries:marked KP");
   ck_assert_int_eq(country_status(context, "KP"), MARKED);
-}
-END_TEST
-
-START_TEST(country_status_whitelisted_test)
-{
-  redisCommand(context, "SADD repsheet:countries:whitelist AU");
-  ck_assert_int_eq(country_status(context, "AU"), WHITELISTED);
 }
 END_TEST
 
@@ -464,15 +397,11 @@ Suite *make_librepsheet_connection_suite(void) {
   tcase_add_test(tc_connection_operations, increment_rule_count_test);
 
   tcase_add_test(tc_connection_operations, mark_actor_test);
-  tcase_add_test(tc_connection_operations, whitelist_actor_test);
 
   tcase_add_test(tc_connection_operations, is_ip_marked_test);
   tcase_add_test(tc_connection_operations, is_ip_marked_false_test);
   tcase_add_test(tc_connection_operations, is_user_marked_test);
   tcase_add_test(tc_connection_operations, is_user_marked_false_test);
-  tcase_add_test(tc_connection_operations, is_ip_whitelisted_test);
-  tcase_add_test(tc_connection_operations, is_ip_whitelisted_in_cidr_test);
-  tcase_add_test(tc_connection_operations, is_user_whitelisted_test);
   tcase_add_test(tc_connection_operations, actor_status_test);
 
   tcase_add_test(tc_connection_operations, expire_test);
@@ -491,11 +420,7 @@ Suite *make_librepsheet_connection_suite(void) {
 
   tcase_add_test(tc_connection_operations, is_country_marked_true_test);
   tcase_add_test(tc_connection_operations, is_country_marked_false_test);
-  tcase_add_test(tc_connection_operations, is_country_whitelisted_true_test);
-  tcase_add_test(tc_connection_operations, is_country_whitelisted_false_test);
-
   tcase_add_test(tc_connection_operations, country_status_marked_test);
-  tcase_add_test(tc_connection_operations, country_status_whitelisted_test);
   tcase_add_test(tc_connection_operations, country_status_good_test);
 
   suite_add_tcase(suite, tc_connection_operations);
