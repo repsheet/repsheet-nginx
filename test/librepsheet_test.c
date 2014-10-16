@@ -57,20 +57,6 @@ START_TEST(increment_rule_count_test)
 }
 END_TEST
 
-START_TEST(mark_actor_test)
-{
-  mark_actor(context, "1.1.1.1", IP, "IP Mark Actor Test");
-  mark_actor(context, "repsheet", USER, "User Mark Actor Test");
-
-  reply = redisCommand(context, "GET 1.1.1.1:repsheet:ip");
-  ck_assert_str_eq(reply->str, "IP Mark Actor Test");
-
-  reply = redisCommand(context, "GET repsheet:repsheet:users");
-  ck_assert_str_eq(reply->str, "User Mark Actor Test");
-}
-END_TEST
-
-
 
 START_TEST(expire_test)
 {
@@ -79,49 +65,6 @@ START_TEST(expire_test)
   reply = redisCommand(context, "TTL 1.1.1.1:repsheet:ip");
 
   ck_assert_int_eq(reply->integer, 200);
-}
-END_TEST
-
-START_TEST(is_ip_marked_test)
-{
-  char value[MAX_REASON_LENGTH];
-
-  mark_actor(context, "1.1.1.1", IP, "Is IP Marked Test");
-  int response = is_ip_marked(context, "1.1.1.1", value);
-  ck_assert_str_eq(value, "Is IP Marked Test");
-
-  ck_assert_int_eq(response, TRUE);
-}
-END_TEST
-
-START_TEST(is_ip_marked_false_test)
-{
-  char value[MAX_REASON_LENGTH];
-
-
-  int response = is_ip_marked(context, "1.1.1.1", value);
-  ck_assert_int_eq(response, FALSE);
-}
-END_TEST
-
-START_TEST(is_user_marked_test)
-{
-  char value[MAX_REASON_LENGTH];
-
-  mark_actor(context, "repsheet", USER, "Is User Marked Test");
-  int response = is_user_marked(context, "repsheet", value);
-  ck_assert_str_eq(value, "Is User Marked Test");
-
-  ck_assert_int_eq(response, TRUE);
-}
-END_TEST
-
-START_TEST(is_user_marked_false_test)
-{
-  char value[MAX_REASON_LENGTH];
-
-  int response = is_user_marked(context, "repsheet", value);
-  ck_assert_int_eq(response, FALSE);
 }
 END_TEST
 
@@ -356,19 +299,6 @@ START_TEST(returns_0_when_no_values_exist) {
 }
 END_TEST
 
-START_TEST(is_country_marked_true_test)
-{
-  redisCommand(context, "SADD repsheet:countries:marked KP");
-  ck_assert_int_eq(is_country_marked(context, "KP"), TRUE);
-}
-END_TEST
-
-START_TEST(is_country_marked_false_test)
-{
-  ck_assert_int_eq(is_country_marked(context, "KP"), FALSE);
-}
-END_TEST
-
 START_TEST(country_status_marked_test)
 {
   redisCommand(context, "SADD repsheet:countries:marked KP");
@@ -396,12 +326,6 @@ Suite *make_librepsheet_connection_suite(void) {
 
   tcase_add_test(tc_connection_operations, increment_rule_count_test);
 
-  tcase_add_test(tc_connection_operations, mark_actor_test);
-
-  tcase_add_test(tc_connection_operations, is_ip_marked_test);
-  tcase_add_test(tc_connection_operations, is_ip_marked_false_test);
-  tcase_add_test(tc_connection_operations, is_user_marked_test);
-  tcase_add_test(tc_connection_operations, is_user_marked_false_test);
   tcase_add_test(tc_connection_operations, actor_status_test);
 
   tcase_add_test(tc_connection_operations, expire_test);
@@ -418,8 +342,6 @@ Suite *make_librepsheet_connection_suite(void) {
   tcase_add_test(tc_connection_operations, record_properly_records_user_agent);
   tcase_add_test(tc_connection_operations, record_properly_records_http_method);
 
-  tcase_add_test(tc_connection_operations, is_country_marked_true_test);
-  tcase_add_test(tc_connection_operations, is_country_marked_false_test);
   tcase_add_test(tc_connection_operations, country_status_marked_test);
   tcase_add_test(tc_connection_operations, country_status_good_test);
 
