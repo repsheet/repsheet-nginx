@@ -150,75 +150,6 @@ START_TEST(blacklist_reason_ip_not_found_test)
 }
 END_TEST
 
-START_TEST(record_test)
-{
-  record(context, "4/23/2014", "airpair", "GET", "/airpair", NULL, 5, 10000, "1.1.1.1");
-
-  reply = redisCommand(context, "EXISTS 1.1.1.1:requests");
-  ck_assert_int_eq(reply->integer, 1);
-
-  reply = redisCommand(context, "TTL 1.1.1.1:requests");
-  ck_assert_int_eq(reply->integer, 10000);
-
-  reply = redisCommand(context, "LPOP 1.1.1.1:requests");
-  ck_assert_str_eq(reply->str, "4/23/2014, airpair, GET, /airpair, -");
-}
-END_TEST
-
-START_TEST(record_handles_null_values)
-{
-  record(context, NULL, NULL, NULL, NULL, NULL, 5, 200, "1.1.1.1");
-
-  reply = redisCommand(context, "LRANGE 1.1.1.1:requests 0 0");
-  ck_assert_str_eq(reply->element[0]->str, "-, -, -, -, -");
-}
-END_TEST
-
-START_TEST(record_properly_records_timestamp)
-{
-  record(context, "12345", NULL, NULL, NULL, NULL, 5, 200, "1.1.1.1");
-
-  reply = redisCommand(context, "LRANGE 1.1.1.1:requests 0 0");
-  ck_assert_str_eq(reply->element[0]->str, "12345, -, -, -, -");
-}
-END_TEST
-
-START_TEST(record_properly_records_user_agent)
-{
-  record(context, NULL, "A User Agent", NULL, NULL, NULL, 5, 200, "1.1.1.1");
-
-  reply = redisCommand(context, "LRANGE 1.1.1.1:requests 0 0");
-  ck_assert_str_eq(reply->element[0]->str, "-, A User Agent, -, -, -");
-}
-END_TEST
-
-START_TEST(record_properly_records_http_method)
-{
-  record(context, NULL, NULL, "GET", NULL, NULL, 5, 200, "1.1.1.1");
-
-  reply = redisCommand(context, "LRANGE 1.1.1.1:requests 0 0");
-  ck_assert_str_eq(reply->element[0]->str, "-, -, GET, -, -");
-}
-END_TEST
-
-START_TEST(record_properly_records_uri)
-{
-  record(context, NULL, NULL, NULL, "/", NULL, 5, 200, "1.1.1.1");
-
-  reply = redisCommand(context, "LRANGE 1.1.1.1:requests 0 0");
-  ck_assert_str_eq(reply->element[0]->str, "-, -, -, /, -");
-}
-END_TEST
-
-START_TEST(record_properly_records_arguments)
-{
-  record(context, NULL, NULL, NULL, NULL, "foo=bar", 5, 200, "1.1.1.1");
-
-  reply = redisCommand(context, "LRANGE 1.1.1.1:requests 0 0");
-  ck_assert_str_eq(reply->element[0]->str, "-, -, -, -, foo=bar");
-}
-END_TEST
-
 START_TEST(returns_null_when_headers_are_null)
 {
   fail_unless(remote_address(NULL, NULL) == NULL);
@@ -241,61 +172,6 @@ START_TEST(ignores_user_generated_noise)
   ck_assert_str_eq(remote_address("1.1.1.1", "\\x5000 8.8.8.8, 12.23.45.67"), "8.8.8.8");
   ck_assert_str_eq(remote_address("1.1.1.1", "This is not an IP address 8.8.8.8, 12.23.45.67"), "8.8.8.8");
   ck_assert_str_eq(remote_address("1.1.1.1", "999.999.999.999, 8.8.8.8, 12.23.45.67"), "8.8.8.8");
-}
-END_TEST
-
-START_TEST(handles_a_single_event)
-{
-  char *waf_events = "X-WAF-Events: TX: / 999935-Detects common comment types-WEB_ATTACK/INJECTION-ARGS:test";
-  int i, m = matches(waf_events);
-
-  char **events;
-
-  events = malloc(m * sizeof(char*));
-  for(i = 0; i < m; i++) {
-    events[i] = malloc(i * sizeof(char));
-  }
-
-  process_mod_security_headers(waf_events, events);
-
-  ck_assert_str_eq(events[0], "999935");
-}
-END_TEST
-
-START_TEST(handles_multiple_events)
-{
-  char *waf_events = "X-WAF-Events: TX: / 999935-Detects common comment types-WEB_ATTACK/INJECTION-ARGS:test, TX:999923-Detects JavaScript location/document property access and window access obfuscation-WEB_ATTACK/INJECTION-REQUEST_URI_RAW, TX:950001- WEB_ATTACK/SQL_INJECTION-ARGS:test";
-
-  int i, m = matches(waf_events);
-
-  char **events;
-
-  events = malloc(m * sizeof(char*));
-  for(i = 0; i  < m; i++) {
-    events[i] = malloc(i * sizeof(char));
-  }
-
-  process_mod_security_headers(waf_events, events);
-
-  ck_assert_str_eq("999935", events[0]);
-  ck_assert_str_eq("999923", events[1]);
-  ck_assert_str_eq("950001", events[2]);
-}
-END_TEST
-
-START_TEST(correctly_parses_anonmaly_total) {
-  char *input = "Total=5;SQLi=;XSS=;";
-  int score = modsecurity_total(input);
-
-  ck_assert_int_eq(5, score);
-}
-END_TEST
-
-START_TEST(returns_0_when_no_values_exist) {
-  char *input = "Total=;SQLi=;XSS=;";
-  int score = modsecurity_total(input);
-
-  ck_assert_int_eq(0, score);
 }
 END_TEST
 
@@ -334,14 +210,6 @@ Suite *make_librepsheet_connection_suite(void) {
   tcase_add_test(tc_connection_operations, blacklist_reason_ip_found_test);
   tcase_add_test(tc_connection_operations, blacklist_reason_ip_not_found_test);
 
-  tcase_add_test(tc_connection_operations, record_test);
-  tcase_add_test(tc_connection_operations, record_handles_null_values);
-  tcase_add_test(tc_connection_operations, record_properly_records_uri);
-  tcase_add_test(tc_connection_operations, record_properly_records_arguments);
-  tcase_add_test(tc_connection_operations, record_properly_records_timestamp);
-  tcase_add_test(tc_connection_operations, record_properly_records_user_agent);
-  tcase_add_test(tc_connection_operations, record_properly_records_http_method);
-
   tcase_add_test(tc_connection_operations, country_status_marked_test);
   tcase_add_test(tc_connection_operations, country_status_good_test);
 
@@ -356,13 +224,6 @@ Suite *make_librepsheet_connection_suite(void) {
   TCase *tc_proxy_malicious = tcase_create("Malicious");
   tcase_add_test(tc_proxy_malicious, ignores_user_generated_noise);
   suite_add_tcase(suite, tc_proxy_malicious);
-
-  TCase *tc_mod_security = tcase_create("ModSecurity Headers");
-  tcase_add_test(tc_mod_security, handles_a_single_event);
-  tcase_add_test(tc_mod_security, handles_multiple_events);
-  tcase_add_test(tc_mod_security, correctly_parses_anonmaly_total);
-  tcase_add_test(tc_mod_security, returns_0_when_no_values_exist);
-  suite_add_tcase(suite, tc_mod_security);
 
   return suite;
 }

@@ -5,6 +5,8 @@ test_runner_SOURCES = librepsheet_test.c   \
                       blacklist_test.c     \
                       whitelist_test.c     \
                       marked_test.c        \
+                      modsecurity_test.c   \
+                      recorder_test.c      \
                       test_runner.c        \
                       ../src/librepsheet.c \
                       ../src/librepsheet.h \
