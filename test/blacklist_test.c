@@ -63,6 +63,29 @@ START_TEST(is_ip_blacklisted_test)
 }
 END_TEST
 
+START_TEST(blacklist_reason_ip_found_test)
+{
+  char value[MAX_REASON_LENGTH];
+  int response;
+
+  blacklist_and_expire(context, IP, "1.1.1.1", 200, "Blacklist Reason IP Found Test");
+  response = is_ip_blacklisted(context, "1.1.1.1", value);
+  ck_assert_int_eq(response, TRUE);
+  ck_assert_str_eq(value, "Blacklist Reason IP Found Test");
+}
+END_TEST
+
+START_TEST(blacklist_reason_ip_not_found_test)
+{
+  char value[MAX_REASON_LENGTH];
+  int response;
+
+  blacklist_and_expire(context, IP, "1.1.1.1", 200, "Blacklist Reason IP Not Found Test");
+  response = is_ip_blacklisted(context, "1.1.1.2", value);
+  ck_assert_int_eq(response, FALSE);
+}
+END_TEST
+
 START_TEST(is_ip_blacklisted_in_cidr_test)
 {
   char value[MAX_REASON_LENGTH];
@@ -148,6 +171,8 @@ Suite *make_blacklist_suite(void) {
   tcase_add_checked_fixture(tc_ip_blacklist, blacklist_setup, blacklist_teardown);
   tcase_add_test(tc_ip_blacklist, blacklist_ip_test);
   tcase_add_test(tc_ip_blacklist, is_ip_blacklisted_test);
+  tcase_add_test(tc_ip_blacklist, blacklist_reason_ip_found_test);
+  tcase_add_test(tc_ip_blacklist, blacklist_reason_ip_not_found_test);
   suite_add_tcase(suite, tc_ip_blacklist);
 
   TCase *tc_user_blacklist = tcase_create("User list");

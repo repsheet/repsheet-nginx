@@ -7,6 +7,8 @@ test_runner_SOURCES = librepsheet_test.c   \
                       marked_test.c        \
                       modsecurity_test.c   \
                       recorder_test.c      \
+                      xff_test.c           \
+                      common_test.c        \
                       test_runner.c        \
                       ../src/librepsheet.c \
                       ../src/librepsheet.h \

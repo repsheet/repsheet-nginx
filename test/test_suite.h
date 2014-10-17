@@ -10,5 +10,7 @@ Suite *make_whitelist_suite();
 Suite *make_marked_suite();
 Suite *make_modsecurity_suite();
 Suite *make_recorder_suite();
+Suite *make_xff_suite();
+Suite *make_common_suite();
 
 #endif
