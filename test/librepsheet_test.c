@@ -75,16 +75,16 @@ START_TEST(actor_status_test)
 }
 END_TEST
 
-START_TEST(country_status_marked_test)
+START_TEST(country_status_test)
 {
   redisCommand(context, "SADD repsheet:countries:marked KP");
-  ck_assert_int_eq(country_status(context, "KP"), MARKED);
-}
-END_TEST
+  redisCommand(context, "SADD repsheet:countries:whitelist US");
+  redisCommand(context, "SADD repsheet:countries:blacklist AU");
 
-START_TEST(country_status_good_test)
-{
-  ck_assert_int_eq(country_status(context, "US"), LIBREPSHEET_OK);
+  ck_assert_int_eq(country_status(context, "KP"), MARKED);
+  ck_assert_int_eq(country_status(context, "US"), WHITELISTED);
+  ck_assert_int_eq(country_status(context, "AU"), BLACKLISTED);
+  ck_assert_int_eq(country_status(context, "UK"), LIBREPSHEET_OK);
 }
 END_TEST
 
@@ -100,8 +100,7 @@ Suite *make_librepsheet_connection_suite(void) {
   TCase *tc_connection_operations = tcase_create("Actor API");
   tcase_add_checked_fixture(tc_connection_operations, setup, teardown);
   tcase_add_test(tc_connection_operations, actor_status_test);
-  tcase_add_test(tc_connection_operations, country_status_marked_test);
-  tcase_add_test(tc_connection_operations, country_status_good_test);
+  tcase_add_test(tc_connection_operations, country_status_test);
   suite_add_tcase(suite, tc_connection_operations);
 
   return suite;
