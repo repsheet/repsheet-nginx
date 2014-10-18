@@ -42,6 +42,15 @@ START_TEST(whitelist_user_test)
 }
 END_TEST
 
+START_TEST(whitelist_cidr_test)
+{
+  whitelist_actor(context, "10.0.0.0/24", BLOCK, "Users Whitelist CIDR Test");
+
+  reply = redisCommand(context, "GET 10.0.0.0/24:repsheet:cidr:whitelist");
+  ck_assert_str_eq(reply->str, "Users Whitelist CIDR Test");
+}
+END_TEST
+
 START_TEST(is_ip_whitelisted_test)
 {
   char value[MAX_REASON_LENGTH];
@@ -116,6 +125,7 @@ Suite *make_whitelist_suite(void) {
   TCase *tc_cidr_whitelist = tcase_create("CIDR list");
   tcase_add_checked_fixture(tc_cidr_whitelist, whitelist_setup, whitelist_teardown);
   tcase_add_test(tc_cidr_whitelist, is_ip_whitelisted_in_cidr_test);
+  tcase_add_test(tc_cidr_whitelist, whitelist_cidr_test);
   suite_add_tcase(suite, tc_cidr_whitelist);
 
   TCase *tc_country_whitelist = tcase_create("Country list");
