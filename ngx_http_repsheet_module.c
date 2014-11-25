@@ -121,7 +121,10 @@ lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "[Repsheet] - Could not locate %V cookie", &main_conf->cookie);
   } else {
     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "[Repsheet] - Got value for %V cookie: %V", &main_conf->cookie, &cookie_value);
-    user_status = actor_status(main_conf->redis.connection, (const char *)cookie_value.data, USER, reason_user);
+    char lookup_value[cookie_value.len + 1];
+    memcpy(lookup_value, cookie_value.data, cookie_value.len);
+    lookup_value[cookie_value.len] = '\0';
+    user_status = actor_status(main_conf->redis.connection, (const char *)lookup_value, USER, reason_user);
   }
 
   if (user_status == DISCONNECTED) {
