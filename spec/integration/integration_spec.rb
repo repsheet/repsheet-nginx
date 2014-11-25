@@ -43,6 +43,24 @@ describe "Integration Specs" do
       expect(http.response_code).to eq(403)
     end
 
+    it "Returns a 403 response if the user is on the blacklist with multiple cookie values present and cookie is at the end" do
+      @redis.set("integration:repsheet:users:blacklist", "Integration Spec")
+      http = Curl.get("http://127.0.0.1:8888") do |http|
+        http.headers['Cookie'] = "foo=bar; user=integration;"
+      end
+
+      expect(http.response_code).to eq(403)
+    end
+
+    it "Returns a 403 response if the user is on the blacklist with multiple cookie values present and cookie is in the middle" do
+      @redis.set("integration:repsheet:users:blacklist", "Integration Spec")
+      http = Curl.get("http://127.0.0.1:8888") do |http|
+        http.headers['Cookie'] = "foo=bar; user=integration; baz=quux;"
+      end
+
+      expect(http.response_code).to eq(403)
+    end
+
     it "Returns a 403 response if the user is in a blacklisted CIDR block" do
       @redis.set("10.0.0.0/24:repsheet:cidr:blacklist", "Integration Spec")
       http = Curl.get("http://127.0.0.1:8888") do |http|
