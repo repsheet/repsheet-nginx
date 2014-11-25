@@ -43,6 +43,15 @@ describe "Integration Specs" do
       expect(http.response_code).to eq(403)
     end
 
+    it "Returns a 403 response if the IP is in a blacklisted country" do
+      @redis.set("US:repsheet:countries:blacklist", "Integration Spec")
+      http = Curl.get("http://127.0.0.1:8888") do |http|
+        http.headers['X-Forwarded-For'] = '8.8.8.8'
+      end
+
+      expect(http.response_code).to eq(200)
+    end
+
     it "Returns a 200 response if the IP is on the whitelist" do
       @redis.set("127.0.0.1:repsheet:ip:blacklist", "Integration Spec")
       @redis.set("127.0.0.1:repsheet:ip:whitelist", "Integration Spec")

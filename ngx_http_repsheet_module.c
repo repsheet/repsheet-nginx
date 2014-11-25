@@ -183,6 +183,22 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
   return NGX_DECLINED;
 }
 
+
+static ngx_int_t
+lookup_country(ngx_http_request_t *r)
+{
+  ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Resolving GeoIP location");
+  ngx_str_t name = ngx_string("geoip_country_code");
+  ngx_int_t hash = ngx_hash_key(name.data, name.len);
+  ngx_http_variable_value_t *geoip_country_code_var = ngx_http_get_variable(r, &name, hash);
+  if (geoip_country_code_var && geoip_country_code_var->valid) {
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Country Code: %s", geoip_country_code_var->data);
+    return NGX_OK;
+  }
+  return NGX_DECLINED;
+}
+
+
 static ngx_int_t
 ngx_http_repsheet_handler(ngx_http_request_t *r)
 {
@@ -203,6 +219,8 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
       return NGX_DECLINED;
     }
   }
+
+  lookup_country(r);
 
   if (main_conf->user_lookup) {
     int user_status = lookup_user(r, main_conf);

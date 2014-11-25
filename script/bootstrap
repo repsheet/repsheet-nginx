@@ -54,6 +54,7 @@ compile () {
     CFLAGS="-g -O0 -Wall -Werror" ./configure        \
 	--with-cc-opt="-Wno-deprecated-declarations" \
         --with-debug                                 \
+	--with-http_geoip_module                     \
         --prefix=$(pwd)/../../build/nginx            \
         --conf-path=conf/nginx.conf                  \
         --error-log-path=logs/error.log              \
