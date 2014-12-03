@@ -31,3 +31,5 @@ dump.rdb
 build
 vendor
 /.bundle/
+cov-int
+repsheet-nginx.tar.gz
