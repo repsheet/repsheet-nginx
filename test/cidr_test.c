@@ -17,16 +17,20 @@ END_TEST
 START_TEST(class_c_excludes)
 {
   char *block = "10.0.0.0/24";
+  char *bad_value = "foo";
   char *short_block = "0.0.0/24";
   char *bad_mask = "10.0.0.0/33";
+  char *no_mask = "10.0.0.0";
 
   char *in = "10.0.0.50";
   char *out = "10.0.1.50";
   char *too_large = "10.0.0.257";
   char *too_long = "10.0.0.1024";
 
+  ck_assert_int_eq(BAD_CIDR_BLOCK, cidr_contains(bad_value, in));
   ck_assert_int_eq(BAD_CIDR_BLOCK, cidr_contains(short_block, in));
   ck_assert_int_eq(BAD_CIDR_BLOCK, cidr_contains(bad_mask, in));
+  ck_assert_int_eq(BAD_CIDR_BLOCK, cidr_contains(no_mask, in));
 
   ck_assert_int_eq(0, cidr_contains(block, out));
   ck_assert_int_eq(BAD_ADDRESS, cidr_contains(block, too_large));

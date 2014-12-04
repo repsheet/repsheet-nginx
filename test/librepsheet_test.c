@@ -21,8 +21,10 @@ void teardown(void)
   freeReplyObject(redisCommand(context, "flushdb"));
   if (reply) {
     freeReplyObject(reply);
+    reply=NULL;
   }
   redisFree(context);
+  context=NULL;
 }
 
 START_TEST(get_redis_context_failure_test)
