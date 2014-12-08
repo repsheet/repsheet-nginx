@@ -52,16 +52,25 @@ int cidr_contains(char *block, const char *address)
 int _string_to_cidr(CIDR *cidr, char *block)
 {
   char dup[strlen(block) + 1];
+  char *value;
   memcpy(dup, block, strlen(block) + 1);
 
-  cidr->address_string = strtok(dup,"/");
-  if (strlen(cidr->address_string) < 8 || strlen(cidr->address_string) > 16) {
-    return BAD_CIDR_BLOCK;
+  value = strtok(dup,"/");
+  if (value != NULL) {
+    cidr->address_string = value;
+    if (strlen(cidr->address_string) < 7 || strlen(cidr->address_string) > 16) {
+      return BAD_CIDR_BLOCK;
+    }
   }
 
-  cidr->mask = strtol(strtok(NULL,"/"), 0, 10);
-  if (cidr->mask < 0 || cidr->mask > 32) {
+  value = strtok(NULL,"/");
+  if (value == NULL) {
     return BAD_CIDR_BLOCK;
+  } else {
+    cidr->mask = strtol(value, 0, 10);
+    if (cidr->mask < 0 || cidr->mask > 32) {
+      return BAD_CIDR_BLOCK;
+    }
   }
 
   cidr->address = _string_to_integer(cidr->address_string);
@@ -75,14 +84,27 @@ int _string_to_cidr(CIDR *cidr, char *block)
 int _string_to_integer(const char *address)
 {
   char dup[strlen(address) + 1];
+  char *value;
   memcpy(dup, address, strlen(address) + 1);
 
-  int first, second, third, fourth;
+  int first, second, third, fourth = -1;
 
-  first = strtol(strtok(dup, "."), 0, 10);
-  second = strtol(strtok(NULL, "."), 0, 10);
-  third = strtol(strtok(NULL, "."), 0, 10);
-  fourth = strtol(strtok(NULL, "."), 0, 10);
+  value = strtok(dup, ".");
+  if (value != NULL) {
+    first = strtol(value, 0, 10);
+  }
+  value = strtok(NULL, ".");
+  if (value != NULL) {
+    second = strtol(value, 0, 10);
+  }
+  value = strtok(NULL, ".");
+  if (value != NULL) {
+    third = strtol(value, 0, 10);
+  }
+  value = strtok(NULL, ".");
+  if (value != NULL) {
+    fourth = strtol(value, 0, 10);
+  }
 
   int i;
   int octets[] = {first, second, third, fourth};

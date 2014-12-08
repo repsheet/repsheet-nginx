@@ -67,7 +67,7 @@ int is_ip_whitelisted(redisContext *context, const char *actor, char *reason)
       char *block;
       for(i = 0; i < whitelist->elements; i++) {
         block = strtok(whitelist->element[i]->str, ":");
-        if (cidr_contains(block, actor)) {
+        if (cidr_contains(block, actor) > 0) {
           value = redisCommand(context, "GET %s:repsheet:cidr:whitelist", block);
           if (value) {
             populate_reason(value, reason);

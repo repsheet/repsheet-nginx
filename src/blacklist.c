@@ -67,7 +67,7 @@ int is_ip_blacklisted(redisContext *context, const char *actor, char *reason)
       char *block;
       for(i = 0; i < blacklist->elements; i++) {
         block = strtok(blacklist->element[i]->str, ":");
-        if (cidr_contains(block, actor)) {
+        if (cidr_contains(block, actor) > 0) {
           value = redisCommand(context, "GET %s:repsheet:cidr:blacklist", block);
           if (value) {
             populate_reason(value, reason);

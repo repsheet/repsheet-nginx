@@ -20,8 +20,10 @@ void blacklist_teardown(void)
   freeReplyObject(redisCommand(context, "flushdb"));
   if (reply) {
     freeReplyObject(reply);
+    reply=NULL;
   }
   redisFree(context);
+  context=NULL;
 }
 
 START_TEST(blacklist_ip_test)
@@ -90,10 +92,21 @@ START_TEST(is_ip_blacklisted_in_cidr_test)
 {
   char value[MAX_REASON_LENGTH];
 
-  redisCommand(context, "SET %s:repsheet:cidr:blacklist %s", "10.0.0.0/24", "CIDR Test");
+  redisCommand(context, "DEL %s:repsheet:cidr:blacklist", "0.0.0.1/32");
+
+  redisCommand(context, "SET %s:repsheet:cidr:blacklist %s", "10.0.0.0/24", "CIDR 24 Test");
   int response = is_ip_blacklisted(context, "10.0.0.15", value);
   ck_assert_int_eq(response, TRUE);
-  ck_assert_str_eq(value, "CIDR Test");
+  ck_assert_str_eq(value, "CIDR 24 Test");
+
+  redisCommand(context, "SET %s:repsheet:cidr:blacklist %s", "0.0.0.1/32", "CIDR 32 Test");
+  response = is_ip_blacklisted(context, "0.0.0.1", value);
+  ck_assert_int_eq(response, TRUE);
+  ck_assert_str_eq(value, "CIDR 32 Test");
+
+  // Verify a value not blacklisted does not match.
+  response = is_ip_blacklisted(context, "20.1.1.1", value);
+  ck_assert_int_eq(response, FALSE);
 }
 END_TEST
 

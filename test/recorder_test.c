@@ -20,8 +20,10 @@ void recorder_teardown(void)
   freeReplyObject(redisCommand(context, "flushdb"));
   if (reply) {
     freeReplyObject(reply);
+    reply=NULL;
   }
   redisFree(context);
+  context=NULL;
 }
 
 START_TEST(record_test)
