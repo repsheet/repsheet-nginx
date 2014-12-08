@@ -1,3 +1,9 @@
+librepsheet (3.2.0-1) unstable-security; urgency=low
+
+  * CIDR support fixes
+
+ -- Aaron Bedra <aaron@aaronbedra.com>  Mon, 08 Dec 2014 12:00:13 -0600
+
 librepsheet (3.1.0-1) unstable-security; urgency=low
 
   * Adds CIDR support
