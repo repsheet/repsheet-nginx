@@ -55,6 +55,7 @@ int _string_to_cidr(CIDR *cidr, char *block)
   char *value;
   memcpy(dup, block, strlen(block) + 1);
 
+  cidr->address_string = NULL;
   value = strtok(dup,"/");
   if (value != NULL) {
     cidr->address_string = value;
@@ -73,9 +74,13 @@ int _string_to_cidr(CIDR *cidr, char *block)
     }
   }
 
-  cidr->address = _string_to_integer(cidr->address_string);
-  if (cidr->address == BAD_ADDRESS) {
+  if (cidr->address_string == NULL) {
     return BAD_ADDRESS;
+  } else {
+    cidr->address = _string_to_integer(cidr->address_string);
+    if (cidr->address == BAD_ADDRESS) {
+      return BAD_ADDRESS;
+    }
   }
 
   return LIBREPSHEET_OK;
@@ -87,23 +92,34 @@ int _string_to_integer(const char *address)
   char *value;
   memcpy(dup, address, strlen(address) + 1);
 
-  int first, second, third, fourth = -1;
+  int first, second, third, fourth;
 
   value = strtok(dup, ".");
   if (value != NULL) {
     first = strtol(value, 0, 10);
+  } else {
+    return BAD_ADDRESS;
   }
+
   value = strtok(NULL, ".");
   if (value != NULL) {
     second = strtol(value, 0, 10);
+  } else {
+    return BAD_ADDRESS;
   }
+
   value = strtok(NULL, ".");
   if (value != NULL) {
     third = strtol(value, 0, 10);
+  } else {
+    return BAD_ADDRESS;
   }
+
   value = strtok(NULL, ".");
   if (value != NULL) {
     fourth = strtol(value, 0, 10);
+  } else {
+    return BAD_ADDRESS;
   }
 
   int i;
