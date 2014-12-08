@@ -1,3 +1,7 @@
+2014-12-08  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 3.2.0: Fixes to CIDR support
+
 2014-10-09  Aaron Bedra  <aaron@aaronbedra.com>
 
 	* 3.1.0: Added CIDR support
