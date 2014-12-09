@@ -2,6 +2,12 @@
 #include "marked.h"
 
 /**
+ * @file marked.c
+ * @author Aaron Bedra
+ * @date 12/09/2014
+ */
+
+/**
  * Adds the actor to the Repsheet
  *
  * @param context the Redis connection

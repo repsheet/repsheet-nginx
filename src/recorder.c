@@ -5,6 +5,12 @@
 #include "recorder.h"
 
 /**
+ * @file recorder.c
+ * @author Aaron Bedra
+ * @date 12/09/2014
+ */
+
+/**
  * Records details about the request and stores them in Redis
  *
  * @param context the redis connection

@@ -6,6 +6,12 @@
 #include "blacklist.h"
 
 /**
+ * @file blacklist.c
+ * @author Aaron Bedra
+ * @date 12/09/2014
+ */
+
+/**
  * Adds the actor to the Repsheet blacklist
  *
  * @param context the Redis connection

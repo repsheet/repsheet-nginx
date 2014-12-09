@@ -6,6 +6,12 @@
 #include "whitelist.h"
 
 /**
+ * @file whitelist.c
+ * @author Aaron Bedra
+ * @date 12/09/2014
+ */
+
+/**
  * Adds the actor to the Repsheet whitelist
  *
  * @param context the Redis connection

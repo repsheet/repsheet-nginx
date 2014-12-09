@@ -6,6 +6,12 @@
 #include "modsecurity.h"
 
 /**
+ * @file modsecurity.c
+ * @author Aaron Bedra
+ * @date 12/09/2014
+ */
+
+/**
  * Finds the number of ModSecurity rules in X-WAF-Events header. This
  * is used before the actual processor so that the events array can be
  * properly allocated.

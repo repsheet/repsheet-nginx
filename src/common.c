@@ -3,6 +3,12 @@
 #include "repsheet.h"
 #include "common.h"
 
+/**
+ * @file common.c
+ * @author Aaron Bedra
+ * @date 12/09/2014
+ */
+
 void populate_reason(redisReply *reply, char *reason)
 {
   size_t s = reply->len > MAX_REASON_LENGTH ? MAX_REASON_LENGTH : reply->len;

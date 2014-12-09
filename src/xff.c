@@ -4,6 +4,12 @@
 #include "xff.h"
 
 /**
+ * @file xff.c
+ * @author Aaron Bedra
+ * @date 12/09/2014
+ */
+
+/**
  * Determines the IP address of the actor. If X-Forwarded-For has
  * information, the function takes the first address in the string. If
  * no XFF information is provided the function returns the
