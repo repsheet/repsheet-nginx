@@ -55,6 +55,8 @@ derive_actor_address(ngx_http_request_t *r, char *address)
   int length;
   ngx_table_elt_t *xff = x_forwarded_for(r);
 
+  memset(address, '\0', INET6_ADDRSTRLEN);
+
   if (xff != NULL && xff->value.data != NULL) {
     u_char *p;
 
@@ -65,20 +67,24 @@ derive_actor_address(ngx_http_request_t *r, char *address)
     }
 
     length = p - xff->value.data;
+    char *test_address = malloc(length + 1);
+    memcpy(test_address, xff->value.data, length);
+    test_address[length] = '\0';
+
     unsigned char buf[sizeof(struct in_addr)];
     unsigned char buf6[sizeof(struct in6_addr)];
 
-    if (inet_pton(AF_INET, (const char *)xff->value.data, buf) == 1 || inet_pton(AF_INET6, (const char *)xff->value.data, buf6) == 1) {
-      strncpy(address, (char *)xff->value.data, length);
-      address[length] = '\0';
+    if (inet_pton(AF_INET, (const char *)test_address, buf) == 1 || inet_pton(AF_INET6, (const char *)test_address, buf6) == 1) {
+      memcpy(address, test_address, length);
+      free(test_address);
       return NGX_OK;
     } else {
+      free(test_address);
       return NGX_DECLINED;
     }
   } else {
     length = r->connection->addr_text.len;
-    strncpy(address, (char *)r->connection->addr_text.data, length);
-    address[length] = '\0';
+    memcpy(address, (char *)r->connection->addr_text.data, length);
     return NGX_OK;
   }
 }

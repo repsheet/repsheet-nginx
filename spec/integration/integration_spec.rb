@@ -162,5 +162,12 @@ describe "Integration Specs" do
       end
       expect(http.response_code).to eq(200)
     end
+
+    it "successfully validates and accepts mixed addresses" do
+      http = Curl.get("http://127.0.0.1:8888?../../") do |http|
+        http.headers['X-Forwarded-For'] = "2607:fb90:2c1a:664:0:45:287c:1301, 66.249.84.231, 63.80.12.214, 209.170.78.1417"
+      end
+      expect(http.response_code).to eq(200)
+    end
   end
 end
