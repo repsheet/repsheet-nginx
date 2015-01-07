@@ -56,7 +56,6 @@ derive_actor_address(ngx_http_request_t *r, char *address)
   ngx_table_elt_t *xff = x_forwarded_for(r);
 
   if (xff != NULL && xff->value.data != NULL) {
-    in_addr_t addr;
     u_char *p;
 
     for (p = xff->value.data; p < (xff->value.data + xff->value.len); p++) {
@@ -66,8 +65,10 @@ derive_actor_address(ngx_http_request_t *r, char *address)
     }
 
     length = p - xff->value.data;
-    addr = ngx_inet_addr(xff->value.data, length);
-    if (addr != INADDR_NONE && length <= INET_ADDRSTRLEN) {
+    unsigned char buf[sizeof(struct in_addr)];
+    unsigned char buf6[sizeof(struct in6_addr)];
+
+    if (inet_pton(AF_INET, (const char *)xff->value.data, buf) == 1 || inet_pton(AF_INET6, (const char *)xff->value.data, buf6) == 1) {
       strncpy(address, (char *)xff->value.data, length);
       address[length] = '\0';
       return NGX_OK;
@@ -153,7 +154,7 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
 {
   int address_code;
   int ip_status = LIBREPSHEET_OK;
-  char address[INET_ADDRSTRLEN];
+  char address[INET6_ADDRSTRLEN];
   char reason_ip[MAX_REASON_LENGTH];
 
   address_code = derive_actor_address(r, address);

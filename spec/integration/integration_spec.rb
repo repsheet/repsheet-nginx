@@ -20,9 +20,52 @@ describe "Integration Specs" do
   end
 
   describe "Actions" do
-    it "Returns a 403 response if the IP is on the blacklist" do
-      @redis.set("127.0.0.1:repsheet:ip:blacklist", "Integration Spec")
-      expect(Curl.get("http://127.0.0.1:8888").response_code).to eq(403)
+    context "IPv4" do
+      it "Returns a 403 response if the IP is on the blacklist" do
+        @redis.set("127.0.0.1:repsheet:ip:blacklist", "Integration Spec")
+        expect(Curl.get("http://127.0.0.1:8888").response_code).to eq(403)
+      end
+
+      it "Returns a 200 response if the IP is on the whitelist" do
+        @redis.set("127.0.0.1:repsheet:ip:blacklist", "Integration Spec")
+        @redis.set("127.0.0.1:repsheet:ip:whitelist", "Integration Spec")
+        expect(Curl.get("http://127.0.0.1:8888").response_code).to eq(200)
+      end
+
+      it "Returns a 200 response if the IP is marked on the repsheet" do
+        @redis.set("127.0.0.1:repsheet:ip", "Integration Spec")
+        expect(Curl.get("http://127.0.0.1:8888").response_code).to eq(200)
+      end
+    end
+
+    context "IPv6" do
+      it "Returns a 403 response if the IP is on the blacklist" do
+        @redis.set("2607:fb90:2c1a:664:0:45:287c:1301:repsheet:ip:blacklist", "Integration Spec")
+        http = Curl.get("http://127.0.0.1:8888") do |http|
+          http.headers['X-Forwarded-For'] = "2607:fb90:2c1a:664:0:45:287c:1301"
+        end
+
+        expect(http.response_code).to eq(403)
+      end
+
+      it "Returns a 200 response if the IP is on the whitelist" do
+        @redis.set("2607:fb90:2c1a:664:0:45:287c:1301:repsheet:ip:blacklist", "Integration Spec")
+        @redis.set("2607:fb90:2c1a:664:0:45:287c:1301:repsheet:ip:whitelist", "Integration Spec")
+        http = Curl.get("http://127.0.0.1:8888") do |http|
+          http.headers['X-Forwarded-For'] = "2607:fb90:2c1a:664:0:45:287c:1301"
+        end
+
+        expect(http.response_code).to eq(200)
+      end
+
+      it "Returns a 200 response if the IP is marked on the repsheet" do
+        @redis.set("2607:fb90:2c1a:664:0:45:287c:1301:repsheet:ip", "Integration Spec")
+        http = Curl.get("http://127.0.0.1:8888") do |http|
+          http.headers['X-Forwarded-For'] = "2607:fb90:2c1a:664:0:45:287c:1301"
+        end
+
+        expect(Curl.get("http://127.0.0.1:8888").response_code).to eq(200)
+      end
     end
 
     it "Returns a 403 response if the user is on the blacklist" do
@@ -70,11 +113,6 @@ describe "Integration Specs" do
       expect(http.response_code).to eq(403)
     end
 
-    it "Returns a 200 response if the IP is on the whitelist" do
-      @redis.set("127.0.0.1:repsheet:ip:blacklist", "Integration Spec")
-      @redis.set("127.0.0.1:repsheet:ip:whitelist", "Integration Spec")
-      expect(Curl.get("http://127.0.0.1:8888").response_code).to eq(200)
-    end
 
     it "Returns a 200 response if the user is on the whitelist" do
       @redis.set("repsheet:repsheet:users:blacklist", "Integration Spec")
@@ -98,11 +136,6 @@ describe "Integration Specs" do
       expect(http.response_code).to eq(200)
     end
 
-    it "Returns a 200 response if the IP is marked on the repsheet" do
-      @redis.set("127.0.0.1:repsheet:ip", "Integration Spec")
-      expect(Curl.get("http://127.0.0.1:8888").response_code).to eq(200)
-    end
-
     it "Returns a 200 response if the user is marked on the repsheet" do
       @redis.set("repsheet:repsheet:users", "Integration Spec")
 
@@ -121,6 +154,13 @@ describe "Integration Specs" do
         http.headers['X-Forwarded-For'] = '\x5000 8.8.8.8, 12.34.56.78, 98.76.54.32'
       end
       expect(http.response_code).to eq(403)
+    end
+
+    it "successfully validates and accepts IPv6 addresses" do
+      http = Curl.get("http://127.0.0.1:8888?../../") do |http|
+        http.headers['X-Forwarded-For'] = "2607:fb90:2c1a:664:0:45:287c:1301"
+      end
+      expect(http.response_code).to eq(200)
     end
   end
 end
