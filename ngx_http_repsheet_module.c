@@ -30,6 +30,71 @@ typedef struct {
 
 ngx_module_t ngx_http_repsheet_module;
 
+
+static ngx_int_t
+capture_browser_from_user_agent(ngx_http_request_t *r, ngx_str_t *browser)
+{
+  u_char *user_agent;
+
+  if (r->headers_in.user_agent) {
+    user_agent = r->headers_in.user_agent->value.data;
+  } else {
+    return NGX_DECLINED;
+  }
+
+  if (ngx_strstrn(user_agent, "Chrome/", 7 - 1)) {
+    ngx_str_set(browser, "Chrome");
+  } else if (ngx_strstrn(user_agent, "MSIE ", 5 - 1)) {
+    ngx_str_set(browser, "MSIE");
+  } else if (ngx_strstrn(user_agent, "Opera", 5 - 1)) {
+    ngx_str_set(browser, "Opera");
+  } else if (ngx_strstrn(user_agent, "Safari/", 7 - 1)) {
+    ngx_str_set(browser, "Safari");
+  } else if (ngx_strstrn(user_agent, "Firefox/", 8 - 1)) {
+    ngx_str_set(browser, "Firefox");
+  } else {
+    return NGX_DECLINED;
+  }
+
+  return NGX_OK;
+}
+
+
+static void
+scan_headers(ngx_http_request_t *r)
+{
+  ngx_list_part_t *part;
+  ngx_table_elt_t *h;
+  ngx_uint_t i;
+
+  ngx_str_t browser;
+  ngx_int_t result = capture_browser_from_user_agent(r, &browser);
+  if (result == NGX_DECLINED) {
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Could not detect browser from User-Agent %s", r->headers_in.user_agent->value.data);
+  } else {
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Browser is %s", browser.data);
+  }
+
+
+  part = &r->headers_in.headers.part;
+  h = part->elts;
+
+  for (i = 0; ; i++) {
+    if (i >= part->nelts) {
+      if (part->next == NULL) {
+        break;
+      }
+
+      part = part->next;
+      h = part->elts;
+      i = 0;
+    }
+
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Header: %s=%s", h[i].key.data, h[i].value.data);
+  }
+}
+
+
 static ngx_table_elt_t*
 x_forwarded_for(ngx_http_request_t *r)
 {
@@ -201,6 +266,8 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
   if (!loc_conf->enabled || loc_conf->enabled == NGX_CONF_UNSET || r->main->internal) {
     return NGX_DECLINED;
   }
+
+  scan_headers(r);
 
   repsheet_main_conf_t *main_conf = ngx_http_get_module_main_conf(r, ngx_http_repsheet_module);
 
