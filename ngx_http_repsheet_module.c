@@ -16,6 +16,7 @@ typedef struct {
   redisContext *connection;
 } repsheet_redis_t;
 
+
 typedef struct {
   repsheet_redis_t redis;
   ngx_flag_t user_lookup;
@@ -24,60 +25,102 @@ typedef struct {
   ngx_str_t cookie;
 } repsheet_main_conf_t;
 
+
 typedef struct {
   ngx_flag_t enabled;
 } repsheet_loc_conf_t;
+
+
+#define HOST 1
+#define CONNECTION 2
+#define USER_AGENT 3
+#define ACCEPT 4
+#define ACCEPT_ENCODING 5
+#define ACCEPT_LANGUAGE 6
+#define CACHE_CONTROL 7
+#define ACCEPT_CHARSET 8
+#define KEEP_ALIVE 9
+
+
+const int Chrome[7] = {1, 2, 7, 4, 3, 5, 6};
+const int Firefox[6] = {1, 3, 4, 6, 5, 2};
+const int Safari[] = {1, 5, 4, 3, 6, 7, 2};
+
+const int Opera[] = {};
+const int MSIE[] = {};
+const int Unknown[] = {};
+
 
 ngx_module_t ngx_http_repsheet_module;
 
 
 static ngx_int_t
-capture_browser_from_user_agent(ngx_http_request_t *r, ngx_str_t *browser)
+magic_number(const char *val)
 {
-  u_char *user_agent;
-
-  if (r->headers_in.user_agent) {
-    user_agent = r->headers_in.user_agent->value.data;
+  if (strncmp(val, "Host", 4) == 0) {
+    return HOST;
+  } else if (strncmp(val, "Connection", 10) == 0) {
+    return CONNECTION;
+  } else if (strncmp(val, "User-Agent", 10) == 0) {
+    return USER_AGENT;
+  } else if (strncmp(val, "Accept", 7) == 0) {
+    return ACCEPT;
+  } else if (strncmp(val, "Accept-Encoding", 15) == 0) {
+    return ACCEPT_ENCODING;
+  } else if (strncmp(val, "Accept-Language", 15) == 0) {
+    return ACCEPT_LANGUAGE;
+  } else if (strncmp(val, "Cache-Control", 13) == 0) {
+    return CACHE_CONTROL;
   } else {
     return NGX_DECLINED;
   }
-
-  if (ngx_strstrn(user_agent, "Chrome/", 7 - 1)) {
-    ngx_str_set(browser, "Chrome");
-  } else if (ngx_strstrn(user_agent, "MSIE ", 5 - 1)) {
-    ngx_str_set(browser, "MSIE");
-  } else if (ngx_strstrn(user_agent, "Opera", 5 - 1)) {
-    ngx_str_set(browser, "Opera");
-  } else if (ngx_strstrn(user_agent, "Safari/", 7 - 1)) {
-    ngx_str_set(browser, "Safari");
-  } else if (ngx_strstrn(user_agent, "Firefox/", 8 - 1)) {
-    ngx_str_set(browser, "Firefox");
-  } else {
-    return NGX_DECLINED;
-  }
-
-  return NGX_OK;
 }
 
 
-static void
+static const int *
+capture_browser_from_user_agent(ngx_http_request_t *r)
+{
+  u_char *user_agent = r->headers_in.user_agent->value.data;
+
+  if (ngx_strstrn(user_agent, "Chrome/", 7 - 1)) {
+    return Chrome;
+  } else if (ngx_strstrn(user_agent, "MSIE ", 5 - 1)) {
+    return MSIE;
+  } else if (ngx_strstrn(user_agent, "Opera", 5 - 1)) {
+    return Opera;
+  } else if (ngx_strstrn(user_agent, "Safari/", 7 - 1)) {
+    return Safari;
+  } else if (ngx_strstrn(user_agent, "Firefox/", 8 - 1)) {
+    return Firefox;
+  } else {
+    return Unknown;
+  }
+}
+
+
+static ngx_int_t
 scan_headers(ngx_http_request_t *r)
 {
   ngx_list_part_t *part;
   ngx_table_elt_t *h;
   ngx_uint_t i;
 
-  ngx_str_t browser;
-  ngx_int_t result = capture_browser_from_user_agent(r, &browser);
-  if (result == NGX_DECLINED) {
-    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Could not detect browser from User-Agent %s", r->headers_in.user_agent->value.data);
-  } else {
-    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Browser is %s", browser.data);
+  if (r->headers_in.user_agent == NULL) {
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - No User-Agent supplied. Skipping bot detection");
+    return NGX_DECLINED;
   }
 
+  const int *browser = capture_browser_from_user_agent(r);
+
+  if (browser == Unknown) {
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Could not detect browser from User-Agent %s", r->headers_in.user_agent);
+    return NGX_DECLINED;
+  }
 
   part = &r->headers_in.headers.part;
   h = part->elts;
+
+  ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Looping through headers");
 
   for (i = 0; ; i++) {
     if (i >= part->nelts) {
@@ -91,7 +134,20 @@ scan_headers(ngx_http_request_t *r)
     }
 
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Header: %s=%s", h[i].key.data, h[i].value.data);
+
+    if (i > sizeof(browser - 1) || browser[i] == 0) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Finished looping through headers, full fingerprint match");
+      return NGX_OK;
+    } else {
+      if (magic_number((const char *)h[i].key.data) != browser[i]) {
+	ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Header order mismatch: Browser %d, Actual %d, for %s", browser[i], magic_number((const char *)h[i].key.data), h[i].key.data);
+	return NGX_DECLINED;
+      }
+    }
   }
+
+  ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Finished looping through headers, full fingerprint match");
+  return NGX_OK;
 }
 
 
