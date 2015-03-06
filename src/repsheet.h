@@ -29,4 +29,7 @@ int actor_status(redisContext *context, const char *actor, int type, char *reaso
 
 const char *remote_address(char *connected_address, const char *xff_header);
 
+int blacklist_actor(redisContext *context, const char *actor, int type, const char *reason);
+int mark_actor(redisContext *context, const char *actor, int type, const char *reason);
+
 #endif
