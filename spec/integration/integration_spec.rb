@@ -170,4 +170,20 @@ describe "Integration Specs" do
       expect(http.response_code).to eq(200)
     end
   end
+
+  describe "Auto Blacklist" do
+    it "Blacklists a request when enabled" do
+      expect(Curl.get("http://127.0.0.1:8888/blacklist").response_code).to eq(403)
+      expect(@redis.get("127.0.0.1:repsheet:ip:blacklist")).to eq("bad robot")
+      expect(Curl.get("http://127.0.0.1:8888").response_code).to eq(403)
+    end
+  end
+
+  describe "Auto Mark" do
+    it "Blacklists a request when enabled" do
+      expect(Curl.get("http://127.0.0.1:8888/mark").response_code).to eq(404)
+      expect(@redis.get("127.0.0.1:repsheet:ip")).to eq("bad robot")
+      expect(Curl.get("http://127.0.0.1:8888").response_code).to eq(200)
+    end
+  end
 end

@@ -26,6 +26,8 @@ typedef struct {
 
 typedef struct {
   ngx_flag_t enabled;
+  ngx_flag_t auto_blacklist;
+  ngx_flag_t auto_mark;
 } repsheet_loc_conf_t;
 
 ngx_module_t ngx_http_repsheet_module;
@@ -214,6 +216,27 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     }
   }
 
+  if (loc_conf->auto_blacklist || loc_conf->auto_mark) {
+    int address_code;
+    char address[INET6_ADDRSTRLEN];
+
+    address_code = derive_actor_address(r, address);
+
+    if (address_code == NGX_DECLINED) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Request was blocked by repsheet. Reason: Invalid X-Forwarded-For", address);
+      return NGX_HTTP_FORBIDDEN;
+    }
+
+    if (loc_conf->auto_blacklist) {
+      blacklist_actor(main_conf->redis.connection, address, IP, "bad robot");
+      return NGX_HTTP_FORBIDDEN;
+    }
+
+    if (loc_conf->auto_mark) {
+      mark_actor(main_conf->redis.connection, address, IP, "bad robot");
+    }
+  }
+
   if (main_conf->user_lookup) {
     int user_status = lookup_user(r, main_conf);
     if (user_status != NGX_DECLINED) {
@@ -316,6 +339,22 @@ static ngx_command_t ngx_http_repsheet_commands[] = {
     offsetof(repsheet_main_conf_t, cookie),
     NULL
   },
+  {
+    ngx_string("repsheet_blacklist"),
+    NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+    ngx_conf_set_flag_slot,
+    NGX_HTTP_LOC_CONF_OFFSET,
+    offsetof(repsheet_loc_conf_t, auto_blacklist),
+    NULL
+  },
+  {
+    ngx_string("repsheet_mark"),
+    NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+    ngx_conf_set_flag_slot,
+    NGX_HTTP_LOC_CONF_OFFSET,
+    offsetof(repsheet_loc_conf_t, auto_mark),
+    NULL
+  },
 
   ngx_null_command
 };
@@ -357,6 +396,8 @@ ngx_http_repsheet_create_loc_conf(ngx_conf_t *cf)
   }
 
   conf->enabled = NGX_CONF_UNSET;
+  conf->auto_blacklist = NGX_CONF_UNSET;
+  conf->auto_mark = NGX_CONF_UNSET;
 
   return conf;
 }
@@ -369,6 +410,8 @@ ngx_http_repsheet_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
   repsheet_loc_conf_t *conf = (repsheet_loc_conf_t *)child;
 
   ngx_conf_merge_value(conf->enabled, prev->enabled, 0);
+  ngx_conf_merge_value(conf->auto_blacklist, prev->auto_blacklist, 0);
+  ngx_conf_merge_value(conf->auto_mark, prev->auto_mark, 0);
 
   return NGX_CONF_OK;
 }
