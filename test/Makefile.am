@@ -5,7 +5,6 @@ test_runner_SOURCES = librepsheet_test.c   \
                       blacklist_test.c     \
                       whitelist_test.c     \
                       marked_test.c        \
-                      recorder_test.c      \
                       xff_test.c           \
                       common_test.c        \
                       test_runner.c        \
@@ -21,8 +20,6 @@ test_runner_SOURCES = librepsheet_test.c   \
                       ../src/whitelist.h   \
                       ../src/marked.c      \
                       ../src/marked.h      \
-                      ../src/recorder.c    \
-                      ../src/recorder.h    \
                       ../src/xff.c         \
                       ../src/xff.h
 test_runner_CFLAGS = -g -O0 --coverage $(CHECK_CFLAGS)
