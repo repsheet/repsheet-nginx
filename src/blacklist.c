@@ -27,13 +27,13 @@ int blacklist_actor(redisContext *context, const char *actor, int type, const ch
 
   switch(type) {
   case IP:
-    return set_list(context, actor, "ip", "blacklist", reason);
+    return set_list(context, actor, "ip", "blacklisted", reason);
     break;
   case USER:
-    return set_list(context, actor, "users", "blacklist", reason);
+    return set_list(context, actor, "users", "blacklisted", reason);
     break;
   case BLOCK:
-    return set_list(context, actor, "cidr", "blacklist", reason);
+    return set_list(context, actor, "cidr", "blacklisted", reason);
     break;
   default:
     return UNSUPPORTED;
@@ -52,7 +52,7 @@ int blacklist_actor(redisContext *context, const char *actor, int type, const ch
  */
 int is_ip_blacklisted(redisContext *context, const char *actor, char *reason)
 {
-  redisReply *ip = redisCommand(context, "GET %s:repsheet:ip:blacklist", actor);
+  redisReply *ip = redisCommand(context, "GET %s:repsheet:ip:blacklisted", actor);
   if (ip) {
     if (ip->type == REDIS_REPLY_STRING) {
       populate_reason(ip, reason);
@@ -65,26 +65,26 @@ int is_ip_blacklisted(redisContext *context, const char *actor, char *reason)
     return DISCONNECTED;
   }
 
-  redisReply *blacklist = redisCommand(context, "KEYS *:repsheet:cidr:blacklist");
-  if (blacklist) {
-    if (blacklist->type == REDIS_REPLY_ARRAY) {
+  redisReply *blacklisted = redisCommand(context, "KEYS *:repsheet:cidr:blacklisted");
+  if (blacklisted) {
+    if (blacklisted->type == REDIS_REPLY_ARRAY) {
       int i;
       redisReply *value;
       char *block;
-      for(i = 0; i < blacklist->elements; i++) {
-        block = strtok(blacklist->element[i]->str, ":");
+      for(i = 0; i < blacklisted->elements; i++) {
+        block = strtok(blacklisted->element[i]->str, ":");
         if (cidr_contains(block, actor) > 0) {
-          value = redisCommand(context, "GET %s:repsheet:cidr:blacklist", block);
+          value = redisCommand(context, "GET %s:repsheet:cidr:blacklisted", block);
           if (value) {
             populate_reason(value, reason);
             freeReplyObject(value);
           }
-          freeReplyObject(blacklist);
+          freeReplyObject(blacklisted);
           return TRUE;
         }
       }
     } else{
-      freeReplyObject(blacklist);
+      freeReplyObject(blacklisted);
     }
   } else {
     return DISCONNECTED;
@@ -106,7 +106,7 @@ int is_user_blacklisted(redisContext *context, const char *actor, char *reason)
 {
   redisReply *reply;
 
-  reply = redisCommand(context, "GET %s:repsheet:users:blacklist", actor);
+  reply = redisCommand(context, "GET %s:repsheet:users:blacklisted", actor);
   if (reply) {
     if (reply->type == REDIS_REPLY_STRING) {
       populate_reason(reply, reason);
@@ -132,7 +132,7 @@ int is_user_blacklisted(redisContext *context, const char *actor, char *reason)
 int is_country_blacklisted(redisContext *context, const char *country_code)
 {
   redisReply *reply;
-  reply = redisCommand(context, "SISMEMBER repsheet:countries:blacklist %s", country_code);
+  reply = redisCommand(context, "SISMEMBER repsheet:countries:blacklisted %s", country_code);
   if (reply) {
     if (reply->type == REDIS_REPLY_INTEGER) {
       freeReplyObject(reply);
@@ -162,10 +162,10 @@ int is_historical_offender(redisContext *context, int type, const char *actor)
 
   switch(type) {
   case IP:
-    reply = redisCommand(context, "SISMEMBER repsheet:ip:blacklist:history %s", actor);
+    reply = redisCommand(context, "SISMEMBER repsheet:ip:blacklisted:history %s", actor);
     break;
   case USER:
-    reply = redisCommand(context, "SISMEMBER repsheet:user:blacklist:history %s", actor);
+    reply = redisCommand(context, "SISMEMBER repsheet:user:blacklisted:history %s", actor);
     break;
   default:
     return UNSUPPORTED;

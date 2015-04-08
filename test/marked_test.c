@@ -30,7 +30,7 @@ START_TEST(mark_ip_test)
 {
   mark_actor(context, "1.1.1.1", IP, "IP Mark Actor Test");
 
-  reply = redisCommand(context, "GET 1.1.1.1:repsheet:ip");
+  reply = redisCommand(context, "GET 1.1.1.1:repsheet:ip:marked");
   ck_assert_str_eq(reply->str, "IP Mark Actor Test");
 }
 END_TEST
@@ -39,7 +39,7 @@ START_TEST(mark_user_test)
 {
   mark_actor(context, "repsheet", USER, "User Mark Actor Test");
 
-  reply = redisCommand(context, "GET repsheet:repsheet:users");
+  reply = redisCommand(context, "GET repsheet:repsheet:users:marked");
   ck_assert_str_eq(reply->str, "User Mark Actor Test");
 }
 END_TEST

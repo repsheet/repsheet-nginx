@@ -29,8 +29,8 @@ void common_teardown(void)
 START_TEST(expire_test)
 {
   mark_actor(context, "1.1.1.1", IP, "Expire Test");
-  expire(context, "1.1.1.1", "repsheet:ip", 200);
-  reply = redisCommand(context, "TTL 1.1.1.1:repsheet:ip");
+  expire(context, "1.1.1.1", "repsheet:ip:marked", 200);
+  reply = redisCommand(context, "TTL 1.1.1.1:repsheet:ip:marked");
 
   ck_assert_int_eq(reply->integer, 200);
 }
@@ -40,13 +40,13 @@ START_TEST(blacklist_and_expire_ip_test)
 {
   blacklist_and_expire(context, IP, "1.1.1.1", 200, "IP Blacklist And Expire Test");
 
-  reply = redisCommand(context, "TTL 1.1.1.1:repsheet:ip:blacklist");
+  reply = redisCommand(context, "TTL 1.1.1.1:repsheet:ip:blacklisted");
   ck_assert_int_eq(reply->integer, 200);
 
-  reply = redisCommand(context, "GET 1.1.1.1:repsheet:ip:blacklist");
+  reply = redisCommand(context, "GET 1.1.1.1:repsheet:ip:blacklisted");
   ck_assert_str_eq(reply->str, "IP Blacklist And Expire Test");
 
-  reply = redisCommand(context, "SISMEMBER repsheet:ip:blacklist:history 1.1.1.1");
+  reply = redisCommand(context, "SISMEMBER repsheet:ip:blacklisted:history 1.1.1.1");
   ck_assert_int_eq(reply->integer, 1);
 }
 END_TEST
@@ -55,13 +55,13 @@ START_TEST(blacklist_and_expire_user_test)
 {
   blacklist_and_expire(context, USER, "test", 200, "IP Blacklist And Expire Test");
 
-  reply = redisCommand(context, "TTL test:repsheet:users:blacklist");
+  reply = redisCommand(context, "TTL test:repsheet:users:blacklisted");
   ck_assert_int_eq(reply->integer, 200);
 
-  reply = redisCommand(context, "GET test:repsheet:users:blacklist");
+  reply = redisCommand(context, "GET test:repsheet:users:blacklisted");
   ck_assert_str_eq(reply->str, "IP Blacklist And Expire Test");
 
-  reply = redisCommand(context, "SISMEMBER repsheet:users:blacklist:history test");
+  reply = redisCommand(context, "SISMEMBER repsheet:users:blacklisted:history test");
   ck_assert_int_eq(reply->integer, 1);
 }
 END_TEST

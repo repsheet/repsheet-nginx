@@ -23,10 +23,10 @@ int mark_actor(redisContext *context, const char *actor, int type, const char *r
 
   switch(type) {
   case IP:
-    return set(context, actor, "ip", reason);
+    return set_list(context, actor, "ip", "marked", reason);
     break;
   case USER:
-    return set(context, actor, "users", reason);
+    return set_list(context, actor, "users", "marked", reason);
     break;
   default:
     return UNSUPPORTED;
@@ -47,7 +47,7 @@ int is_ip_marked(redisContext *context, const char *actor, char *reason)
 {
   redisReply *reply;
 
-  reply = redisCommand(context, "GET %s:repsheet:ip", actor);
+  reply = redisCommand(context, "GET %s:repsheet:ip:marked", actor);
   if (reply) {
     if (reply->type == REDIS_REPLY_STRING) {
       populate_reason(reply, reason);
@@ -75,7 +75,7 @@ int is_user_marked(redisContext *context, const char *actor, char *reason)
 {
   redisReply *reply;
 
-  reply = redisCommand(context, "GET %s:repsheet:users", actor);
+  reply = redisCommand(context, "GET %s:repsheet:users:marked", actor);
   if (reply) {
     if (reply->type == REDIS_REPLY_STRING) {
       populate_reason(reply, reason);

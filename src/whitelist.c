@@ -27,13 +27,13 @@ int whitelist_actor(redisContext *context, const char *actor, int type, const ch
 
   switch(type) {
   case IP:
-    return set_list(context, actor, "ip", "whitelist", reason);
+    return set_list(context, actor, "ip", "whitelisted", reason);
     break;
   case USER:
-    return set_list(context, actor, "users", "whitelist", reason);
+    return set_list(context, actor, "users", "whitelisted", reason);
     break;
   case BLOCK:
-    return set_list(context, actor, "cidr", "whitelist", reason);
+    return set_list(context, actor, "cidr", "whitelisted", reason);
     break;
   default:
     return UNSUPPORTED;
@@ -52,7 +52,7 @@ int whitelist_actor(redisContext *context, const char *actor, int type, const ch
  */
 int is_ip_whitelisted(redisContext *context, const char *actor, char *reason)
 {
-  redisReply *ip = redisCommand(context, "GET %s:repsheet:ip:whitelist", actor);
+  redisReply *ip = redisCommand(context, "GET %s:repsheet:ip:whitelisted", actor);
   if (ip) {
     if (ip->type == REDIS_REPLY_STRING) {
       populate_reason(ip, reason);
@@ -65,26 +65,26 @@ int is_ip_whitelisted(redisContext *context, const char *actor, char *reason)
     return DISCONNECTED;
   }
 
-  redisReply *whitelist = redisCommand(context, "KEYS *:repsheet:cidr:whitelist");
-  if (whitelist) {
-    if (whitelist->type == REDIS_REPLY_ARRAY) {
+  redisReply *whitelisted = redisCommand(context, "KEYS *:repsheet:cidr:whitelisted");
+  if (whitelisted) {
+    if (whitelisted->type == REDIS_REPLY_ARRAY) {
       int i;
       redisReply *value;
       char *block;
-      for(i = 0; i < whitelist->elements; i++) {
-        block = strtok(whitelist->element[i]->str, ":");
+      for(i = 0; i < whitelisted->elements; i++) {
+        block = strtok(whitelisted->element[i]->str, ":");
         if (cidr_contains(block, actor) > 0) {
-          value = redisCommand(context, "GET %s:repsheet:cidr:whitelist", block);
+          value = redisCommand(context, "GET %s:repsheet:cidr:whitelisted", block);
           if (value) {
             populate_reason(value, reason);
             freeReplyObject(value);
           }
-          freeReplyObject(whitelist);
+          freeReplyObject(whitelisted);
           return TRUE;
         }
       }
     } else{
-      freeReplyObject(whitelist);
+      freeReplyObject(whitelisted);
     }
   } else {
     return DISCONNECTED;
@@ -106,7 +106,7 @@ int is_user_whitelisted(redisContext *context, const char *actor, char *reason)
 {
   redisReply *reply;
 
-  reply = redisCommand(context, "GET %s:repsheet:users:whitelist", actor);
+  reply = redisCommand(context, "GET %s:repsheet:users:whitelisted", actor);
   if (reply) {
     if (reply->type == REDIS_REPLY_STRING) {
       populate_reason(reply, reason);
@@ -132,7 +132,7 @@ int is_user_whitelisted(redisContext *context, const char *actor, char *reason)
 int is_country_whitelisted(redisContext *context, const char *country_code)
 {
   redisReply *reply;
-  reply = redisCommand(context, "SISMEMBER repsheet:countries:whitelist %s", country_code);
+  reply = redisCommand(context, "SISMEMBER repsheet:countries:whitelisted %s", country_code);
   if (reply) {
     if (reply->type == REDIS_REPLY_INTEGER) {
       freeReplyObject(reply);

@@ -84,12 +84,12 @@ int blacklist_and_expire(redisContext *context, int type, const char *actor, int
   redisCommand(context, "MULTI");
   switch(type) {
   case IP:
-    redisCommand(context, "SETEX %s:repsheet:ip:blacklist %d %s", actor, expiry, reason);
-    redisCommand(context, "SADD repsheet:ip:blacklist:history %s", actor);
+    redisCommand(context, "SETEX %s:repsheet:ip:blacklisted %d %s", actor, expiry, reason);
+    redisCommand(context, "SADD repsheet:ip:blacklisted:history %s", actor);
     break;
   case USER:
-    redisCommand(context, "SETEX %s:repsheet:users:blacklist %d %s", actor, expiry, reason);
-    redisCommand(context, "SADD repsheet:users:blacklist:history %s", actor);
+    redisCommand(context, "SETEX %s:repsheet:users:blacklisted %d %s", actor, expiry, reason);
+    redisCommand(context, "SADD repsheet:users:blacklisted:history %s", actor);
     break;
   }
   reply = redisCommand(context, "EXEC");

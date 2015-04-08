@@ -80,8 +80,8 @@ END_TEST
 START_TEST(country_status_test)
 {
   redisCommand(context, "SADD repsheet:countries:marked KP");
-  redisCommand(context, "SADD repsheet:countries:whitelist US");
-  redisCommand(context, "SADD repsheet:countries:blacklist AU");
+  redisCommand(context, "SADD repsheet:countries:whitelisted US");
+  redisCommand(context, "SADD repsheet:countries:blacklisted AU");
 
   ck_assert_int_eq(country_status(context, "KP"), MARKED);
   ck_assert_int_eq(country_status(context, "US"), WHITELISTED);

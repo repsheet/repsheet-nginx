@@ -30,7 +30,7 @@ START_TEST(blacklist_ip_test)
 {
   blacklist_actor(context, "1.1.1.1", IP, "IP Blacklist Actor Test");
 
-  reply = redisCommand(context, "GET 1.1.1.1:repsheet:ip:blacklist");
+  reply = redisCommand(context, "GET 1.1.1.1:repsheet:ip:blacklisted");
   ck_assert_str_eq(reply->str, "IP Blacklist Actor Test");
 }
 END_TEST
@@ -39,7 +39,7 @@ START_TEST(blacklist_user_test)
 {
   blacklist_actor(context, "repsheet", USER, "Users Blacklist Actor Test");
 
-  reply = redisCommand(context, "GET repsheet:repsheet:users:blacklist");
+  reply = redisCommand(context, "GET repsheet:repsheet:users:blacklisted");
   ck_assert_str_eq(reply->str, "Users Blacklist Actor Test");
 }
 END_TEST
@@ -48,7 +48,7 @@ START_TEST(blacklist_cidr_test)
 {
   blacklist_actor(context, "10.0.0.0/24", BLOCK, "Users Blacklist CIDR Test");
 
-  reply = redisCommand(context, "GET 10.0.0.0/24:repsheet:cidr:blacklist");
+  reply = redisCommand(context, "GET 10.0.0.0/24:repsheet:cidr:blacklisted");
   ck_assert_str_eq(reply->str, "Users Blacklist CIDR Test");
 }
 END_TEST
@@ -92,14 +92,14 @@ START_TEST(is_ip_blacklisted_in_cidr_test)
 {
   char value[MAX_REASON_LENGTH];
 
-  redisCommand(context, "DEL %s:repsheet:cidr:blacklist", "0.0.0.1/32");
+  redisCommand(context, "DEL %s:repsheet:cidr:blacklisted", "0.0.0.1/32");
 
-  redisCommand(context, "SET %s:repsheet:cidr:blacklist %s", "10.0.0.0/24", "CIDR 24 Test");
+  redisCommand(context, "SET %s:repsheet:cidr:blacklisted %s", "10.0.0.0/24", "CIDR 24 Test");
   int response = is_ip_blacklisted(context, "10.0.0.15", value);
   ck_assert_int_eq(response, TRUE);
   ck_assert_str_eq(value, "CIDR 24 Test");
 
-  redisCommand(context, "SET %s:repsheet:cidr:blacklist %s", "0.0.0.1/32", "CIDR 32 Test");
+  redisCommand(context, "SET %s:repsheet:cidr:blacklisted %s", "0.0.0.1/32", "CIDR 32 Test");
   response = is_ip_blacklisted(context, "0.0.0.1", value);
   ck_assert_int_eq(response, TRUE);
   ck_assert_str_eq(value, "CIDR 32 Test");
@@ -124,7 +124,7 @@ END_TEST
 
 START_TEST(is_historical_offender_ip_test)
 {
-  redisCommand(context, "SADD repsheet:ip:blacklist:history 1.1.1.1");
+  redisCommand(context, "SADD repsheet:ip:blacklisted:history 1.1.1.1");
   int response = is_historical_offender(context, IP, "1.1.1.1");
 
   ck_assert_int_eq(response, TRUE);
@@ -133,7 +133,7 @@ END_TEST
 
 START_TEST(is_not_historical_offender_ip_test)
 {
-  redisCommand(context, "SADD repsheet:ip:blacklist:history 1.1.1.2");
+  redisCommand(context, "SADD repsheet:ip:blacklisted:history 1.1.1.2");
   int response = is_historical_offender(context, IP, "1.1.1.1");
 
   ck_assert_int_eq(response, FALSE);
@@ -142,7 +142,7 @@ END_TEST
 
 START_TEST(is_historical_offender_user_test)
 {
-  redisCommand(context, "SADD repsheet:user:blacklist:history test");
+  redisCommand(context, "SADD repsheet:user:blacklisted:history test");
   int response = is_historical_offender(context, USER, "test");
 
   ck_assert_int_eq(response, TRUE);
@@ -165,14 +165,14 @@ END_TEST
 
 START_TEST(is_country_blacklisted_true_test)
 {
-  redisCommand(context, "SADD repsheet:countries:blacklist KP");
+  redisCommand(context, "SADD repsheet:countries:blacklisted KP");
   ck_assert_int_eq(is_country_blacklisted(context, "KP"), TRUE);
 }
 END_TEST
 
 START_TEST(country_status_blacklisted_test)
 {
-  redisCommand(context, "SADD repsheet:countries:blacklist KP");
+  redisCommand(context, "SADD repsheet:countries:blacklisted KP");
   ck_assert_int_eq(country_status(context, "KP"), BLACKLISTED);
 }
 END_TEST

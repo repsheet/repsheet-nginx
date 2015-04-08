@@ -30,7 +30,7 @@ START_TEST(whitelist_ip_test)
 {
   whitelist_actor(context, "1.1.1.1", IP, "IP Whitelist Actor Test");
 
-  reply = redisCommand(context, "GET 1.1.1.1:repsheet:ip:whitelist");
+  reply = redisCommand(context, "GET 1.1.1.1:repsheet:ip:whitelisted");
   ck_assert_str_eq(reply->str, "IP Whitelist Actor Test");
 }
 END_TEST
@@ -39,7 +39,7 @@ START_TEST(whitelist_user_test)
 {
   whitelist_actor(context, "repsheet", USER, "User Whitelist Actor Test");
 
-  reply = redisCommand(context, "GET repsheet:repsheet:users:whitelist");
+  reply = redisCommand(context, "GET repsheet:repsheet:users:whitelisted");
   ck_assert_str_eq(reply->str, "User Whitelist Actor Test");
 }
 END_TEST
@@ -48,7 +48,7 @@ START_TEST(whitelist_cidr_test)
 {
   whitelist_actor(context, "10.0.0.0/24", BLOCK, "Users Whitelist CIDR Test");
 
-  reply = redisCommand(context, "GET 10.0.0.0/24:repsheet:cidr:whitelist");
+  reply = redisCommand(context, "GET 10.0.0.0/24:repsheet:cidr:whitelisted");
   ck_assert_str_eq(reply->str, "Users Whitelist CIDR Test");
 }
 END_TEST
@@ -69,14 +69,14 @@ START_TEST(is_ip_whitelisted_in_cidr_test)
 {
   char value[MAX_REASON_LENGTH];
 
-  redisCommand(context, "DEL %s:repsheet:cidr:whitelist", "0.0.0.1/32");
+  redisCommand(context, "DEL %s:repsheet:cidr:whitelisted", "0.0.0.1/32");
 
-  redisCommand(context, "SET %s:repsheet:cidr:whitelist %s", "10.0.0.0/24", "CIDR 24 Test");
+  redisCommand(context, "SET %s:repsheet:cidr:whitelisted %s", "10.0.0.0/24", "CIDR 24 Test");
   int response = is_ip_whitelisted(context, "10.0.0.15", value);
   ck_assert_int_eq(response, TRUE);
   ck_assert_str_eq(value, "CIDR 24 Test");
 
-  redisCommand(context, "SET %s:repsheet:cidr:whitelist %s", "0.0.0.1/32", "CIDR 32 Test");
+  redisCommand(context, "SET %s:repsheet:cidr:whitelisted %s", "0.0.0.1/32", "CIDR 32 Test");
   response = is_ip_whitelisted(context, "0.0.0.1", value);
   ck_assert_int_eq(response, TRUE);
   ck_assert_str_eq(value, "CIDR 32 Test");
@@ -101,7 +101,7 @@ END_TEST
 
 START_TEST(is_country_whitelisted_true_test)
 {
-  redisCommand(context, "SADD repsheet:countries:whitelist AU");
+  redisCommand(context, "SADD repsheet:countries:whitelisted AU");
   ck_assert_int_eq(is_country_whitelisted(context, "AU"), TRUE);
 }
 END_TEST
@@ -114,7 +114,7 @@ END_TEST
 
 START_TEST(country_status_whitelisted_test)
 {
-  redisCommand(context, "SADD repsheet:countries:whitelist AU");
+  redisCommand(context, "SADD repsheet:countries:whitelisted AU");
   ck_assert_int_eq(country_status(context, "AU"), WHITELISTED);
 }
 END_TEST
