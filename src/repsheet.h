@@ -27,7 +27,7 @@ int check_connection(redisContext *context);
 int country_status(redisContext *context, const char *country_code);
 int actor_status(redisContext *context, const char *actor, int type, char *reason);
 
-const char *remote_address(char *connected_address, const char *xff_header);
+int remote_address(char *connected_address, char *xff_header, char *address);
 
 int blacklist_actor(redisContext *context, const char *actor, int type, const char *reason);
 int mark_actor(redisContext *context, const char *actor, int type, const char *reason);

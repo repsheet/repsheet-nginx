@@ -1,6 +1,6 @@
 #ifndef __XFF_H
 #define __XFF_H
 
-const char *remote_address(char *connected_address, const char *xff_header);
+int remote_address(char *connected_address, char *xff_header, char *address);
 
 #endif

@@ -1,6 +1,8 @@
-#include <pcre.h>
+#include <stdlib.h>
 #include <string.h>
+#include <arpa/inet.h>
 
+#include "repsheet.h"
 #include "xff.h"
 
 /**
@@ -18,30 +20,42 @@
  * @param connected_address The IP of the connection to the server
  * @param xff_header The contents of the X-Forwarded-For header
  */
-const char *remote_address(char *connected_address, const char *xff_header)
+int remote_address(char *connected_address, char *xff_header, char *address)
 {
-  if (xff_header == NULL) {
-    return connected_address;
+  if ((connected_address == NULL && xff_header == NULL) || address == NULL) {
+    return NIL;
   }
 
-  int error_offset, subvector[30];
-  const char *error, *address;
+  int length;
+  memset(address, '\0', INET6_ADDRSTRLEN);
 
-  pcre *re_compiled;
+  if (xff_header != NULL) {
+    char *p;
 
-  char *regex = "\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b";
+    for (p = xff_header; p < (xff_header + strlen(xff_header)); p++) {
+      if (*p == ' ' || *p == ',') {
+        break;
+      }
+    }
 
-  re_compiled = pcre_compile(regex, 0, &error, &error_offset, NULL);
+    length = p - xff_header;
+    char *test_address = malloc(length + 1);
+    memcpy(test_address, xff_header, length);
+    test_address[length] = '\0';
 
-  int matches = pcre_exec(re_compiled, 0, xff_header, strlen(xff_header), 0, 0, subvector, 30);
+    unsigned char buf[sizeof(struct in_addr)];
+    unsigned char buf6[sizeof(struct in6_addr)];
 
-  if(matches < 0) {
-    return NULL;
+    if (inet_pton(AF_INET, (const char *)test_address, buf) == 1 || inet_pton(AF_INET6, (const char *)test_address, buf6) == 1) {
+      memcpy(address, test_address, length);
+      free(test_address);
+      return LIBREPSHEET_OK;
+    } else {
+      free(test_address);
+      return BLACKLISTED;
+    }
   } else {
-    pcre_get_substring(xff_header, subvector, matches, 0, &(address));
+    memcpy(address, connected_address, strlen(connected_address));
+    return LIBREPSHEET_OK;
   }
-
-  pcre_free(re_compiled);
-
-  return address;
 }
