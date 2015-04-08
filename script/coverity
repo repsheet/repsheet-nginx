@@ -1,0 +1,13 @@
+#!/bin/sh
+
+make clean
+cov-build --dir cov-int make
+
+tar czvf librepsheet.tar.gz cov-int
+
+curl --form token=G-JpLX_yCvpLGa2gkp5VxQ \
+--form email=aaron@aaronbedra.com \
+--form file=@librepsheet.tar.gz \
+--form version="$1" \
+--form description="$1" \
+https://scan.coverity.com/builds?project=repsheet%2Flibrepsheet
