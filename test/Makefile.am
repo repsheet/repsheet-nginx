@@ -5,7 +5,6 @@ test_runner_SOURCES = librepsheet_test.c   \
                       blacklist_test.c     \
                       whitelist_test.c     \
                       marked_test.c        \
-                      modsecurity_test.c   \
                       recorder_test.c      \
                       xff_test.c           \
                       common_test.c        \
@@ -22,8 +21,6 @@ test_runner_SOURCES = librepsheet_test.c   \
                       ../src/whitelist.h   \
                       ../src/marked.c      \
                       ../src/marked.h      \
-                      ../src/modsecurity.c \
-                      ../src/modsecurity.h \
                       ../src/recorder.c    \
                       ../src/recorder.h    \
                       ../src/xff.c         \

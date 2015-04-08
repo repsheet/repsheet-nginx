@@ -7,7 +7,6 @@ librepsheet_la_SOURCES = librepsheet.c \
                          blacklist.c   \
                          whitelist.c   \
                          marked.c      \
-                         modsecurity.c \
                          recorder.c    \
                          xff.c
 librepsheet_la_LDFLAGS = -lhiredis -lpcre -lm
