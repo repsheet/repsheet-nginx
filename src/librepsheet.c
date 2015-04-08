@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include <pcre.h>
 
 #include "hiredis/hiredis.h"
 
@@ -29,7 +28,7 @@
  *
  * To build librepsheet you will need the following dependencies:
  *
- * - autoconf, automake, libtool, libpcre, hiredis, check (optional for tests)
+ * - autoconf, automake, libtool, hiredis, check (optional for tests)
  *
  * The library can be built and installed using the following commands:
  *

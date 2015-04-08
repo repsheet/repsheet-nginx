@@ -8,4 +8,4 @@ librepsheet_la_SOURCES = librepsheet.c \
                          whitelist.c   \
                          marked.c      \
                          xff.c
-librepsheet_la_LDFLAGS = -lhiredis -lpcre -lm
+librepsheet_la_LDFLAGS = -lhiredis -lm

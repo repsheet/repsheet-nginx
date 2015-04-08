@@ -1,3 +1,7 @@
+2015-04-08  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 4.1.0: Remove pcre dependency for remote_address
+
 2015-04-07  Aaron Bedra  <aaron@aaronbedra.com>
 
 	* 4.0.0: Unifies keyspace (Breaking changes)

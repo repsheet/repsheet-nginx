@@ -23,4 +23,4 @@ test_runner_SOURCES = librepsheet_test.c   \
                       ../src/xff.c         \
                       ../src/xff.h
 test_runner_CFLAGS = -g -O0 --coverage $(CHECK_CFLAGS)
-test_runner_LDADD = $(CHECK_LIBS) -lhiredis -lpcre -lm
+test_runner_LDADD = $(CHECK_LIBS) -lhiredis -lm

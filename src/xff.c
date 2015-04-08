@@ -19,6 +19,7 @@
  *
  * @param connected_address The IP of the connection to the server
  * @param xff_header The contents of the X-Forwarded-For header
+ * @param address The string to store the resulting address
  */
 int remote_address(char *connected_address, char *xff_header, char *address)
 {

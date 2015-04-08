@@ -1,5 +1,5 @@
 Name: repsheet
-Version: 4.0.0
+Version: 4.1.0
 Release: 1
 Summary: Core library
 License: ASL 2.0
@@ -8,7 +8,7 @@ URL: https://github.com/repsheet/librepsheet
 Source0: https://github.com/repsheet/librepsheet/archive/%{name}-%{version}.zip
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 Requires: hiredis
-BuildRequires: pcre-devel hiredis-devel gcc automake autoconf libtool check check-devel
+BuildRequires: hiredis-devel gcc automake autoconf libtool check check-devel
 
 %description
 This library contains the business logic for Repsheet
@@ -72,6 +72,8 @@ rm -rf $RPM_BUILD_ROOT
 %doc LICENSE
 
 %changelog
+* Wed Apr 08 2015 Aaron Bedra <aaron@aaronbedra.com> - 4.1.0-1
+- Updates for remote_address that remove the pcre dependency
 * Tue Apr 07 2015 Aaron Bedra <aaron@aaronbedra.com> - 4.0.0-1
 - Unifies Keyspace (Breaking changes)
 * Mon Dec 08 2014 Aaron Bedra <aaron@aaronbedra.com> - 3.2.0-1
