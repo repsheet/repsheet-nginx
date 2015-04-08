@@ -1,3 +1,9 @@
+librepsheet (4.0.0-1) unstable-security; urgency=medium
+
+  * Unifies keyspace (Breaking changes)
+
+ -- Aaron Bedra <aaron@aaronbedra.com>  Tue, 07 Apr 2015 20:31:42 -0500
+
 librepsheet (3.2.0-1) unstable-security; urgency=low
 
   * CIDR support fixes
