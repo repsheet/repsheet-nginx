@@ -162,40 +162,10 @@ int actor_status(redisContext *context, const char *actor, int type, char *reaso
 #endif
 
     break;
+  default:
+    return UNSUPPORTED;
+    break;
   }
-
-  return UNSUPPORTED;
-}
-
-/**
- * Top level API for determining the status of a country
- *
- * @param context the Redis connection
- * @param country_code the 2 digit ISO country code
- *
- * @returns an integer response
- */
-int country_status(redisContext *context, const char *country_code)
-{
-  int response;
-
-#if WHITELIST_ENABLED
-  response = is_country_whitelisted(context, country_code);
-  if (response == DISCONNECTED) { return DISCONNECTED; }
-  if (response == TRUE)         { return WHITELISTED; }
-#endif
-
-#if BLACKLIST_ENABLED
-  response = is_country_blacklisted(context, country_code);
-  if (response == DISCONNECTED) { return DISCONNECTED; }
-  if (response == TRUE)         { return BLACKLISTED; }
-#endif
-
-#if MARKED_ENABLED
-  response = is_country_marked(context, country_code);
-  if (response == DISCONNECTED) { return DISCONNECTED; }
-  if (response == TRUE)         { return MARKED; }
-#endif
 
   return LIBREPSHEET_OK;
 }

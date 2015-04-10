@@ -24,7 +24,6 @@
 redisContext *get_redis_context(const char *host, int port, int timeout);
 int check_connection(redisContext *context);
 
-int country_status(redisContext *context, const char *country_code);
 int actor_status(redisContext *context, const char *actor, int type, char *reason);
 
 int remote_address(char *connected_address, char *xff_header, char *address);

@@ -1,7 +1,5 @@
-#include "hiredis/hiredis.h"
+#include "../src/hiredis/hiredis.h"
 #include "../src/repsheet.h"
-#include "test_suite.h"
-#include "assert.h"
 #include "check.h"
 
 redisContext *context;
@@ -27,23 +25,17 @@ void teardown(void)
   context=NULL;
 }
 
-START_TEST(get_redis_context_failure_test)
-{
-  context = get_redis_context("localhost", 12345, 0);
-  ck_assert(context == NULL);
-}
-END_TEST
-
-START_TEST(check_connection_test)
+START_TEST(connect_success_test)
 {
   context = get_redis_context("localhost", 6379, 0);
   ck_assert_int_eq(LIBREPSHEET_OK, check_connection(context));
 }
 END_TEST
 
-START_TEST(check_connection_failure_test)
+START_TEST(connect_failure_test)
 {
   context = get_redis_context("localhost", 12345, 0);
+  ck_assert(context == NULL);
   ck_assert_int_eq(DISCONNECTED, check_connection(context));
 }
 END_TEST
@@ -77,32 +69,17 @@ START_TEST(actor_status_test)
 }
 END_TEST
 
-START_TEST(country_status_test)
-{
-  redisCommand(context, "SADD repsheet:countries:marked KP");
-  redisCommand(context, "SADD repsheet:countries:whitelisted US");
-  redisCommand(context, "SADD repsheet:countries:blacklisted AU");
-
-  ck_assert_int_eq(country_status(context, "KP"), MARKED);
-  ck_assert_int_eq(country_status(context, "US"), WHITELISTED);
-  ck_assert_int_eq(country_status(context, "AU"), BLACKLISTED);
-  ck_assert_int_eq(country_status(context, "UK"), LIBREPSHEET_OK);
-}
-END_TEST
-
 Suite *make_librepsheet_connection_suite(void) {
   Suite *suite = suite_create("API Suite");
 
   TCase *tc_redis_connection = tcase_create("Connection API");
-  tcase_add_test(tc_redis_connection, get_redis_context_failure_test);
-  tcase_add_test(tc_redis_connection, check_connection_test);
-  tcase_add_test(tc_redis_connection, check_connection_failure_test);
+  tcase_add_test(tc_redis_connection, connect_success_test);
+  tcase_add_test(tc_redis_connection, connect_failure_test);
   suite_add_tcase(suite, tc_redis_connection);
 
   TCase *tc_connection_operations = tcase_create("Actor API");
   tcase_add_checked_fixture(tc_connection_operations, setup, teardown);
   tcase_add_test(tc_connection_operations, actor_status_test);
-  tcase_add_test(tc_connection_operations, country_status_test);
   suite_add_tcase(suite, tc_connection_operations);
 
   return suite;

@@ -6,7 +6,6 @@ test_runner_SOURCES = librepsheet_test.c   \
                       whitelist_test.c     \
                       marked_test.c        \
                       xff_test.c           \
-                      common_test.c        \
                       test_runner.c        \
                       ../src/librepsheet.c \
                       ../src/librepsheet.h \
@@ -23,4 +22,4 @@ test_runner_SOURCES = librepsheet_test.c   \
                       ../src/xff.c         \
                       ../src/xff.h
 test_runner_CFLAGS = -g -O0 --coverage $(CHECK_CFLAGS)
-test_runner_LDADD = $(CHECK_LIBS) -lhiredis -lm
+test_runner_LDADD = $(CHECK_LIBS) -lm ../src/hiredis/libhiredis.a
