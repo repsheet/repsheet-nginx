@@ -38,7 +38,7 @@ test_coverage
 m4
 autom4te.cache
 Makefile.in
-Makefile
+/Makefile
 aclocal.m4
 ar-lib
 compile
@@ -85,5 +85,3 @@ debian/files
 debian/tmp
 debian/librepsheet
 debian/librepsheet-dev
-
-
