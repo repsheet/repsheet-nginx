@@ -1,4 +1,5 @@
 #include "repsheet.h"
+#include "common.h"
 #include "marked.h"
 
 /**

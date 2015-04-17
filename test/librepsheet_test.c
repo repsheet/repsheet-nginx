@@ -1,5 +1,8 @@
 #include "../src/hiredis/hiredis.h"
 #include "../src/repsheet.h"
+#include "../src/whitelist.h"
+#include "../src/blacklist.h"
+#include "../src/marked.h"
 #include "check.h"
 
 redisContext *context;

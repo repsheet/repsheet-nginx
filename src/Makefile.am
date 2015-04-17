@@ -9,6 +9,7 @@ librepsheet_la_SOURCES = librepsheet.c \
                          whitelist.c   \
                          marked.c      \
                          xff.c
-librepsheet_la_LIBADD = hiredis/libhiredis.a
+librepsheet_la_LIBADD = hiredis/libhiredis.so
 librepsheet_la_LDFLAGS = -lm
+librepsheet_la_CFLAGS = -std=c99
 

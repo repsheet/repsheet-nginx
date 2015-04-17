@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2009-2011, Salvatore Sanfilippo <antirez at gmail dot com>
- * Copyright (c) 2010-2011, Pieter Noordhuis <pcnoordhuis at gmail dot com>
+ * Copyright (c) 2010-2014, Pieter Noordhuis <pcnoordhuis at gmail dot com>
+ * Copyright (c) 2015, Matt Stancliff <matt at genges dot com>,
+ *                     Jan-Erik Rediger <janerik at fnordig dot com>
  *
  * All rights reserved.
  *
@@ -38,8 +40,8 @@
 #include "sds.h" /* for sds */
 
 #define HIREDIS_MAJOR 0
-#define HIREDIS_MINOR 12
-#define HIREDIS_PATCH 1
+#define HIREDIS_MINOR 13
+#define HIREDIS_PATCH 0
 
 /* Connection type can be blocking or non-blocking and is set in the
  * least significant bit of the flags field in redisContext. */
@@ -128,6 +130,11 @@ int redisFormatSdsCommandArgv(sds *target, int argc, const char ** argv, const s
 void redisFreeCommand(char *cmd);
 void redisFreeSdsCommand(sds cmd);
 
+enum redisConnectionType {
+    REDIS_CONN_TCP,
+    REDIS_CONN_UNIX,
+};
+
 /* Context for a connection to Redis */
 typedef struct redisContext {
     int err; /* Error flags, 0 when there is no error */
@@ -136,6 +143,20 @@ typedef struct redisContext {
     int flags;
     char *obuf; /* Write buffer */
     redisReader *reader; /* Protocol reader */
+
+    enum redisConnectionType connection_type;
+    struct timeval *timeout;
+
+    struct {
+        char *host;
+        char *source_addr;
+        int port;
+    } tcp;
+
+    struct {
+        char *path;
+    } unix;
+
 } redisContext;
 
 redisContext *redisConnect(const char *ip, int port);
@@ -149,6 +170,18 @@ redisContext *redisConnectUnix(const char *path);
 redisContext *redisConnectUnixWithTimeout(const char *path, const struct timeval tv);
 redisContext *redisConnectUnixNonBlock(const char *path);
 redisContext *redisConnectFd(int fd);
+
+/**
+ * Reconnect the given context using the saved information.
+ *
+ * This re-uses the exact same connect options as in the initial connection.
+ * host, ip (or path), timeout and bind address are reused,
+ * flags are used unmodified from the existing context.
+ *
+ * Returns REDIS_OK on successfull connect or REDIS_ERR otherwise.
+ */
+int redisReconnect(redisContext *c);
+
 int redisSetTimeout(redisContext *c, const struct timeval tv);
 int redisEnableKeepAlive(redisContext *c);
 void redisFree(redisContext *c);
