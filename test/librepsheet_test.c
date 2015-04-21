@@ -94,15 +94,6 @@ END_TEST
 
 START_TEST(repsheet_reconnect_null_test)
 {
-  context = repsheet_connect("localhost", 6379, 0, 5);
-  blacklist_actor(context, "1.1.1.1", IP, "IP Blacklist Actor Status");
-  const char *query = "DEBUG SLEEP 1\r\n";
-  int wr = write(context->fd, query, strlen(query));
-  char value[MAX_REASON_LENGTH];
-
-  ck_assert_int_eq(DISCONNECTED, actor_status(context, "1.1.1.1", IP, value));
-
-  sleep(1);
   int status = repsheet_reconnect(NULL);
 
   ck_assert_int_eq(DISCONNECTED, status);
