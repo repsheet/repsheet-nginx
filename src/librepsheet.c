@@ -52,7 +52,7 @@
  */
 
 /**
- * This function establishes a connection to Redis
+ * This function establishes a connection to Redis with a connect time out
  *
  * @param host the hostname of the Redis server
  * @param port the port number of the Redis server
@@ -64,7 +64,7 @@ redisContext *get_redis_context(const char *host, int port, int timeout)
 {
   redisContext *context;
 
-  struct timeval time = {0, (timeout > 0) ? timeout : 10000};
+  struct timeval time = {0, (timeout > 0) ? (timeout * 1000) : 10000};
 
   context = redisConnectWithTimeout(host, port, time);
   if (context == NULL || context->err) {
@@ -76,6 +76,37 @@ redisContext *get_redis_context(const char *host, int port, int timeout)
     }
     return NULL;
   } else {
+    return context;
+  }
+}
+
+/**
+ * This function establishes a connection to Redis with a connect and request time out
+ *
+ * @param host the hostname of the Redis server
+ * @param port the port number of the Redis server
+ * @param connect_timeout the length in milliseconds before the connection times out
+ * @param read_timeout the length in milliseconds before a request times out
+ *
+ * @returns a Redis connection
+ */
+redisContext *repsheet_connect(const char *host, int port, int connect_timeout, int read_timeout) {
+  redisContext *context;
+
+  struct timeval ct = {0, (connect_timeout > 0) ? (connect_timeout * 1000) : 10000};
+  struct timeval rt = {0, (read_timeout > 0) ? (read_timeout * 1000) : 10000};
+
+  context = redisConnectWithTimeout(host, port, ct);
+  if (context == NULL || context->err) {
+    if (context) {
+      printf("Error: %s\n", context->errstr);
+      redisFree(context);
+    } else {
+      printf("Error: could not connect to Redis\n");
+    }
+    return NULL;
+  } else {
+    redisSetTimeout(context, rt);
     return context;
   }
 }
@@ -103,6 +134,32 @@ int check_connection(redisContext *context)
       freeReplyObject(reply);
       return LIBREPSHEET_OK;
     }
+  } else {
+    return DISCONNECTED;
+  }
+}
+
+/**
+ * Tests the connection to ensure it is working properly
+ *
+ * @param context the Redis connection
+ *
+ * @returns an integer response with the connection status
+ */
+int repsheet_reconnect(redisContext *context)
+{
+  if (context == NULL) {
+    return DISCONNECTED;
+  }
+
+  if (context && context->err == 0) {
+    return LIBREPSHEET_OK;
+  }
+
+  redisReconnect(context);
+
+  if (context->err == 0) {
+    return LIBREPSHEET_OK;
   } else {
     return DISCONNECTED;
   }

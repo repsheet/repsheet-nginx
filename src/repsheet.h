@@ -22,6 +22,8 @@
 #include "hiredis/hiredis.h"
 
 redisContext *get_redis_context(const char *host, int port, int timeout);
+redisContext *repsheet_connect(const char *host, int port, int connect_timeout, int read_timeout);
+int repsheet_reconnect(redisContext *context);
 int check_connection(redisContext *context);
 
 int actor_status(redisContext *context, const char *actor, int type, char *reason);
