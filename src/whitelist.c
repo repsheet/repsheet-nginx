@@ -30,7 +30,7 @@ int whitelist_actor(redisContext *context, const char *actor, int type, const ch
     return set_list(context, actor, "ip", "whitelisted", reason);
     break;
   case USER:
-    return set_list(context, actor, "users", "whitelisted", reason);
+    return set_list(context, actor, "user", "whitelisted", reason);
     break;
   case BLOCK:
     return set_list(context, actor, "cidr", "whitelisted", reason);
@@ -106,7 +106,7 @@ int is_user_whitelisted(redisContext *context, const char *actor, char *reason)
 {
   redisReply *reply;
 
-  reply = redisCommand(context, "GET %s:repsheet:users:whitelisted", actor);
+  reply = redisCommand(context, "GET %s:repsheet:user:whitelisted", actor);
   if (reply) {
     if (reply->type == REDIS_REPLY_STRING) {
       populate_reason(reply, reason);

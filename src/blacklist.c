@@ -30,7 +30,7 @@ int blacklist_actor(redisContext *context, const char *actor, int type, const ch
     return set_list(context, actor, "ip", "blacklisted", reason);
     break;
   case USER:
-    return set_list(context, actor, "users", "blacklisted", reason);
+    return set_list(context, actor, "user", "blacklisted", reason);
     break;
   case BLOCK:
     return set_list(context, actor, "cidr", "blacklisted", reason);
@@ -106,7 +106,7 @@ int is_user_blacklisted(redisContext *context, const char *actor, char *reason)
 {
   redisReply *reply;
 
-  reply = redisCommand(context, "GET %s:repsheet:users:blacklisted", actor);
+  reply = redisCommand(context, "GET %s:repsheet:user:blacklisted", actor);
   if (reply) {
     if (reply->type == REDIS_REPLY_STRING) {
       populate_reason(reply, reason);

@@ -27,7 +27,7 @@ int mark_actor(redisContext *context, const char *actor, int type, const char *r
     return set_list(context, actor, "ip", "marked", reason);
     break;
   case USER:
-    return set_list(context, actor, "users", "marked", reason);
+    return set_list(context, actor, "user", "marked", reason);
     break;
   default:
     return UNSUPPORTED;
@@ -76,7 +76,7 @@ int is_user_marked(redisContext *context, const char *actor, char *reason)
 {
   redisReply *reply;
 
-  reply = redisCommand(context, "GET %s:repsheet:users:marked", actor);
+  reply = redisCommand(context, "GET %s:repsheet:user:marked", actor);
   if (reply) {
     if (reply->type == REDIS_REPLY_STRING) {
       populate_reason(reply, reason);
