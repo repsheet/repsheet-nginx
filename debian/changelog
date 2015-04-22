@@ -1,3 +1,9 @@
+librepsheet (5.0.0-1) unstable-security; urgency=medium
+
+  * Adds request timeouts and embeds hiredis
+
+ -- Aaron Bedra <aaron@aaronbedra.com>  Wed, 22 Apr 2015 08:47:43 -0500
+
 librepsheet (4.1.0-1) unstable-security; urgency=medium
 
   * Updates for remote_address that remove the pcre dependency

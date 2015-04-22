@@ -1,5 +1,5 @@
 Name: repsheet
-Version: 4.1.0
+Version: 5.0.0
 Release: 1
 Summary: Core library
 License: ASL 2.0
@@ -72,6 +72,8 @@ rm -rf $RPM_BUILD_ROOT
 %doc LICENSE
 
 %changelog
+* Wed Apr 22 2015 Aaron Bedra <aaron@aaronbedra.com> - 5.0.0-1
+- Adds request timeouts and embeds hiredis
 * Wed Apr 08 2015 Aaron Bedra <aaron@aaronbedra.com> - 4.1.0-1
 - Updates for remote_address that remove the pcre dependency
 * Tue Apr 07 2015 Aaron Bedra <aaron@aaronbedra.com> - 4.0.0-1

@@ -1,3 +1,7 @@
+2015-04-22  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 5.0.0: Adds request timeouts and embeds hiredis
+
 2015-04-08  Aaron Bedra  <aaron@aaronbedra.com>
 
 	* 4.1.0: Remove pcre dependency for remote_address
