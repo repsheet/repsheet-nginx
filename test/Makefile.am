@@ -22,4 +22,4 @@ test_runner_SOURCES = librepsheet_test.c   \
                       ../src/xff.c         \
                       ../src/xff.h
 test_runner_CFLAGS = -g -O0 --coverage -std=c99 $(CHECK_CFLAGS)
-test_runner_LDADD = $(CHECK_LIBS) -lm ../src/hiredis/libhiredis.a
+test_runner_LDADD = $(CHECK_LIBS) -lm -lhiredis

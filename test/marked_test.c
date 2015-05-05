@@ -1,4 +1,4 @@
-#include "../src/hiredis/hiredis.h"
+#include <hiredis/hiredis.h>
 #include "../src/repsheet.h"
 #include "../src/marked.h"
 #include "check.h"
