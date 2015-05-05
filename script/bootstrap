@@ -31,7 +31,8 @@ install_nginx () {
         tar xzf "nginx-$NGINX_VERSION.tar.gz"
         pushd "nginx-$NGINX_VERSION" > /dev/null 2>&1
         ./configure                                       \
-	    --with-cc-opt="-Wno-deprecated-declarations"  \
+            --with-cc-opt="-Wno-deprecated-declarations"  \
+            --with-cc-opt="-std=c99"                      \
             --with-debug                                  \
             --prefix=$(pwd)/../../build/nginx             \
             --conf-path=conf/nginx.conf                   \
@@ -52,7 +53,8 @@ compile () {
     pushd "vendor" > /dev/null 2>&1
     pushd "nginx-$NGINX_VERSION" > /dev/null 2>&1
     CFLAGS="-g -O0 -Wall -Werror" ./configure        \
-	--with-cc-opt="-Wno-deprecated-declarations" \
+        --with-cc-opt="-Wno-deprecated-declarations" \
+        --with-cc-opt="-std=c99"                     \
         --with-debug                                 \
         --prefix=$(pwd)/../../build/nginx            \
         --conf-path=conf/nginx.conf                  \

@@ -69,7 +69,7 @@ describe "Integration Specs" do
     end
 
     it "Returns a 403 response if the user is on the blacklist" do
-      @redis.set("integration:repsheet:users:blacklisted", "Integration Spec")
+      @redis.set("integration:repsheet:user:blacklisted", "Integration Spec")
       http = Curl.get("http://127.0.0.1:8888") do |http|
         http.headers['Cookie'] = "user=integration"
       end
@@ -78,7 +78,7 @@ describe "Integration Specs" do
     end
 
     it "Returns a 403 response if the user is on the blacklist with multiple cookie values present" do
-      @redis.set("integration:repsheet:users:blacklisted", "Integration Spec")
+      @redis.set("integration:repsheet:user:blacklisted", "Integration Spec")
       http = Curl.get("http://127.0.0.1:8888") do |http|
         http.headers['Cookie'] = "user=integration; foo=bar;"
       end
@@ -87,7 +87,7 @@ describe "Integration Specs" do
     end
 
     it "Returns a 403 response if the user is on the blacklist with multiple cookie values present and cookie is at the end" do
-      @redis.set("integration:repsheet:users:blacklisted", "Integration Spec")
+      @redis.set("integration:repsheet:user:blacklisted", "Integration Spec")
       http = Curl.get("http://127.0.0.1:8888") do |http|
         http.headers['Cookie'] = "foo=bar; user=integration;"
       end
@@ -96,7 +96,7 @@ describe "Integration Specs" do
     end
 
     it "Returns a 403 response if the user is on the blacklist with multiple cookie values present and cookie is in the middle" do
-      @redis.set("integration:repsheet:users:blacklisted", "Integration Spec")
+      @redis.set("integration:repsheet:user:blacklisted", "Integration Spec")
       http = Curl.get("http://127.0.0.1:8888") do |http|
         http.headers['Cookie'] = "foo=bar; user=integration; baz=quux;"
       end
@@ -115,8 +115,8 @@ describe "Integration Specs" do
 
 
     it "Returns a 200 response if the user is on the whitelist" do
-      @redis.set("repsheet:repsheet:users:blacklisted", "Integration Spec")
-      @redis.set("repsheet:repsheet:users:whitelisted", "Integration Spec")
+      @redis.set("repsheet:repsheet:user:blacklisted", "Integration Spec")
+      @redis.set("repsheet:repsheet:user:whitelisted", "Integration Spec")
 
       http = Curl.get("http://127.0.0.1:8888") do |http|
         http.headers['Cookie'] = "user=repsheet"
@@ -137,7 +137,7 @@ describe "Integration Specs" do
     end
 
     it "Returns a 200 response if the user is marked on the repsheet" do
-      @redis.set("repsheet:repsheet:users:marked", "Integration Spec")
+      @redis.set("repsheet:repsheet:user:marked", "Integration Spec")
 
       http = Curl.get("http://127.0.0.1:8888") do |http|
         http.headers['Cookie'] = "user=repsheet"

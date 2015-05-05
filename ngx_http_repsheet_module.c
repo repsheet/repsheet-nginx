@@ -2,15 +2,14 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_http.h>
-
-#include "hiredis/hiredis.h"
-
-#include "repsheet.h"
+#include <hiredis/hiredis.h>
+#include <repsheet.h>
 
 typedef struct {
   ngx_str_t  host;
   ngx_uint_t port;
-  ngx_uint_t timeout;
+  ngx_uint_t connection_timeout;
+  ngx_uint_t read_timeout;
   ngx_uint_t max_length;
   ngx_uint_t expiry;
   redisContext *connection;
@@ -54,40 +53,19 @@ x_forwarded_for(ngx_http_request_t *r)
 static int
 derive_actor_address(ngx_http_request_t *r, char *address)
 {
-  int length;
+  int result;
   ngx_table_elt_t *xff = x_forwarded_for(r);
-
-  memset(address, '\0', INET6_ADDRSTRLEN);
-
-  if (xff != NULL && xff->value.data != NULL) {
-    u_char *p;
-
-    for (p = xff->value.data; p < (xff->value.data + xff->value.len); p++) {
-      if (*p == ' ' || *p == ',') {
-        break;
-      }
-    }
-
-    length = p - xff->value.data;
-    char *test_address = malloc(length + 1);
-    memcpy(test_address, xff->value.data, length);
-    test_address[length] = '\0';
-
-    unsigned char buf[sizeof(struct in_addr)];
-    unsigned char buf6[sizeof(struct in6_addr)];
-
-    if (inet_pton(AF_INET, (const char *)test_address, buf) == 1 || inet_pton(AF_INET6, (const char *)test_address, buf6) == 1) {
-      memcpy(address, test_address, length);
-      free(test_address);
-      return NGX_OK;
-    } else {
-      free(test_address);
-      return NGX_DECLINED;
-    }
-  } else {
-    length = r->connection->addr_text.len;
-    memcpy(address, (char *)r->connection->addr_text.data, length);
+  if (xff == NULL) {
+    memcpy(address, r->connection->addr_text.data, r->connection->addr_text.len);
+    address[r->connection->addr_text.len] = '\0';
     return NGX_OK;
+  } else {
+    result = remote_address((char *)r->connection->addr_text.data, (char*)xff->value.data, address);
+    if (result == BLACKLISTED) {
+      return NGX_DECLINED;
+    } else {
+      return NGX_OK;
+    }
   }
 }
 
@@ -95,7 +73,10 @@ derive_actor_address(ngx_http_request_t *r, char *address)
 static int
 reset_connection(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
 {
-  redisContext *context = get_redis_context((const char*)main_conf->redis.host.data, main_conf->redis.port, main_conf->redis.timeout);
+  redisContext *context = repsheet_connect((const char*)main_conf->redis.host.data,
+					   main_conf->redis.port,
+					   main_conf->redis.connection_timeout,
+					   main_conf->redis.read_timeout);
 
   if (context == NULL) {
     return NGX_DECLINED;
@@ -324,11 +305,19 @@ static ngx_command_t ngx_http_repsheet_commands[] = {
     NULL
   },
   {
-    ngx_string("repsheet_redis_timeout"),
+    ngx_string("repsheet_redis_connection_timeout"),
     NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
     ngx_conf_set_num_slot,
     NGX_HTTP_MAIN_CONF_OFFSET,
-    offsetof(repsheet_main_conf_t, redis.timeout),
+    offsetof(repsheet_main_conf_t, redis.connection_timeout),
+    NULL
+  },
+  {
+    ngx_string("repsheet_redis_read_timeout"),
+    NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
+    ngx_conf_set_num_slot,
+    NGX_HTTP_MAIN_CONF_OFFSET,
+    offsetof(repsheet_main_conf_t, redis.read_timeout),
     NULL
   },
   {
@@ -371,7 +360,8 @@ ngx_http_repsheet_create_main_conf(ngx_conf_t *cf)
   }
 
   conf->redis.port = NGX_CONF_UNSET_UINT;
-  conf->redis.timeout = NGX_CONF_UNSET_UINT;
+  conf->redis.connection_timeout = NGX_CONF_UNSET_UINT;
+  conf->redis.read_timeout = NGX_CONF_UNSET_UINT;
   conf->redis.max_length = NGX_CONF_UNSET_UINT;
   conf->redis.expiry = NGX_CONF_UNSET_UINT;
   conf->redis.connection = NULL;
