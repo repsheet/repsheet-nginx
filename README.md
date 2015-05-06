@@ -21,9 +21,9 @@ each request to see if that cookie has been blacklisted.
 
 ## Dependencies
 
-This module requires [hiredis](https://github.com/redis/hiredis) and
-[librepsheet](https://github.com/repsheet/librepsheet) >= 3.0.0 for
-compilation and [Redis](http://redis.io) for its runtime.
+* [hiredis](https://github.com/redis/hiredis) 0.13.1 or greater
+* [librepsheet](https://github.com/repsheet/librepsheet) 5.0.0 or greater
+* [Redis](http://redis.io) 2.8 or greater (runtime only)
 
 #### Installation
 
@@ -44,7 +44,8 @@ the main configuration section of `nginx.conf`.
 
 * `repsheet_redis_host <host>` - Sets the host for the Redis connection
 * `repsheet_redis_port <port>` - Sets the port for the Redis connection
-* `repsheet_redis_timeout <n>` - Sets the Redis connection timeout (in milliseconds)
+* `repsheet_redis_connection_timeout <n>` - Sets the Redis connection timeout (in milliseconds)
+* `repsheet_redis_read_timeout <n>` - Sets the Redis request timeout (in milliseconds)
 
 * `repsheet_user_cookie <name>` - Sets the cookie that holds the user value to be examined
 
@@ -63,7 +64,8 @@ http {
 
   repsheet_redis_host localhost;
   repsheet_redis_port 6379;
-  repsheet_redis_timeout 5;
+  repsheet_redis_connection_timeout 5;
+  repsheet_redis_read_timeout 10;
 
   repsheet_user_cookie "user"
 

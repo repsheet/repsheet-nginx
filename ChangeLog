@@ -1,3 +1,10 @@
+2015-05-06  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 3.0.0: Read timeouts
+	  - read_timeout is now an option
+	  - XFF processing moved to librepsheet
+	  - Keyspace in tests updated to match librepsheet
+
 2014-11-25  Aaron Bedra  <aaron@aaronbedra.com>
 
 	* 2.1.0: Bug fixes
