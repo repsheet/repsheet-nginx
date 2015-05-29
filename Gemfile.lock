@@ -35,3 +35,6 @@ DEPENDENCIES
   redis
   rspec
   sinatra
+
+BUNDLED WITH
+   1.10.0
