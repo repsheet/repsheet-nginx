@@ -29,7 +29,7 @@ void whitelist_teardown(void)
 START_TEST(is_ip_whitelisted_true_test)
 {
   char value[MAX_REASON_LENGTH];
-  whitelist_actor(context, "1.1.1.1", IP, "Is IP Whitelisted Test");
+  whitelist(context, "1.1.1.1", IP, "Is IP Whitelisted Test");
   int response = is_ip_whitelisted(context, "1.1.1.1", value);
 
   ck_assert_int_eq(response, TRUE);
@@ -49,7 +49,7 @@ END_TEST
 START_TEST(is_user_whitelisted_true_test)
 {
   char value[MAX_REASON_LENGTH];
-  whitelist_actor(context, "repsheet", USER, "Is User Whitelisted Test");
+  whitelist(context, "repsheet", USER, "Is User Whitelisted Test");
   int response = is_user_whitelisted(context, "repsheet", value);
 
   ck_assert_int_eq(response, TRUE);
@@ -69,7 +69,7 @@ END_TEST
 START_TEST(is_ip_whitelisted_in_cidr_true_test)
 {
   char value[MAX_REASON_LENGTH];
-  whitelist_actor(context, "10.0.0.0/24", BLOCK, "CIDR 24 Test");
+  whitelist(context, "10.0.0.0/24", BLOCK, "CIDR 24 Test");
   int response = is_ip_whitelisted(context, "10.0.0.15", value);
 
   ck_assert_int_eq(response, TRUE);

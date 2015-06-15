@@ -18,7 +18,7 @@
  *
  * @returns an integer result
  */
-int mark_actor(redisContext *context, const char *actor, int type, const char *reason)
+int mark(redisContext *context, const char *actor, int type, const char *reason)
 {
   redisReply *reply;
 
@@ -29,6 +29,8 @@ int mark_actor(redisContext *context, const char *actor, int type, const char *r
   case USER:
     return set_list(context, actor, "user", "marked", reason);
     break;
+  case BLOCK:
+    return set_block(context, actor, "marked", reason);
   default:
     return UNSUPPORTED;
     break;

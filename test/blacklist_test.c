@@ -29,7 +29,7 @@ void blacklist_teardown(void)
 START_TEST(is_ip_blacklisted_true_test)
 {
   char value[MAX_REASON_LENGTH];
-  blacklist_actor(context, "1.1.1.1", IP, "Is IP Blacklisted Test");
+  blacklist(context, "1.1.1.1", IP, "Is IP Blacklisted Test");
   int response = is_ip_blacklisted(context, "1.1.1.1", value);
 
   ck_assert_int_eq(response, TRUE);
@@ -49,7 +49,7 @@ END_TEST
 START_TEST(is_user_blacklisted_true_test)
 {
   char value[MAX_REASON_LENGTH];
-  blacklist_actor(context, "repsheet", USER, "Is User Blacklisted Test");
+  blacklist(context, "repsheet", USER, "Is User Blacklisted Test");
   int response = is_user_blacklisted(context, "repsheet", value);
 
   ck_assert_int_eq(response, TRUE);
@@ -69,7 +69,7 @@ END_TEST
 START_TEST(is_ip_blacklisted_in_cidr_true_test)
 {
   char value[MAX_REASON_LENGTH];
-  blacklist_actor(context, "10.0.0.0/24", BLOCK, "CIDR 24 Test");
+  blacklist(context, "10.0.0.0/24", BLOCK, "CIDR 24 Test");
   int response = is_ip_blacklisted(context, "10.0.0.15", value);
 
   ck_assert_int_eq(response, TRUE);

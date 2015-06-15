@@ -21,7 +21,7 @@
  *
  * @returns an integer result
  */
-int whitelist_actor(redisContext *context, const char *actor, int type, const char *reason)
+int whitelist(redisContext *context, const char *actor, int type, const char *reason)
 {
   redisReply *reply;
 
@@ -33,7 +33,7 @@ int whitelist_actor(redisContext *context, const char *actor, int type, const ch
     return set_list(context, actor, "user", "whitelisted", reason);
     break;
   case BLOCK:
-    return set_list(context, actor, "cidr", "whitelisted", reason);
+    return set_block(context, actor, "whitelisted", reason);
     break;
   default:
     return UNSUPPORTED;
@@ -65,7 +65,7 @@ int is_ip_whitelisted(redisContext *context, const char *actor, char *reason)
     return DISCONNECTED;
   }
 
-  redisReply *whitelisted = redisCommand(context, "KEYS *:repsheet:cidr:whitelisted");
+  redisReply *whitelisted = redisCommand(context, "SMEMBERS repsheet:cidr:whitelisted");
   if (whitelisted) {
     if (whitelisted->type == REDIS_REPLY_ARRAY) {
       int i;

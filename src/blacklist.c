@@ -21,7 +21,7 @@
  *
  * @returns an integer result
  */
-int blacklist_actor(redisContext *context, const char *actor, int type, const char *reason)
+int blacklist(redisContext *context, const char *actor, int type, const char *reason)
 {
   redisReply *reply;
 
@@ -33,7 +33,7 @@ int blacklist_actor(redisContext *context, const char *actor, int type, const ch
     return set_list(context, actor, "user", "blacklisted", reason);
     break;
   case BLOCK:
-    return set_list(context, actor, "cidr", "blacklisted", reason);
+    return set_block(context, actor, "blacklisted", reason);
     break;
   default:
     return UNSUPPORTED;
@@ -65,7 +65,7 @@ int is_ip_blacklisted(redisContext *context, const char *actor, char *reason)
     return DISCONNECTED;
   }
 
-  redisReply *blacklisted = redisCommand(context, "KEYS *:repsheet:cidr:blacklisted");
+  redisReply *blacklisted = redisCommand(context, "SMEMBERS repsheet:cidr:blacklisted");
   if (blacklisted) {
     if (blacklisted->type == REDIS_REPLY_ARRAY) {
       int i;

@@ -76,7 +76,7 @@ END_TEST
 START_TEST(repsheet_reconnect_test)
 {
   context = repsheet_connect("localhost", 6379, 0, 5);
-  blacklist_actor(context, "1.1.1.1", IP, "IP Blacklist Actor Status");
+  blacklist(context, "1.1.1.1", IP, "IP Blacklist Actor Status");
   const char *query = "DEBUG SLEEP 1\r\n";
   int wr = write(context->fd, query, strlen(query));
   char value[MAX_REASON_LENGTH];
@@ -104,12 +104,12 @@ START_TEST(actor_status_test)
 {
   char value[MAX_REASON_LENGTH];
 
-  whitelist_actor(context, "1.1.1.1", IP, "IP Whitelist Actor Status");
-  whitelist_actor(context, "whitelist", USER, "User Whitelist Actor Status");
-  blacklist_actor(context, "1.1.1.2", IP, "IP Blacklist Actor Status");
-  blacklist_actor(context, "blacklist", USER, "User Blacklist Actor Status");
-  mark_actor(context, "1.1.1.3", IP, "IP Marked Actor Status");
-  mark_actor(context, "marked", USER, "User Marked Actor Status");
+  whitelist(context, "1.1.1.1", IP, "IP Whitelist Actor Status");
+  whitelist(context, "whitelist", USER, "User Whitelist Actor Status");
+  blacklist(context, "1.1.1.2", IP, "IP Blacklist Actor Status");
+  blacklist(context, "blacklist", USER, "User Blacklist Actor Status");
+  mark(context, "1.1.1.3", IP, "IP Marked Actor Status");
+  mark(context, "marked", USER, "User Marked Actor Status");
 
   ck_assert_int_eq(actor_status(context, "1.1.1.1", IP, value), WHITELISTED);
   ck_assert_str_eq(value, "IP Whitelist Actor Status");

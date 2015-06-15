@@ -29,7 +29,7 @@ void marked_teardown(void)
 START_TEST(is_ip_marked_true_test)
 {
   char value[MAX_REASON_LENGTH];
-  mark_actor(context, "1.1.1.1", IP, "Is IP Marked Test");
+  mark(context, "1.1.1.1", IP, "Is IP Marked Test");
   int response = is_ip_marked(context, "1.1.1.1", value);
 
   ck_assert_int_eq(response, TRUE);
@@ -49,7 +49,7 @@ END_TEST
 START_TEST(is_user_marked_true_test)
 {
   char value[MAX_REASON_LENGTH];
-  mark_actor(context, "repsheet", USER, "Is User Marked Test");
+  mark(context, "repsheet", USER, "Is User Marked Test");
   int response = is_user_marked(context, "repsheet", value);
 
   ck_assert_int_eq(response, TRUE);
