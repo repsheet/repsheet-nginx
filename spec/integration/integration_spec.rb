@@ -106,6 +106,7 @@ describe "Integration Specs" do
 
     it "Returns a 403 response if the user is in a blacklisted CIDR block" do
       @redis.set("10.0.0.0/24:repsheet:cidr:blacklisted", "Integration Spec")
+      @redis.sadd("repsheet:cidr:blacklisted", "10.0.0.0/24")
       http = Curl.get("http://127.0.0.1:8888") do |http|
         http.headers['X-Forwarded-For'] = '10.0.0.15'
       end
@@ -128,6 +129,7 @@ describe "Integration Specs" do
     it "Returns a 200 response if the user is in a blacklisted CIDR block" do
       @redis.set("10.0.0.50:repsheet:ip:blacklisted", "Integration Spec")
       @redis.set("10.0.0.0/24:repsheet:cidr:whitelisted", "Integration Spec")
+      @redis.sadd("repsheet:cidr:whitelisted", "10.0.0.0/24")
 
       http = Curl.get("http://127.0.0.1:8888") do |http|
         http.headers['X-Forwarded-For'] = '10.0.0.50'

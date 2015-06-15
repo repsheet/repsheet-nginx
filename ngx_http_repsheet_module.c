@@ -209,12 +209,12 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     }
 
     if (loc_conf->auto_blacklist) {
-      blacklist_actor(main_conf->redis.connection, address, IP, "bad robot");
+      blacklist(main_conf->redis.connection, address, IP, "bad robot");
       return NGX_HTTP_FORBIDDEN;
     }
 
     if (loc_conf->auto_mark) {
-      mark_actor(main_conf->redis.connection, address, IP, "bad robot");
+      mark(main_conf->redis.connection, address, IP, "bad robot");
     }
   }
 
