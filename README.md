@@ -161,6 +161,7 @@ Key                                | Value
 `<ip>:repsheet:ip:blacklisted`     | `<reason>`
 `<user>:repsheet:user:blacklisted` | `<reason>`
 `<cidr>:repsheet:cidr:blacklisted` | `<reason>`
+`repsheet:cidr:blacklisted`        | `<cidr>`
 
 #### Whitelist
 
@@ -169,6 +170,7 @@ Key                                | Value
 `<ip>:repsheet:ip:whitelisted`     | `<reason>`
 `<user>:repsheet:user:whitelisted` | `<reason>`
 `<cidr>:repsheet:cidr:whitelisted` | `<reason>`
+`repsheet:cidr:whitelisted`        | `<cidr>`
 
 #### Marked
 
@@ -176,6 +178,8 @@ Key                           | Value
 ----------------------------- | --------
 `<ip>:repsheet:ip:marked`     | `<reason>`
 `<user>:repsheet:user:marked` | `<reason>`
+`<cidr>:repsheet:cidr:marked` | `<reason>`
+`repsheet:cidr:marked`        | `<cidr>`
 
 To view all of the functions provided by librepsheet you can visit the
 [documentation page](http://repsheet.github.io/librepsheet/docs/librepsheet_8c.html). To
