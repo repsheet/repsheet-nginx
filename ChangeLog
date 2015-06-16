@@ -1,3 +1,7 @@
+2015-06-16  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 6.0.0: Remove the KEYS command
+
 2015-04-22  Aaron Bedra  <aaron@aaronbedra.com>
 
 	* 5.0.0: Adds request timeouts and embeds hiredis
