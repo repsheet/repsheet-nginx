@@ -1,3 +1,9 @@
+librepsheet (6.0.0-1) unstable-security; urgency=medium
+
+  * Remove KEYS command
+
+ -- Aaron Bedra <aaron@aaronbedra.com>  Tue, 16 Jun 2015 09:06:15 -0500
+
 librepsheet (5.0.0-1) unstable-security; urgency=medium
 
   * Adds request timeouts and embeds hiredis

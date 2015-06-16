@@ -1,5 +1,5 @@
 Name: repsheet
-Version: 5.0.0
+Version: 6.0.0
 Release: 1
 Summary: Core library
 License: ASL 2.0
@@ -72,6 +72,8 @@ rm -rf $RPM_BUILD_ROOT
 %doc LICENSE
 
 %changelog
+* Tue Jun 16 2015 Aaron Bedra <aaron@aaronbedra.com> - 6.0.0-1
+- Remove KEYS command
 * Wed Apr 22 2015 Aaron Bedra <aaron@aaronbedra.com> - 5.0.0-1
 - Adds request timeouts and embeds hiredis
 * Wed Apr 08 2015 Aaron Bedra <aaron@aaronbedra.com> - 4.1.0-1
