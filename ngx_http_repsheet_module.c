@@ -70,13 +70,20 @@ derive_actor_address(ngx_http_request_t *r, char *address)
 }
 
 
-static int
-reset_connection(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
+static void
+cleanup_connection(repsheet_main_conf_t *main_conf)
 {
   if (main_conf->redis.connection != NULL) {
     redisFree(main_conf->redis.connection);
     main_conf->redis.connection = NULL;
   }
+}
+
+
+static int
+reset_connection(repsheet_main_conf_t *main_conf)
+{
+  cleanup_connection(main_conf);
 
   redisContext *context = repsheet_connect((const char*)main_conf->redis.host.data,
 					   main_conf->redis.port,
@@ -195,14 +202,19 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
   int connection_status = check_connection(main_conf->redis.connection);
   if (connection_status == DISCONNECTED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - No Redis connection found, creating a new connection");
+
     if (main_conf->redis.connection != NULL) {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Redis Context Error: %s", main_conf->redis.connection->errstr);
     }
-    connection_status = reset_connection(r, main_conf);
+
+    connection_status = reset_connection(main_conf);
+
     if (connection_status == NGX_DECLINED) {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Unable to establish a connection to Redis, bypassing Repsheet operations");
+
       if (main_conf->redis.connection != NULL) {
 	ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Redis Context Error: %s", main_conf->redis.connection->errstr);
+	cleanup_connection(main_conf);
       }
 
       return NGX_DECLINED;
