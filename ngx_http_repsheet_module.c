@@ -73,6 +73,11 @@ derive_actor_address(ngx_http_request_t *r, char *address)
 static int
 reset_connection(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
 {
+  if (main_conf->redis.connection != NULL) {
+    redisFree(main_conf->redis.connection);
+    main_conf->redis.connection = NULL;
+  }
+  
   redisContext *context = repsheet_connect((const char*)main_conf->redis.host.data,
 					   main_conf->redis.port,
 					   main_conf->redis.connection_timeout,
