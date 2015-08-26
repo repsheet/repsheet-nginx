@@ -13,6 +13,8 @@ test_runner_SOURCES = librepsheet_test.c   \
                       ../src/common.h      \
                       ../src/cidr.h        \
                       ../src/cidr.c        \
+                      ../src/check_cidr.h  \
+                      ../src/check_cidr.c  \
                       ../src/blacklist.c   \
                       ../src/blacklist.h   \
                       ../src/whitelist.c   \

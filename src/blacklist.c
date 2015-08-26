@@ -4,6 +4,7 @@
 #include "cidr.h"
 
 #include "blacklist.h"
+#include "check_cidr.h"
 
 /**
  * @file blacklist.c
@@ -65,32 +66,7 @@ int is_ip_blacklisted(redisContext *context, const char *actor, char *reason)
     return DISCONNECTED;
   }
 
-  redisReply *blacklisted = redisCommand(context, "SMEMBERS repsheet:cidr:blacklisted");
-  if (blacklisted) {
-    if (blacklisted->type == REDIS_REPLY_ARRAY) {
-      int i;
-      redisReply *value;
-      char *block;
-      for(i = 0; i < blacklisted->elements; i++) {
-        block = strtok(blacklisted->element[i]->str, ":");
-        if (cidr_contains(block, actor) > 0) {
-          value = redisCommand(context, "GET %s:repsheet:cidr:blacklisted", block);
-          if (value) {
-            populate_reason(value, reason);
-            freeReplyObject(value);
-          }
-          freeReplyObject(blacklisted);
-          return TRUE;
-        }
-      }
-    } else{
-      freeReplyObject(blacklisted);
-    }
-  } else {
-    return DISCONNECTED;
-  }
-
-  return FALSE;
+ return checkCIDR(context, actor, reason, "blacklisted");
 }
 
 /**

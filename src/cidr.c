@@ -11,7 +11,6 @@
  * @date 10/09/2014
  */
 
-int ip_address_to_integer(const char *address);
 int _string_to_cidr(CIDR *cidr, char *block);
 
 /**
@@ -141,3 +140,4 @@ int ip_address_to_integer(const char *address)
 
   return ip_integer;
 }
+

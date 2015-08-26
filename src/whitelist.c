@@ -2,8 +2,9 @@
 #include "repsheet.h"
 #include "common.h"
 #include "cidr.h"
-
+#include "check_cidr.h"
 #include "whitelist.h"
+
 
 /**
  * @file whitelist.c
@@ -41,39 +42,7 @@ int whitelist(redisContext *context, const char *actor, int type, const char *re
   }
 }
 
-#define COMMAND_MAX_LENGTH 200 
-int checkCIDR(redisContext *context, const char *actor, char *reason, char *list) 
-{
 
-  char command[COMMAND_MAX_LENGTH];
-  snprintf(command ,COMMAND_MAX_LENGTH, "SMEMBERS repsheet:cidr:%s", list);
-  redisReply *whitelisted = redisCommand(context, command);
-  if (whitelisted) {
-    if (whitelisted->type == REDIS_REPLY_ARRAY) {
-      int i;
-      redisReply *value;
-      char *block;
-      for(i = 0; i < whitelisted->elements; i++) {
-        block = strtok(whitelisted->element[i]->str, ":");
-        if (cidr_contains(block, actor) > 0) {
-          value = redisCommand(context, "GET %s:repsheet:cidr:whitelisted", block);
-          if (value) {
-            populate_reason(value, reason);
-            freeReplyObject(value);
-          }
-          freeReplyObject(whitelisted);
-          return TRUE;
-        }
-      }
-    } else{
-      freeReplyObject(whitelisted);
-    }
-  } else {
-    return DISCONNECTED;
-  }
-
-  return FALSE;
-}
 /**
  * Checks to see if an ip is on the Repsheet whitelist
  *
