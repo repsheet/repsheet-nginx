@@ -13,15 +13,7 @@
 
 int _string_to_cidr(CIDR *cidr, char *block);
 
-/**
- * Test an IP to see if it is contained in the CIDR block
- *
- * @param block the CIDR block string
- * @param address the IP address string
- *
- * @returns 1 if in the block, 0 if not
- */
-int cidr_contains(char *block, int ip)
+int block_to_range( char *block, range *range )
 {
   if (block == NULL) {
     return NIL;
@@ -33,16 +25,35 @@ int cidr_contains(char *block, int ip)
     return result;
   }
 
-  range r;
+  range->lower = cidr.address;
+  range->upper = range->lower + (pow(2, (32 - cidr.mask)) -1);
 
-  r.lower = cidr.address;
-  r.upper = r.lower + (pow(2, (32 - cidr.mask)) -1);
-
-  if (cidr.address == BAD_ADDRESS || ip == BAD_ADDRESS) {
+  if (cidr.address == BAD_ADDRESS) {
     return BAD_ADDRESS;
   }
+  return 1;
+}
 
-  return address_in_range( &r, ip );
+/**
+ * Test an IP to see if it is contained in the CIDR block
+ *
+ * @param block the CIDR block string
+ * @param address the IP address string
+ *
+ * @returns 1 if in the block, 0 if not
+ */
+int cidr_contains(char *block, int ip)
+{
+  range range;
+  if ( ip == BAD_ADDRESS )
+  {
+    return BAD_ADDRESS;
+  }
+  int rc =  block_to_range( block, &range );
+  if ( rc <= 0 ) {
+    return rc;
+  }
+  return address_in_range( &range, ip );
 }
 
 int address_in_range( range *r, int ip )
