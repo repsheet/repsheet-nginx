@@ -11,7 +11,7 @@
  * @date 10/09/2014
  */
 
-int _string_to_integer(const char *address);
+int ip_address_to_integer(const char *address);
 int _string_to_cidr(CIDR *cidr, char *block);
 
 /**
@@ -34,15 +34,22 @@ int cidr_contains(char *block, const char *address)
     return result;
   }
 
-  int lower = cidr.address;
-  int upper = lower + (pow(2, (32 - cidr.mask)) -1);
-  int ip = _string_to_integer(address);
+  range r;
+
+  r.lower = cidr.address;
+  r.upper = r.lower + (pow(2, (32 - cidr.mask)) -1);
+  int ip = ip_address_to_integer(address);
 
   if (cidr.address == BAD_ADDRESS || ip == BAD_ADDRESS) {
     return BAD_ADDRESS;
   }
 
-  return ((lower <= ip) && (ip <= upper));
+  return address_in_range( &r, ip );
+}
+
+int address_in_range( range *r, int ip )
+{
+  return ((r->lower <= ip) && (ip <= r->upper));
 }
 
 int _string_to_cidr(CIDR *cidr, char *block)
@@ -73,7 +80,7 @@ int _string_to_cidr(CIDR *cidr, char *block)
   if (cidr->address_string == NULL) {
     return BAD_ADDRESS;
   } else {
-    cidr->address = _string_to_integer(cidr->address_string);
+    cidr->address = ip_address_to_integer(cidr->address_string);
     if (cidr->address == BAD_ADDRESS) {
       return BAD_ADDRESS;
     }
@@ -82,7 +89,7 @@ int _string_to_cidr(CIDR *cidr, char *block)
   return LIBREPSHEET_OK;
 }
 
-int _string_to_integer(const char *address)
+int ip_address_to_integer(const char *address)
 {
   char dup[strlen(address) + 1];
   char *value;
