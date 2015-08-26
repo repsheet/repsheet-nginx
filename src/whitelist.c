@@ -41,31 +41,13 @@ int whitelist(redisContext *context, const char *actor, int type, const char *re
   }
 }
 
-/**
- * Checks to see if an ip is on the Repsheet whitelist
- *
- * @param context the Redis connection
- * @param actor the IP address of the actor
- * @param reason returns the reason for whitelisting.
- *
- * @returns TRUE if yes, FALSE if no, DISCONNECTED if error
- */
-int is_ip_whitelisted(redisContext *context, const char *actor, char *reason)
+#define COMMAND_MAX_LENGTH 200 
+int checkCIDR(redisContext *context, const char *actor, char *reason, char *list) 
 {
-  redisReply *ip = redisCommand(context, "GET %s:repsheet:ip:whitelisted", actor);
-  if (ip) {
-    if (ip->type == REDIS_REPLY_STRING) {
-      populate_reason(ip, reason);
-      freeReplyObject(ip);
-      return TRUE;
-    } else {
-      freeReplyObject(ip);
-    }
-  } else {
-    return DISCONNECTED;
-  }
 
-  redisReply *whitelisted = redisCommand(context, "SMEMBERS repsheet:cidr:whitelisted");
+  char command[COMMAND_MAX_LENGTH];
+  snprintf(command ,COMMAND_MAX_LENGTH, "SMEMBERS repsheet:cidr:%s", list);
+  redisReply *whitelisted = redisCommand(context, command);
   if (whitelisted) {
     if (whitelisted->type == REDIS_REPLY_ARRAY) {
       int i;
@@ -91,6 +73,32 @@ int is_ip_whitelisted(redisContext *context, const char *actor, char *reason)
   }
 
   return FALSE;
+}
+/**
+ * Checks to see if an ip is on the Repsheet whitelist
+ *
+ * @param context the Redis connection
+ * @param actor the IP address of the actor
+ * @param reason returns the reason for whitelisting.
+ *
+ * @returns TRUE if yes, FALSE if no, DISCONNECTED if error
+ */
+int is_ip_whitelisted(redisContext *context, const char *actor, char *reason)
+{
+  redisReply *ip = redisCommand(context, "GET %s:repsheet:ip:whitelisted", actor);
+  if (ip) {
+    if (ip->type == REDIS_REPLY_STRING) {
+      populate_reason(ip, reason);
+      freeReplyObject(ip);
+      return TRUE;
+    } else {
+      freeReplyObject(ip);
+    }
+  } else {
+    return DISCONNECTED;
+  }
+
+  return checkCIDR(context, actor, reason, "whitelisted");
 }
 
 /**
