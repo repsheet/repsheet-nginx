@@ -28,23 +28,19 @@ int cidr_contains(char *block, const char *address)
     return NIL;
   }
 
-  CIDR *cidr = malloc(sizeof(*cidr));
-  int result = _string_to_cidr(cidr, block);
+  CIDR cidr;
+  int result = _string_to_cidr(&cidr, block);
   if (result == BAD_ADDRESS || result == BAD_CIDR_BLOCK) {
-    free(cidr);
     return result;
   }
 
-  int lower = cidr->address;
-  int upper = lower + (pow(2, (32 - cidr->mask)) -1);
+  int lower = cidr.address;
+  int upper = lower + (pow(2, (32 - cidr.mask)) -1);
   int ip = _string_to_integer(address);
 
-  if (cidr->address == BAD_ADDRESS || ip == BAD_ADDRESS) {
-    free(cidr);
+  if (cidr.address == BAD_ADDRESS || ip == BAD_ADDRESS) {
     return BAD_ADDRESS;
   }
-
-  free(cidr);
 
   return ((lower <= ip) && (ip <= upper));
 }
