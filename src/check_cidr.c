@@ -11,6 +11,8 @@ int checkCIDR(redisContext *context, const char *actor, char *reason, char *list
   char command[COMMAND_MAX_LENGTH];
   snprintf(command ,COMMAND_MAX_LENGTH, "SMEMBERS repsheet:cidr:%s", list);
   redisReply *listed = redisCommand(context, command);
+  int ip = ip_address_to_integer(actor);
+ 
   if (listed) {
     if (listed->type == REDIS_REPLY_ARRAY) {
       int i;
@@ -18,7 +20,7 @@ int checkCIDR(redisContext *context, const char *actor, char *reason, char *list
       char *block;
       for(i = 0; i < listed->elements; i++) {
         block = strtok(listed->element[i]->str, ":");
-        if (cidr_contains(block, actor) > 0) {
+        if (cidr_contains(block, ip) > 0) {
           snprintf(command, COMMAND_MAX_LENGTH, "GET %s:repsheet:cidr:%s", block ,list);
           value = redisCommand(context, command);
           if (value) {

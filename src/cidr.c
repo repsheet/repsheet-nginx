@@ -21,9 +21,9 @@ int _string_to_cidr(CIDR *cidr, char *block);
  *
  * @returns 1 if in the block, 0 if not
  */
-int cidr_contains(char *block, const char *address)
+int cidr_contains(char *block, int ip)
 {
-  if (block == NULL || address == NULL) {
+  if (block == NULL) {
     return NIL;
   }
 
@@ -37,7 +37,6 @@ int cidr_contains(char *block, const char *address)
 
   r.lower = cidr.address;
   r.upper = r.lower + (pow(2, (32 - cidr.mask)) -1);
-  int ip = ip_address_to_integer(address);
 
   if (cidr.address == BAD_ADDRESS || ip == BAD_ADDRESS) {
     return BAD_ADDRESS;
