@@ -25,6 +25,8 @@ void push_item( struct expanding_vector *ev , range *push_range )
   memcpy( ev->data + ev->size , push_range , sizeof( range ) );
   ++ev->size;
 }
+
+
   
 
  
