@@ -71,8 +71,8 @@ int is_ip_blacklisted(redisContext *context, const char *actor, char *reason)
     return DISCONNECTED;
   }
 
-  if ( cidr_cache == NULL ) {
-    cidr_cache = create_expanding_vector( 10000 );
+  if (cidr_cache == NULL) {
+    cidr_cache = create_expanding_vector(10000);
   }
   return checkCIDR(context, actor, reason, "blacklisted", cidr_cache, &cache_update_time);
 }

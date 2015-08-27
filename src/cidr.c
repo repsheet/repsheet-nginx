@@ -46,18 +46,18 @@ int block_to_range( char *block, range *range )
 int cidr_contains(char *block, int ip)
 {
   range range;
-  if ( ip == BAD_ADDRESS )
+  if (ip == BAD_ADDRESS)
   {
     return BAD_ADDRESS;
   }
-  int rc =  block_to_range( block, &range );
-  if ( rc <= 0 ) {
+  int rc =  block_to_range(block, &range);
+  if (rc <= 0) {
     return rc;
   }
-  return address_in_range( &range, ip );
+  return address_in_range(&range, ip);
 }
 
-int address_in_range( range *r, int ip )
+int address_in_range(range *r, int ip)
 {
   return ((r->lower <= ip) && (ip <= r->upper));
 }

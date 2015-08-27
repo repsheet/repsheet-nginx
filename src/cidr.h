@@ -19,8 +19,8 @@ typedef struct {
 } range;
 
 int cidr_contains(char *block, int address);
-int address_in_range( range *r, int ip );
+int address_in_range(range *r, int ip);
 int ip_address_to_integer(const char *address);
-int block_to_range( char *block, range *range );
+int block_to_range(char *block, range *range);
 
 #endif

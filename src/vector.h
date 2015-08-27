@@ -10,8 +10,8 @@ typedef struct
   range* data;
 } expanding_vector;
 
-expanding_vector *create_expanding_vector( int initial_size );
-void clear_expanding_vector( expanding_vector *ev );
-void push_item( expanding_vector *ev , range *push_range );
+expanding_vector *create_expanding_vector(int initial_size);
+void clear_expanding_vector(expanding_vector *ev);
+void push_item(expanding_vector *ev, range *push_range);
 
 #endif

@@ -25,8 +25,8 @@ int checkCIDR(redisContext *context, const char *actor, char *reason, char *list
 
   char command[COMMAND_MAX_LENGTH];
 
-  if ( *last_update_time + CACHE_MILISECONDS < current_miliseconds ) {
-    clear_expanding_vector( ev );
+  if (*last_update_time + CACHE_MILISECONDS < current_miliseconds) {
+    clear_expanding_vector(ev);
     
     snprintf(command ,COMMAND_MAX_LENGTH, "SMEMBERS repsheet:cidr:%s", list);
     redisReply *listed = redisCommand(context, command);
@@ -54,12 +54,11 @@ int checkCIDR(redisContext *context, const char *actor, char *reason, char *list
     *last_update_time = current_miliseconds;
   }
 
-  for( int i = 0 ; i < ev->size ; ++ i) {
+  for(int i = 0 ; i < ev->size ; ++ i) {
     range *range = &(ev->data[i]);
     if (address_in_range(range, ip) > 0) {
-      snprintf(command, COMMAND_MAX_LENGTH, "GET %s:repsheet:cidr:%s", range->block ,list);
-      redisReply *value;
-      value = redisCommand(context, command);
+      snprintf(command, COMMAND_MAX_LENGTH, "GET %s:repsheet:cidr:%s", range->block, list);
+      redisReply* value = redisCommand(context, command);
       if (value) {
         populate_reason(value, reason);
         freeReplyObject(value);

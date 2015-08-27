@@ -70,8 +70,8 @@ int is_ip_whitelisted(redisContext *context, const char *actor, char *reason)
     return DISCONNECTED;
   }
 
-  if ( cidr_cache == NULL ) {
-    cidr_cache = create_expanding_vector( 10000 );
+  if (cidr_cache == NULL) {
+    cidr_cache = create_expanding_vector(10000);
   }
   return checkCIDR(context, actor, reason, "whitelisted", cidr_cache, &cache_update_time);
 }
