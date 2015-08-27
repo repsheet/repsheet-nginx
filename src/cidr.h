@@ -10,9 +10,12 @@ typedef struct {
   char *address_string;
 } CIDR;
 
+#define MAX_BLOCK_SIZE 200
+
 typedef struct {
   int lower;
   int upper; 
+  char block[ MAX_BLOCK_SIZE ];
 } range;
 
 int cidr_contains(char *block, int address);

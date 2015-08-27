@@ -22,6 +22,8 @@ test_runner_SOURCES = librepsheet_test.c   \
                       ../src/marked.c      \
                       ../src/marked.h      \
                       ../src/xff.c         \
-                      ../src/xff.h
+                      ../src/xff.h         \ 
+                      ../src/vector.h      \
+                      ../src/vector.c 
 test_runner_CFLAGS = -g -O0 --coverage -std=c99 $(CHECK_CFLAGS)
 test_runner_LDADD = $(CHECK_LIBS) -lm -lhiredis
