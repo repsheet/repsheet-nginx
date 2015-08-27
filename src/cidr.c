@@ -26,7 +26,8 @@ int block_to_range( char *block, range *range )
   }
 
   range->lower = cidr.address;
-  range->upper = range->lower + (pow(2, (32 - cidr.mask)) -1);
+  range->upper = range->lower + (1 <<  (32 - cidr.mask)); 
+    // (pow(2, (32 - cidr.mask)) -1); POW is a potential bug because of rounding--POW is double and we're working with INT values 
 
   if (cidr.address == BAD_ADDRESS) {
     return BAD_ADDRESS;
