@@ -140,15 +140,15 @@ int ip_address_to_integer(const char *address)
   int octets[] = {first, second, third, fourth};
 
   for (i = 0; i < 4; i++) {
-    if (octets[i] < 0 || octets[i] > 256) {
+    if (octets[i] < 0 || octets[i] > 255) {
       return BAD_ADDRESS;
     }
   }
 
-  int ip_integer = ((first << 24) & 0xFF000000)
-    | ((second << 16) & 0xFF0000)
-    | ((third << 8)   & 0xFF00)
-    |  (fourth        & 0xFF);
+  int ip_integer = (first << 24)
+    | (second << 16)
+    | (third << 8)
+    | fourth;
 
   return ip_integer;
 }
