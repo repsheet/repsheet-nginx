@@ -13,17 +13,12 @@ long msecs()
 }
 
 #define COMMAND_MAX_LENGTH 200  
+char command[COMMAND_MAX_LENGTH];
 #define CACHE_MILISECONDS 1000 * 60 // sixty seconds 
 
-int checkCIDR(redisContext *context, const char *actor, char *reason, char *list, expanding_vector *ev, long* last_update_time)
+int check_and_update_cache( redisContext *context, const char *actor, char *reason, char *list, expanding_vector *ev, long *last_update_time )
 {
-  int ip = ip_address_to_integer(actor);
-  if ( ip == BAD_ADDRESS )
-    return BAD_ADDRESS;
-
   long current_miliseconds = msecs();
-
-  char command[COMMAND_MAX_LENGTH];
 
   if (*last_update_time + CACHE_MILISECONDS < current_miliseconds) {
     clear_expanding_vector(ev);
@@ -52,6 +47,20 @@ int checkCIDR(redisContext *context, const char *actor, char *reason, char *list
     }
     //loaded ok, update the cache time
     *last_update_time = current_miliseconds;
+  }
+  return 0;
+}
+
+
+int checkCIDR(redisContext *context, const char *actor, char *reason, char *list, expanding_vector *ev, long *last_update_time)
+{
+  int ip = ip_address_to_integer(actor);
+  if (ip == BAD_ADDRESS)
+    return BAD_ADDRESS;
+
+  int rc = check_and_update_cache(context, actor, reason, list, ev, last_update_time);
+  if ( rc != 0 ) {
+    return rc;
   }
 
   for(int i = 0 ; i < ev->size ; ++ i) {

@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-
+#include <assert.h>
 #include "vector.h"
 
 expanding_vector *create_expanding_vector(int initial_size)
