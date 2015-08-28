@@ -14,16 +14,16 @@ long msecs()
 
 #define COMMAND_MAX_LENGTH 200  
 char command[COMMAND_MAX_LENGTH];
-#define CACHE_MILISECONDS 1000 * 60 // sixty seconds 
+#define CACHE_MILLISECONDS 1000 * 60 // sixty seconds 
 
-int check_and_update_cache( redisContext *context, const char *actor, char *reason, char *list, expanding_vector *ev, long *last_update_time )
+int check_and_update_cache(redisContext *context, const char *actor, char *reason, char *list, expanding_vector *ev, long *last_update_time)
 {
-  long current_miliseconds = msecs();
+  long current_milliseconds = msecs();
 
-  if (*last_update_time + CACHE_MILISECONDS < current_miliseconds) {
+  if (*last_update_time + CACHE_MILLISECONDS < current_milliseconds) {
     clear_expanding_vector(ev);
     
-    snprintf(command ,COMMAND_MAX_LENGTH, "SMEMBERS repsheet:cidr:%s", list);
+    snprintf(command, COMMAND_MAX_LENGTH, "SMEMBERS repsheet:cidr:%s", list);
     redisReply *listed = redisCommand(context, command);
     
     if (listed) {
@@ -34,7 +34,7 @@ int check_and_update_cache( redisContext *context, const char *actor, char *reas
         for(i = 0; i < listed->elements; i++) {
           block = strtok(listed->element[i]->str, ":");
           range range;
-          int rc = block_to_range( block , &range );
+          int rc = block_to_range(block, &range);
           if (rc >= 0) {   
             strncpy(range.block, block, MAX_BLOCK_SIZE);
             push_item(ev, &range);
@@ -46,7 +46,7 @@ int check_and_update_cache( redisContext *context, const char *actor, char *reas
       return DISCONNECTED;
     }
     //loaded ok, update the cache time
-    *last_update_time = current_miliseconds;
+    *last_update_time = current_milliseconds;
   }
   return 0;
 }
@@ -59,11 +59,11 @@ int checkCIDR(redisContext *context, const char *actor, char *reason, char *list
     return BAD_ADDRESS;
 
   int rc = check_and_update_cache(context, actor, reason, list, ev, last_update_time);
-  if ( rc != 0 ) {
+  if (rc != 0) {
     return rc;
   }
 
-  for(int i = 0 ; i < ev->size ; ++ i) {
+  for(int i = 0; i < ev->size; ++ i) {
     range *range = &(ev->data[i]);
     if (address_in_range(range, ip) > 0) {
       snprintf(command, COMMAND_MAX_LENGTH, "GET %s:repsheet:cidr:%s", range->block, list);
