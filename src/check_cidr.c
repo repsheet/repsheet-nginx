@@ -5,22 +5,14 @@
 #include "check_cidr.h"
 #include "vector.h"
 
-long msecs()
+
+int CACHED_FOR_SECONDS = 60; 
+
+int check_and_update_cache(redisContext *context, const char *actor, char *reason, char *list, expanding_vector *ev, time_t *last_update_time)
 {
-  struct timeval tp;
-  gettimeofday(&tp, NULL);
-  return tp.tv_sec * 1000 + tp.tv_usec / 1000;
-}
+  long current_seconds = time(NULL);
 
-#define COMMAND_MAX_LENGTH 200  
-char command[COMMAND_MAX_LENGTH];
-#define CACHE_MILLISECONDS 1000 * 60 // sixty seconds 
-
-int check_and_update_cache(redisContext *context, const char *actor, char *reason, char *list, expanding_vector *ev, long *last_update_time)
-{
-  long current_milliseconds = msecs();
-
-  if (*last_update_time + CACHE_MILLISECONDS < current_milliseconds) {
+  if (*last_update_time + CACHED_FOR_SECONDS < current_seconds) {
     clear_expanding_vector(ev);
     redisReply *listed = redisCommand(context, "SMEMBERS repsheet:cidr:%s", list);  
     if (listed) {
@@ -43,13 +35,13 @@ int check_and_update_cache(redisContext *context, const char *actor, char *reaso
       return DISCONNECTED;
     }
     //loaded ok, update the cache time
-    *last_update_time = current_milliseconds;
+    *last_update_time = current_seconds;
   }
   return 0;
 }
 
 
-int checkCIDR(redisContext *context, const char *actor, char *reason, char *list, expanding_vector *ev, long *last_update_time)
+int checkCIDR(redisContext *context, const char *actor, char *reason, char *list, expanding_vector *ev, time_t *last_update_time)
 {
   int ip = ip_address_to_integer(actor);
   if (ip == BAD_ADDRESS)
