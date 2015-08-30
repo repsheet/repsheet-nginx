@@ -56,7 +56,7 @@ int blacklist(redisContext *context, const char *actor, int type, const char *re
 int is_ip_blacklisted(redisContext *context, const char *actor, char *reason)
 {
   static expanding_vector *cidr_cache = NULL;
-  static long cache_update_time = 0L;
+  static time_t cache_update_time = 0;
 
   redisReply *ip = redisCommand(context, "GET %s:repsheet:ip:blacklisted", actor);
   if (ip) {
@@ -72,7 +72,7 @@ int is_ip_blacklisted(redisContext *context, const char *actor, char *reason)
   }
 
   if (cidr_cache == NULL) {
-    cidr_cache = create_expanding_vector(10000);
+    cidr_cache = create_expanding_vector(1000);
   }
   return checkCIDR(context, actor, reason, "blacklisted", cidr_cache, &cache_update_time);
 }

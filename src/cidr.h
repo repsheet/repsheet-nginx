@@ -15,7 +15,7 @@ typedef struct {
 typedef struct {
   int lower;
   int upper; 
-  char block[ MAX_BLOCK_SIZE ];
+  char block[MAX_BLOCK_SIZE];
 } range;
 
 int cidr_contains(char *block, int address);

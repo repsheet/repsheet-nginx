@@ -55,7 +55,7 @@ int whitelist(redisContext *context, const char *actor, int type, const char *re
 int is_ip_whitelisted(redisContext *context, const char *actor, char *reason)
 {
   static expanding_vector *cidr_cache = NULL;
-  static long cache_update_time = 0L;
+  static time_t cache_update_time = 0;
 
   redisReply *ip = redisCommand(context, "GET %s:repsheet:ip:whitelisted", actor);
   if (ip) {

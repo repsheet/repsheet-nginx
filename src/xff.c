@@ -40,7 +40,7 @@ int remote_address(char *connected_address, char *xff_header, char *address)
     }
 
     length = p - xff_header;
-    char *test_address = malloc(length + 1);
+    char test_address[length + 1];
     memcpy(test_address, xff_header, length);
     test_address[length] = '\0';
 
@@ -49,10 +49,8 @@ int remote_address(char *connected_address, char *xff_header, char *address)
 
     if (inet_pton(AF_INET, (const char *)test_address, buf) == 1 || inet_pton(AF_INET6, (const char *)test_address, buf6) == 1) {
       memcpy(address, test_address, length);
-      free(test_address);
       return LIBREPSHEET_OK;
     } else {
-      free(test_address);
       return BLACKLISTED;
     }
   } else {

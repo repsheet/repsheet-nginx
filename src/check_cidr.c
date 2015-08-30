@@ -5,26 +5,16 @@
 #include "check_cidr.h"
 #include "vector.h"
 
-long msecs()
+
+int CACHED_FOR_SECONDS = 60; 
+
+int check_and_update_cache(redisContext *context, const char *actor, char *reason, char *list, expanding_vector *ev, time_t *last_update_time)
 {
-  struct timeval tp;
-  gettimeofday(&tp, NULL);
-  return tp.tv_sec * 1000 + tp.tv_usec / 1000;
-}
+  long current_seconds = time(NULL);
 
-#define COMMAND_MAX_LENGTH 200  
-char command[COMMAND_MAX_LENGTH];
-#define CACHE_MILISECONDS 1000 * 60 // sixty seconds 
-
-int check_and_update_cache( redisContext *context, const char *actor, char *reason, char *list, expanding_vector *ev, long *last_update_time )
-{
-  long current_miliseconds = msecs();
-
-  if (*last_update_time + CACHE_MILISECONDS < current_miliseconds) {
+  if (*last_update_time + CACHED_FOR_SECONDS < current_seconds) {
     clear_expanding_vector(ev);
-    
     redisReply *listed = redisCommand(context, "SMEMBERS repsheet:cidr:%s", list);
-    
     if (listed) {
       if (listed->type == REDIS_REPLY_ARRAY) {
         int i;
@@ -33,7 +23,7 @@ int check_and_update_cache( redisContext *context, const char *actor, char *reas
         for(i = 0; i < listed->elements; i++) {
           block = strtok(listed->element[i]->str, ":");
           range range;
-          int rc = block_to_range( block , &range );
+          int rc = block_to_range(block, &range);
           if (rc >= 0) {   
             strncpy(range.block, block, MAX_BLOCK_SIZE);
             push_item(ev, &range);
@@ -45,24 +35,24 @@ int check_and_update_cache( redisContext *context, const char *actor, char *reas
       return DISCONNECTED;
     }
     //loaded ok, update the cache time
-    *last_update_time = current_miliseconds;
+    *last_update_time = current_seconds;
   }
   return 0;
 }
 
 
-int checkCIDR(redisContext *context, const char *actor, char *reason, char *list, expanding_vector *ev, long *last_update_time)
+int checkCIDR(redisContext *context, const char *actor, char *reason, char *list, expanding_vector *ev, time_t *last_update_time)
 {
   int ip = ip_address_to_integer(actor);
   if (ip == BAD_ADDRESS)
     return BAD_ADDRESS;
 
   int rc = check_and_update_cache(context, actor, reason, list, ev, last_update_time);
-  if ( rc != 0 ) {
+  if (rc != 0) {
     return rc;
   }
 
-  for(int i = 0 ; i < ev->size ; ++ i) {
+  for(int i = 0; i < ev->size; ++ i) {
     range *range = &(ev->data[i]);
     if (address_in_range(range, ip) > 0) {
       redisReply* value = redisCommand(context, "GET %s:repsheet:cidr:%s", range->block, list);
