@@ -3,7 +3,7 @@
 
 #include "cidr.h"
 
-typedef struct  
+typedef struct
 {
   int size;
   int alloced_size;

@@ -19,7 +19,7 @@ void clear_expanding_vector(expanding_vector *ev)
   ev->size = 0;
 }
 
-void push_item(expanding_vector *ev, range *push_range) 
+void push_item(expanding_vector *ev, range *push_range)
 {
   if (ev->size == ev->alloced_size) {
     ev->alloced_size *= 2;
@@ -29,9 +29,3 @@ void push_item(expanding_vector *ev, range *push_range)
   memcpy(ev->data + ev->size, push_range, sizeof(range));
   ++ev->size;
 }
-
-
-
-  
-
- 

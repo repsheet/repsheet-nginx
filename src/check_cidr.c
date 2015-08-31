@@ -6,7 +6,7 @@
 #include "vector.h"
 
 
-int CACHED_FOR_SECONDS = 60; 
+int CACHED_FOR_SECONDS = 60;
 
 int check_and_update_cache(redisContext *context, const char *actor, char *reason, char *list, expanding_vector *ev, time_t *last_update_time)
 {
@@ -18,18 +18,18 @@ int check_and_update_cache(redisContext *context, const char *actor, char *reaso
     if (listed) {
       if (listed->type == REDIS_REPLY_ARRAY) {
         int i;
-      
+
         char *block;
         for(i = 0; i < listed->elements; i++) {
           block = strtok(listed->element[i]->str, ":");
           range range;
           int rc = block_to_range(block, &range);
-          if (rc >= 0) {   
+          if (rc >= 0) {
             strncpy(range.block, block, MAX_BLOCK_SIZE);
             push_item(ev, &range);
           }
         }
-      } 
+      }
       freeReplyObject(listed);
     } else {
       return DISCONNECTED;
@@ -65,4 +65,3 @@ int checkCIDR(redisContext *context, const char *actor, char *reason, char *list
   }
   return FALSE;
 }
-

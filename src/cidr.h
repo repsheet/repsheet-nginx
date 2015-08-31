@@ -14,7 +14,7 @@ typedef struct {
 
 typedef struct {
   int lower;
-  int upper; 
+  int upper;
   char block[MAX_BLOCK_SIZE];
 } range;
 

@@ -13,7 +13,7 @@ void populate_reason(redisReply *reply, char *reason)
 {
   size_t s = reply->len > MAX_REASON_LENGTH ? MAX_REASON_LENGTH : reply->len;
   strncpy(reason, reply->str, s);
-  reason[s] = '\0'; //TODO: can this go over by one? 
+  reason[s] = '\0'; //TODO: can this go over by one?
 }
 
 int set_list(redisContext *context, const char *prefix, char *keyspace, char *list, const char *value)
