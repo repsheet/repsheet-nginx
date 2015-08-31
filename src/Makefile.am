@@ -10,6 +10,6 @@ librepsheet_la_SOURCES = librepsheet.c \
                          xff.c         \
                          vector.c      \
                          check_cidr.c
-librepsheet_la_LDFLAGS = -lm -lhiredis
+librepsheet_la_LDFLAGS = -lm -lhiredis -version-info 6:0:0
 librepsheet_la_CFLAGS = -std=c99
 
