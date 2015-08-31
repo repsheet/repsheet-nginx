@@ -1,4 +1,5 @@
 #include <string.h>
+#include <time.h>
 #include "repsheet.h"
 #include "common.h"
 #include "cidr.h"
