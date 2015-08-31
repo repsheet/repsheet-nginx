@@ -4,6 +4,7 @@
 #include "cidr.h"
 
 #include "blacklist.h"
+#include "check_cidr.h"
 
 /**
  * @file blacklist.c
@@ -41,6 +42,8 @@ int blacklist(redisContext *context, const char *actor, int type, const char *re
   }
 }
 
+
+
 /**
  * Checks to see if an ip is on the Repsheet blacklist
  *
@@ -52,6 +55,9 @@ int blacklist(redisContext *context, const char *actor, int type, const char *re
  */
 int is_ip_blacklisted(redisContext *context, const char *actor, char *reason)
 {
+  static expanding_vector *cidr_cache = NULL;
+  static time_t cache_update_time = 0;
+
   redisReply *ip = redisCommand(context, "GET %s:repsheet:ip:blacklisted", actor);
   if (ip) {
     if (ip->type == REDIS_REPLY_STRING) {
@@ -65,32 +71,10 @@ int is_ip_blacklisted(redisContext *context, const char *actor, char *reason)
     return DISCONNECTED;
   }
 
-  redisReply *blacklisted = redisCommand(context, "SMEMBERS repsheet:cidr:blacklisted");
-  if (blacklisted) {
-    if (blacklisted->type == REDIS_REPLY_ARRAY) {
-      int i;
-      redisReply *value;
-      char *block;
-      for(i = 0; i < blacklisted->elements; i++) {
-        block = strtok(blacklisted->element[i]->str, ":");
-        if (cidr_contains(block, actor) > 0) {
-          value = redisCommand(context, "GET %s:repsheet:cidr:blacklisted", block);
-          if (value) {
-            populate_reason(value, reason);
-            freeReplyObject(value);
-          }
-          freeReplyObject(blacklisted);
-          return TRUE;
-        }
-      }
-    } else{
-      freeReplyObject(blacklisted);
-    }
-  } else {
-    return DISCONNECTED;
+  if (cidr_cache == NULL) {
+    cidr_cache = create_expanding_vector(1000);
   }
-
-  return FALSE;
+  return checkCIDR(context, actor, reason, "blacklisted", cidr_cache, &cache_update_time);
 }
 
 /**

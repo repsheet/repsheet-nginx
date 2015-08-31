@@ -7,7 +7,9 @@ librepsheet_la_SOURCES = librepsheet.c \
                          blacklist.c   \
                          whitelist.c   \
                          marked.c      \
-                         xff.c
+                         xff.c         \
+                         vector.c      \
+                         check_cidr.c
 librepsheet_la_LDFLAGS = -lm -lhiredis
 librepsheet_la_CFLAGS = -std=c99
 

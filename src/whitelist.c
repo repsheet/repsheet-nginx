@@ -2,8 +2,9 @@
 #include "repsheet.h"
 #include "common.h"
 #include "cidr.h"
-
+#include "check_cidr.h"
 #include "whitelist.h"
+
 
 /**
  * @file whitelist.c
@@ -41,6 +42,7 @@ int whitelist(redisContext *context, const char *actor, int type, const char *re
   }
 }
 
+
 /**
  * Checks to see if an ip is on the Repsheet whitelist
  *
@@ -52,6 +54,9 @@ int whitelist(redisContext *context, const char *actor, int type, const char *re
  */
 int is_ip_whitelisted(redisContext *context, const char *actor, char *reason)
 {
+  static expanding_vector *cidr_cache = NULL;
+  static time_t cache_update_time = 0;
+
   redisReply *ip = redisCommand(context, "GET %s:repsheet:ip:whitelisted", actor);
   if (ip) {
     if (ip->type == REDIS_REPLY_STRING) {
@@ -65,32 +70,10 @@ int is_ip_whitelisted(redisContext *context, const char *actor, char *reason)
     return DISCONNECTED;
   }
 
-  redisReply *whitelisted = redisCommand(context, "SMEMBERS repsheet:cidr:whitelisted");
-  if (whitelisted) {
-    if (whitelisted->type == REDIS_REPLY_ARRAY) {
-      int i;
-      redisReply *value;
-      char *block;
-      for(i = 0; i < whitelisted->elements; i++) {
-        block = strtok(whitelisted->element[i]->str, ":");
-        if (cidr_contains(block, actor) > 0) {
-          value = redisCommand(context, "GET %s:repsheet:cidr:whitelisted", block);
-          if (value) {
-            populate_reason(value, reason);
-            freeReplyObject(value);
-          }
-          freeReplyObject(whitelisted);
-          return TRUE;
-        }
-      }
-    } else{
-      freeReplyObject(whitelisted);
-    }
-  } else {
-    return DISCONNECTED;
+  if (cidr_cache == NULL) {
+    cidr_cache = create_expanding_vector(10000);
   }
-
-  return FALSE;
+  return checkCIDR(context, actor, reason, "whitelisted", cidr_cache, &cache_update_time);
 }
 
 /**

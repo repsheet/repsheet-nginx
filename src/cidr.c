@@ -11,8 +11,29 @@
  * @date 10/09/2014
  */
 
-int _string_to_integer(const char *address);
 int _string_to_cidr(CIDR *cidr, char *block);
+
+int block_to_range( char *block, range *range )
+{
+  if (block == NULL) {
+    return NIL;
+  }
+
+  CIDR cidr;
+  int result = _string_to_cidr(&cidr, block);
+  if (result == BAD_ADDRESS || result == BAD_CIDR_BLOCK) {
+    return result;
+  }
+
+  range->lower = cidr.address;
+  range->upper = range->lower + (1 <<  (32 - cidr.mask)) - 1; 
+    // (pow(2, (32 - cidr.mask)) -1); POW is a potential bug because of rounding--POW is double and we're working with INT values 
+
+  if (cidr.address == BAD_ADDRESS) {
+    return BAD_ADDRESS;
+  }
+  return 1;
+}
 
 /**
  * Test an IP to see if it is contained in the CIDR block
@@ -22,31 +43,23 @@ int _string_to_cidr(CIDR *cidr, char *block);
  *
  * @returns 1 if in the block, 0 if not
  */
-int cidr_contains(char *block, const char *address)
+int cidr_contains(char *block, int ip)
 {
-  if (block == NULL || address == NULL) {
-    return NIL;
-  }
-
-  CIDR *cidr = malloc(sizeof(*cidr));
-  int result = _string_to_cidr(cidr, block);
-  if (result == BAD_ADDRESS || result == BAD_CIDR_BLOCK) {
-    free(cidr);
-    return result;
-  }
-
-  int lower = cidr->address;
-  int upper = lower + (pow(2, (32 - cidr->mask)) -1);
-  int ip = _string_to_integer(address);
-
-  if (cidr->address == BAD_ADDRESS || ip == BAD_ADDRESS) {
-    free(cidr);
+  range range;
+  if (ip == BAD_ADDRESS)
+  {
     return BAD_ADDRESS;
   }
+  int rc =  block_to_range(block, &range);
+  if (rc <= 0) {
+    return rc;
+  }
+  return address_in_range(&range, ip);
+}
 
-  free(cidr);
-
-  return ((lower <= ip) && (ip <= upper));
+int address_in_range(range *r, int ip)
+{
+  return ((r->lower <= ip) && (ip <= r->upper));
 }
 
 int _string_to_cidr(CIDR *cidr, char *block)
@@ -59,7 +72,7 @@ int _string_to_cidr(CIDR *cidr, char *block)
   value = strtok(dup,"/");
   if (value != NULL) {
     cidr->address_string = value;
-    if (strlen(cidr->address_string) < 7 || strlen(cidr->address_string) > 16) {
+    if (strlen(cidr->address_string) < 7 || strlen(cidr->address_string) > 16) { // 15?
       return BAD_CIDR_BLOCK;
     }
   }
@@ -77,7 +90,7 @@ int _string_to_cidr(CIDR *cidr, char *block)
   if (cidr->address_string == NULL) {
     return BAD_ADDRESS;
   } else {
-    cidr->address = _string_to_integer(cidr->address_string);
+    cidr->address = ip_address_to_integer(cidr->address_string);
     if (cidr->address == BAD_ADDRESS) {
       return BAD_ADDRESS;
     }
@@ -86,7 +99,8 @@ int _string_to_cidr(CIDR *cidr, char *block)
   return LIBREPSHEET_OK;
 }
 
-int _string_to_integer(const char *address)
+//TODO: make this a LONG, because it can give negative numbers. 
+int ip_address_to_integer(const char *address)
 {
   char dup[strlen(address) + 1];
   char *value;
@@ -126,15 +140,16 @@ int _string_to_integer(const char *address)
   int octets[] = {first, second, third, fourth};
 
   for (i = 0; i < 4; i++) {
-    if (octets[i] < 0 || octets[i] > 256) {
+    if (octets[i] < 0 || octets[i] > 255) {
       return BAD_ADDRESS;
     }
   }
 
-  int ip_integer = ((first << 24) & 0xFF000000)
-    | ((second << 16) & 0xFF0000)
-    | ((third << 8)   & 0xFF00)
-    |  (fourth        & 0xFF);
+  int ip_integer = (first << 24) 
+    | (second << 16)
+    | (third << 8) 
+    | fourth;
 
   return ip_integer;
 }
+

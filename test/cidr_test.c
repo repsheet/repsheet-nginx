@@ -4,9 +4,9 @@
 START_TEST(class_c)
 {
   char *block = "10.0.0.0/24";
-  char *in = "10.0.0.50";
-  char *lower = "10.0.0.0";
-  char *upper = "10.0.0.256";
+  int in = ip_address_to_integer("10.0.0.50");
+  int lower = ip_address_to_integer("10.0.0.0");
+  int upper = ip_address_to_integer("10.0.0.255");
 
   ck_assert_int_eq(1, cidr_contains(block, in));
   ck_assert_int_eq(1, cidr_contains(block, lower));
@@ -22,10 +22,10 @@ START_TEST(class_c_excludes)
   char *bad_mask = "10.0.0.0/33";
   char *no_mask = "10.0.0.0";
 
-  char *in = "10.0.0.50";
-  char *out = "10.0.1.50";
-  char *too_large = "10.0.0.257";
-  char *too_long = "10.0.0.1024";
+  int in = ip_address_to_integer("10.0.0.50");
+  int out = ip_address_to_integer("10.0.1.50");
+  int too_large = ip_address_to_integer("10.0.0.257");
+  int too_long = ip_address_to_integer("10.0.0.1024");
 
   ck_assert_int_eq(BAD_CIDR_BLOCK, cidr_contains(bad_value, in));
   ck_assert_int_eq(BAD_CIDR_BLOCK, cidr_contains(short_block, in));
