@@ -12,6 +12,15 @@
  * @date 12/09/2014
  */
 
+
+int initial_whitelist_size = 1000;
+
+void set_initial_whitelist_size(int new_size) 
+{
+  initial_whitelist_size = new_size;
+}
+
+
 /**
  * Adds the actor to the Repsheet whitelist
  *
