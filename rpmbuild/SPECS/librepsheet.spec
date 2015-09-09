@@ -1,5 +1,5 @@
 Name: repsheet
-Version: 6.0.0
+Version: 6.1.0
 Release: 1
 Summary: Core library
 License: ASL 2.0
@@ -72,6 +72,8 @@ rm -rf $RPM_BUILD_ROOT
 %doc LICENSE
 
 %changelog
+* Wed Sep 09 2015 Aaron Bedra <aaron@aaronbedra.com> - 6.1.0-1
+- Cache CIDR conversions
 * Tue Jun 16 2015 Aaron Bedra <aaron@aaronbedra.com> - 6.0.0-1
 - Remove KEYS command
 * Wed Apr 22 2015 Aaron Bedra <aaron@aaronbedra.com> - 5.0.0-1

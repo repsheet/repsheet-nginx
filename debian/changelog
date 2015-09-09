@@ -1,3 +1,9 @@
+librepsheet (6.1.0-1) unstable-security; urgency=medium
+
+  * Cache CIDR conversions
+
+ -- Aaron Bedra <aaron@aaronbedra.com>  Wed, 9 Sep 2015 12:08:34 -0500
+
 librepsheet (6.0.0-1) unstable-security; urgency=medium
 
   * Remove KEYS command
