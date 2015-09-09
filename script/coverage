@@ -8,6 +8,7 @@ then
 fi
 
 echo "Building"
+export AR_FLAGS=cr
 ./autogen.sh > /dev/null 2>&1
 ./configure > /dev/null 2>&1
 make clean > /dev/null 2>&1
@@ -18,7 +19,5 @@ echo "Generating Coverage Report"
 lcov --base-directory src --directory src -c -o librepsheet_test.info
 lcov --remove librepsheet_test.info "/usr*" -o librepsheet_test.info
 lcov --remove librepsheet_test.info "src/mpc.*" -o librepsheet_test.info
-rm -rf test_coverage
-genhtml -o test_coverage -t "librepsheet test coverage" --num-spaces 4 librepsheet_test.info
-
-chromium-browser test_coverage/index.html
+rm -rf coverage
+genhtml -o coverage -t "librepsheet test coverage" --num-spaces 4 librepsheet_test.info

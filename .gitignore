@@ -8,7 +8,7 @@
 *.gcda
 *.gcno
 *.info
-test_coverage
+coverage
 
 # Libraries
 *.lib
