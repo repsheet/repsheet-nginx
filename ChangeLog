@@ -1,3 +1,7 @@
+2015-09-09  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 6.1.0: Cache CIDR block conversions
+
 2015-06-16  Aaron Bedra  <aaron@aaronbedra.com>
 
 	* 6.0.0: Remove the KEYS command
