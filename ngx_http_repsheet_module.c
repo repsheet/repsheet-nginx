@@ -118,6 +118,8 @@ lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
   ngx_int_t location;
   ngx_str_t cookie_value;
 
+  reason_user[0] = '\0';
+
   location = ngx_http_parse_multi_header_lines(&r->headers_in.cookies, &main_conf->cookie, &cookie_value);
   if (location == NGX_DECLINED) {
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "[Repsheet] - Could not locate %V cookie", &main_conf->cookie);
@@ -136,7 +138,7 @@ lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - User %V is whitelisted by repsheet. Reason: %s", &cookie_value, reason_user);
     return NGX_DECLINED;
   } else if (user_status == BLACKLISTED) {
-    if (reason_user != NULL) {
+    if (reason_user[0] != '\0' ) {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - User %V was blocked by repsheet. Reason: %s", &cookie_value, reason_user);
     } else {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - User %V was blocked by repsheet. No reason provided", &cookie_value);
@@ -158,6 +160,8 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
   char address[INET6_ADDRSTRLEN];
   char reason_ip[MAX_REASON_LENGTH];
 
+  address[0] = reason_ip[0] = '\0';
+
   address_code = derive_actor_address(r, address);
 
   if (address_code == NGX_DECLINED) {
@@ -174,7 +178,7 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s is whitelisted by repsheet. Reason: %s", address, reason_ip);
     return NGX_DECLINED;
   } else if (ip_status == BLACKLISTED) {
-    if (reason_ip != NULL) {
+    if (reason_ip[0] != '\0') {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was blocked by repsheet. Reason: %s", address, reason_ip);
     } else {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was blocked by repsheet. No reason provided", address);
@@ -224,6 +228,7 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
   if (loc_conf->auto_blacklist || loc_conf->auto_mark) {
     int address_code;
     char address[INET6_ADDRSTRLEN];
+    address[0] = '\0';
 
     address_code = derive_actor_address(r, address);
 
