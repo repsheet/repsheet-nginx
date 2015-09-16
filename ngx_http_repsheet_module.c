@@ -27,6 +27,8 @@ typedef struct {
   ngx_flag_t enabled;
   ngx_flag_t auto_blacklist;
   ngx_flag_t auto_mark;
+  ngx_uint_t whitelist_CIDR_cache_initial_size;
+  ngx_uint_t blacklist_CIDR_cache_initial_size;
 } repsheet_loc_conf_t;
 
 ngx_module_t ngx_http_repsheet_module;
@@ -131,6 +133,7 @@ lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
     user_status = actor_status(main_conf->redis.connection, (const char *)lookup_value, USER, reason_user);
   }
 
+  
   if (user_status == DISCONNECTED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - The Redis request failed, bypassing further operations");
     return NGX_DECLINED;
@@ -187,15 +190,27 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
   } else if (ip_status == MARKED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was found on repsheet. No action taken", address);
     set_repsheet_header(r);
-  }
+    }
 
   return NGX_DECLINED;
 }
+
+static int set_cache_sizes = 0;
 
 static ngx_int_t
 ngx_http_repsheet_handler(ngx_http_request_t *r)
 {
   repsheet_loc_conf_t  *loc_conf  = ngx_http_get_module_loc_conf(r, ngx_http_repsheet_module);
+
+  if ( set_cache_sizes == 0 ) {
+    set_cache_sizes = 1;
+    if ( loc_conf->whitelist_CIDR_cache_initial_size != NGX_CONF_UNSET ) {
+      set_initial_whitelist_size( loc_conf->whitelist_CIDR_cache_initial_size );
+    }
+    if ( loc_conf->blacklist_CIDR_cache_initial_size != NGX_CONF_UNSET ) {
+      set_initial_blacklist_size( loc_conf->blacklist_CIDR_cache_initial_size );
+    }
+  }
 
   if (!loc_conf->enabled || loc_conf->enabled == NGX_CONF_UNSET || r->main->internal) {
     return NGX_DECLINED;
@@ -373,6 +388,22 @@ static ngx_command_t ngx_http_repsheet_commands[] = {
     offsetof(repsheet_loc_conf_t, auto_mark),
     NULL
   },
+{
+    ngx_string("repsheet_whitelist_CIDR_cache_initial_size"),
+    NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+    ngx_conf_set_num_slot,
+    NGX_HTTP_LOC_CONF_OFFSET,
+    offsetof(repsheet_loc_conf_t, whitelist_CIDR_cache_initial_size),
+    NULL
+  },
+{
+    ngx_string("repsheet_blacklist_CIDR_cache_initial_size"),
+    NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+    ngx_conf_set_num_slot,
+    NGX_HTTP_LOC_CONF_OFFSET,
+    offsetof(repsheet_loc_conf_t, blacklist_CIDR_cache_initial_size),
+    NULL
+  },
 
   ngx_null_command
 };
@@ -417,7 +448,8 @@ ngx_http_repsheet_create_loc_conf(ngx_conf_t *cf)
   conf->enabled = NGX_CONF_UNSET;
   conf->auto_blacklist = NGX_CONF_UNSET;
   conf->auto_mark = NGX_CONF_UNSET;
-
+  conf->whitelist_CIDR_cache_initial_size = NGX_CONF_UNSET;
+  conf->blacklist_CIDR_cache_initial_size = NGX_CONF_UNSET;
   return conf;
 }
 
@@ -431,6 +463,8 @@ ngx_http_repsheet_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
   ngx_conf_merge_value(conf->enabled, prev->enabled, 0);
   ngx_conf_merge_value(conf->auto_blacklist, prev->auto_blacklist, 0);
   ngx_conf_merge_value(conf->auto_mark, prev->auto_mark, 0);
+  ngx_conf_merge_value(conf->whitelist_CIDR_cache_initial_size, prev->whitelist_CIDR_cache_initial_size, 0);
+  ngx_conf_merge_value(conf->blacklist_CIDR_cache_initial_size, prev->blacklist_CIDR_cache_initial_size, 0);
 
   return NGX_CONF_OK;
 }
