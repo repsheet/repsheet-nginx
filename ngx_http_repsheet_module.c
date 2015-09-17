@@ -102,13 +102,13 @@ reset_connection(repsheet_main_conf_t *main_conf)
 
 
 static void
-set_repsheet_header(ngx_http_request_t *r)
+set_repsheet_header(ngx_http_request_t *r, char *field, char *value)
 {
   ngx_table_elt_t *h;
   h = ngx_list_push(&r->headers_in.headers);
   h->hash = 1;
-  ngx_str_set(&h->key, "X-Repsheet");
-  ngx_str_set(&h->value, "true");
+  ngx_str_set(&h->key, field);
+  ngx_str_set(&h->value, value);
 }
 
 
@@ -131,8 +131,13 @@ lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
     memcpy(lookup_value, cookie_value.data, cookie_value.len);
     lookup_value[cookie_value.len] = '\0';
     user_status = actor_status(main_conf->redis.connection, (const char *)lookup_value, USER, reason_user);
+
+    if (is_user_marked(main_conf->redis.connection, (const char *)lookup_value, reason_user)) {
+      set_repsheet_header(r,"repsheet-user-marked",reason_user);
+    }
   }
 
+ 
   
   if (user_status == DISCONNECTED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - The Redis request failed, bypassing further operations");
@@ -147,10 +152,10 @@ lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - User %V was blocked by repsheet. No reason provided", &cookie_value);
     }
     return NGX_HTTP_FORBIDDEN;
-  } else if (user_status == MARKED) {
+  } /*else if (user_status == MARKED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - User %s was found on repsheet. No action taken", &cookie_value);
     set_repsheet_header(r);
-  }
+    }*/
 
   return NGX_DECLINED;
 }
@@ -172,6 +177,11 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
     return NGX_HTTP_FORBIDDEN;
   }
 
+   if ( is_ip_marked( main_conf->redis.connection, address, reason_ip ) ) {
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was found on repsheet. No action taken", address);
+    set_repsheet_header(r, "repsheet-ip-marked", reason_ip);
+  }
+
   ip_status = actor_status(main_conf->redis.connection, address, IP, reason_ip);
 
   if (ip_status == DISCONNECTED) {
@@ -187,10 +197,10 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was blocked by repsheet. No reason provided", address);
     }
     return NGX_HTTP_FORBIDDEN;
-  } else if (ip_status == MARKED) {
+  } /*else if (ip_status == MARKED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was found on repsheet. No action taken", address);
     set_repsheet_header(r);
-    }
+    }*/
 
   return NGX_DECLINED;
 }
