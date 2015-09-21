@@ -136,7 +136,7 @@ lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - User %V is whitelisted by repsheet. Reason: %s", &cookie_value, reason_user);
     return NGX_DECLINED;
   } else if (user_status == BLACKLISTED) {
-    if (reason_user != NULL) {
+    if (reason_user[0] != '\0') {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - User %V was blocked by repsheet. Reason: %s", &cookie_value, reason_user);
     } else {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - User %V was blocked by repsheet. No reason provided", &cookie_value);
@@ -174,7 +174,7 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s is whitelisted by repsheet. Reason: %s", address, reason_ip);
     return NGX_DECLINED;
   } else if (ip_status == BLACKLISTED) {
-    if (reason_ip != NULL) {
+    if (reason_ip[0] != '\0') {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was blocked by repsheet. Reason: %s", address, reason_ip);
     } else {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was blocked by repsheet. No reason provided", address);
