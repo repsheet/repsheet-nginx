@@ -27,8 +27,8 @@ typedef struct {
   ngx_flag_t enabled;
   ngx_flag_t auto_blacklist;
   ngx_flag_t auto_mark;
-  ngx_uint_t whitelist_CIDR_cache_initial_size;
-  ngx_uint_t blacklist_CIDR_cache_initial_size;
+  ngx_int_t whitelist_CIDR_cache_initial_size;
+  ngx_int_t blacklist_CIDR_cache_initial_size;
 } repsheet_loc_conf_t;
 
 ngx_module_t ngx_http_repsheet_module;
