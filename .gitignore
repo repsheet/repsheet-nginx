@@ -4,6 +4,12 @@
 *.obj
 *.elf
 
+# Coverage files
+*.gcda
+*.gcno
+*.info
+coverage
+
 # Libraries
 *.lib
 *.a
@@ -12,6 +18,7 @@
 *.lo
 *.Po
 *.Plo
+*.pc
 
 # Shared objects (inc. Windows DLLs)
 *.dll
@@ -27,9 +34,54 @@
 *.x86_64
 *.hex
 
+# Autotools stuff
+m4
+autom4te.cache
+Makefile.in
+/Makefile
+aclocal.m4
+ar-lib
+compile
+config.guess
+config.h.in
+config.sub
+configure
+depcomp
+install-sh
+ltmain.sh
+missing
+test-driver
+config.h
+config.log
+config.status
+libtool
+stamp-h1
 dump.rdb
-build
-vendor
-/.bundle/
+config.h.in~
+
+src/Makefile
+src/Makefile.in
+src/.deps
+src/.dirstamp
+
+test/*.log
+test/test_runner
+test/test_runner.trs
+test/Makefile.in
+test/Makefile
+
+# Coverity
 cov-int
-repsheet-nginx.tar.gz
+librepsheet.tar.gz
+
+# Doxygen
+docs
+
+# Debian
+debian/*.log
+debian/*.debhelper
+debian/*.substvars
+debian/files
+debian/tmp
+debian/librepsheet
+debian/librepsheet-dev

@@ -10,18 +10,8 @@ sudo make install
 sudo ldconfig
 cd ..
 
-# Install librepsheet
-git clone git://github.com/repsheet/librepsheet
-cd librepsheet
+# Build and run test suite
 ./autogen.sh
 ./configure
 make
-sudo make install
-sudo ldconfig
-pkg-config --list-all
-cd ..
-
-# Compile and run tests
-script/bootstrap
-bundle install
-bundle exec rake
+make check

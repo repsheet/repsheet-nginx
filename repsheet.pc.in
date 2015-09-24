@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: repsheet
+Description: The Repsheet core logic library
+URL: https://github.com/repsheet/librepsheet
+Version: @VERSION@
+Requires: hiredis
+Libs: -lhiredis
+Cflags: -I{includedir}

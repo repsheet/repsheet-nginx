@@ -1,12 +1,13 @@
 #!/bin/sh
 
-cov-build --dir cov-int rake nginx:compile
+make clean
+cov-build --dir cov-int make
 
-tar czvf repsheet-nginx.tar.gz cov-int
+tar czvf librepsheet.tar.gz cov-int
 
-curl --form token=ArnEUyUtVzklFw90uJIYdg \
+curl --form token=G-JpLX_yCvpLGa2gkp5VxQ \
 --form email=aaron@aaronbedra.com \
---form file=@repsheet-nginx.tar.gz \
+--form file=@librepsheet.tar.gz \
 --form version="$1" \
 --form description="$1" \
-https://scan.coverity.com/builds?project=repsheet%2Frepsheet-nginx
+https://scan.coverity.com/builds?project=repsheet%2Flibrepsheet

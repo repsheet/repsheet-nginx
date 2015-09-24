@@ -1,32 +1,62 @@
-2015-05-06  Aaron Bedra  <aaron@aaronbedra.com>
+2015-09-09  Aaron Bedra  <aaron@aaronbedra.com>
 
-	* 3.0.0: Read timeouts
-	  - read_timeout is now an option
-	  - XFF processing moved to librepsheet
-	  - Keyspace in tests updated to match librepsheet
+	* 6.1.0: Cache CIDR block conversions
 
-2014-11-25  Aaron Bedra  <aaron@aaronbedra.com>
+2015-06-16  Aaron Bedra  <aaron@aaronbedra.com>
 
-	* 2.1.0: Bug fixes
-	  - Defer processing if enabled is unset
-	  - Allow enabled flag to be set in a location
-	  - Make log messages consistent
-	  - Fix header processing
+	* 6.0.0: Remove the KEYS command
 
-2014-09-12  Aaron Bedra  <aaron@aaronbedra.com>
+2015-04-22  Aaron Bedra  <aaron@aaronbedra.com>
 
-	* 2.0.0: Performance improvements. Now relies on librepsheet >= 3.0.0
+	* 5.0.0: Adds request timeouts and embeds hiredis
 
-2014-08-05  Aaron Bedra  <aaron@aaronbedra.com>
+2015-04-08  Aaron Bedra  <aaron@aaronbedra.com>
 
-	* 1.2.0: Updates from librepsheet to use LIBREPSHEET_OK instead
-	          of the removed OK variable.
+	* 4.1.0: Remove pcre dependency for remote_address
+
+2015-04-07  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 4.0.0: Unifies keyspace (Breaking changes)
+
+2014-12-08  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 3.2.0: Fixes to CIDR support
+
+2014-10-09  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 3.1.0: Added CIDR support
+
+2014-09-08  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 3.0.0: Performance improvements and breaking API changes
+	  - Performance improvements (@yippibrian)
+	  - blacklist/whitelist key now stores reason code
+	  - Lookup functions now populate reason if it is set
+	  - Added ability to disable any of the lookup functions in actor
+	    or country status calls
+	  - Added country lookup
+
+2014-08-04  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 2.2.0: Rename OK to LIBREPSHEET_OK
 
 2014-08-03  Aaron Bedra  <aaron@aaronbedra.com>
 
-	* 1.1.0: Adds blacklist reason to logs
+	* 2.1.0: Small fix and new functionality
+	  - Added blacklist_reason() for reason code lookup
+	  - Fixed clause order in record() to remove dangling free()
 
-2014-07-24  Aaron Bedra  <aaron@aaronbedra.com>
+2014-07-25  Aaron Bedra  <aaron@aaronbedra.com>
 
-	* 1.0.0: This is the first stable and production worthy release.
+	* 2.0.0: A number of changes to the library including API breaking changes.
+	  - Added support for looking up a user
+	  - Added actor_status() which returns the state of an actor in Repsheet
+	  - Added several integer codes for signaling status
+	  - Added check_connect() which ensures the connection to Redis is stil alive
+	  - Added error handling to all Redis functions to ensure that requests
+	    with no Reply don't cause segfaults.
+
+2014-05-19  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 1.0.0: First publicly consumable release
 
