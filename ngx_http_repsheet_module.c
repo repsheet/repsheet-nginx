@@ -178,7 +178,7 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
   }
 
    if ( is_ip_marked( main_conf->redis.connection, address, reason_ip ) ) {
-    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was found on repsheet. No action taken", address);
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[RepsheetMark] - IP %s was found on repsheet for reason %s.", address, reason_ip);
     set_repsheet_header(r, "repsheet-ip-marked", reason_ip);
   }
 
