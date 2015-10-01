@@ -104,9 +104,16 @@ describe "Integration Specs" do
       expect(http.response_code).to eq(403)
     end
 
-    it "Returns a 403 response if the user is in a blacklisted CIDR block" do
+    it "Returns a 200 then a 403 response after blacklisting a CIDR block - cache" do
       @redis.set("10.0.0.0/24:repsheet:cidr:blacklisted", "Integration Spec")
       @redis.sadd("repsheet:cidr:blacklisted", "10.0.0.0/24")
+      http = Curl.get("http://127.0.0.1:8888") do |http|
+        http.headers['X-Forwarded-For'] = '10.0.0.15'
+      end
+
+      expect(http.response_code).to eq(200)
+      sleep 5
+
       http = Curl.get("http://127.0.0.1:8888") do |http|
         http.headers['X-Forwarded-For'] = '10.0.0.15'
       end
@@ -114,6 +121,25 @@ describe "Integration Specs" do
       expect(http.response_code).to eq(403)
     end
 
+    it "Returns a 403 then a 200 response after whitelisting a blacklisted CIDR block - cache" do
+      @redis.set("10.0.0.50:repsheet:ip:blacklisted", "Integration Spec")
+      @redis.set("10.0.0.0/24:repsheet:cidr:whitelisted", "Integration Spec")
+      @redis.sadd("repsheet:cidr:whitelisted", "10.0.0.0/24")
+
+      http = Curl.get("http://127.0.0.1:8888") do |http|
+        http.headers['X-Forwarded-For'] = '10.0.0.50'
+      end
+
+      expect(http.response_code).to eq(403)
+
+      sleep 5
+
+      http = Curl.get("http://127.0.0.1:8888") do |http|
+        http.headers['X-Forwarded-For'] = '10.0.0.50'
+      end
+
+      expect(http.response_code).to eq(200)
+    end
 
     it "Returns a 200 response if the user is on the whitelist" do
       @redis.set("repsheet:repsheet:user:blacklisted", "Integration Spec")
@@ -121,18 +147,6 @@ describe "Integration Specs" do
 
       http = Curl.get("http://127.0.0.1:8888") do |http|
         http.headers['Cookie'] = "user=repsheet"
-      end
-
-      expect(http.response_code).to eq(200)
-    end
-
-    it "Returns a 200 response if the user is in a blacklisted CIDR block" do
-      @redis.set("10.0.0.50:repsheet:ip:blacklisted", "Integration Spec")
-      @redis.set("10.0.0.0/24:repsheet:cidr:whitelisted", "Integration Spec")
-      @redis.sadd("repsheet:cidr:whitelisted", "10.0.0.0/24")
-
-      http = Curl.get("http://127.0.0.1:8888") do |http|
-        http.headers['X-Forwarded-For'] = '10.0.0.50'
       end
 
       expect(http.response_code).to eq(200)
