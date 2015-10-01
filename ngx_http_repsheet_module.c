@@ -209,7 +209,7 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
   if ( set_cache_sizes == 0 ) {
     set_cache_sizes = 1;
 
-    int n;
+    unsigned int n;
 
     n = main_conf->whitelist_CIDR_cache_initial_size; 
     if ( n != NGX_CONF_UNSET ) {
