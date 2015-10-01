@@ -134,6 +134,7 @@ lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
     user_status = actor_status(main_conf->redis.connection, (const char *)lookup_value, USER, reason_user);
 
     if (is_user_marked(main_conf->redis.connection, (const char *)lookup_value, reason_user)) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[RepsheetMark] - USER %V was found on repsheet for reason %s.", &cookie_value, reason_user);
       set_repsheet_header(r,"repsheet-user-marked",reason_user);
     }
   }
@@ -173,7 +174,7 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
     return NGX_HTTP_FORBIDDEN;
   }
 
-   if ( is_ip_marked( main_conf->redis.connection, address, reason_ip ) ) {
+  if (is_ip_marked(main_conf->redis.connection, address, reason_ip)) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[RepsheetMark] - IP %s was found on repsheet for reason %s.", address, reason_ip);
     set_repsheet_header(r, "repsheet-ip-marked", reason_ip);
   }
