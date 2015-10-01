@@ -67,7 +67,7 @@ http {
   repsheet_redis_connection_timeout 5;
   repsheet_redis_read_timeout 10;
 
-  repsheet_user_cookie "user"
+  repsheet_user_cookie "user";
 
   server {
     listen 8888;
