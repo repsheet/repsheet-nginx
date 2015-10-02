@@ -89,9 +89,9 @@ reset_connection(repsheet_main_conf_t *main_conf)
   cleanup_connection(main_conf);
 
   redisContext *context = repsheet_connect((const char*)main_conf->redis.host.data,
-					   main_conf->redis.port,
-					   main_conf->redis.connection_timeout,
-					   main_conf->redis.read_timeout);
+                                           main_conf->redis.port,
+                                           main_conf->redis.connection_timeout,
+                                           main_conf->redis.read_timeout);
 
   if (context == NULL) {
     return NGX_DECLINED;
@@ -210,12 +210,12 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
   if ( set_cache_sizes == 0 ) {
     set_cache_sizes = 1;
 
-    unsigned int n;
+    int n;
 
-    n = main_conf->whitelist_CIDR_cache_initial_size; 
+    n = main_conf->whitelist_CIDR_cache_initial_size;
     if ( n != NGX_CONF_UNSET ) {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - setting whitelist CIDR cache size to : %d", n);
-      set_initial_whitelist_size( n );  
+      set_initial_whitelist_size( n );
     }
 
     n = main_conf->blacklist_CIDR_cache_initial_size;
@@ -252,8 +252,8 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Unable to establish a connection to Redis, bypassing Repsheet operations");
 
       if (main_conf->redis.connection != NULL) {
-	ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Redis Context Error: %s", main_conf->redis.connection->errstr);
-	cleanup_connection(main_conf);
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Redis Context Error: %s", main_conf->redis.connection->errstr);
+        cleanup_connection(main_conf);
       }
 
       return NGX_DECLINED;
@@ -416,7 +416,7 @@ static ngx_command_t ngx_http_repsheet_commands[] = {
     offsetof(repsheet_main_conf_t, whitelist_CIDR_cache_initial_size),
     NULL
   },
-{
+  {
     ngx_string("repsheet_blacklist_CIDR_cache_initial_size"),
     NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
     ngx_conf_set_num_slot,
