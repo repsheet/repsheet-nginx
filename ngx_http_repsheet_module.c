@@ -21,6 +21,9 @@ typedef struct {
   ngx_flag_t ip_lookup;
   ngx_flag_t proxy_headers;
   ngx_str_t cookie;
+  ngx_int_t whitelist_CIDR_cache_initial_size;
+  ngx_int_t blacklist_CIDR_cache_initial_size;
+  ngx_uint_t cache_expiry;
 } repsheet_main_conf_t;
 
 typedef struct {
@@ -100,13 +103,13 @@ reset_connection(repsheet_main_conf_t *main_conf)
 
 
 static void
-set_repsheet_header(ngx_http_request_t *r)
+set_repsheet_header(ngx_http_request_t *r, char *field, char *value)
 {
   ngx_table_elt_t *h;
   h = ngx_list_push(&r->headers_in.headers);
   h->hash = 1;
-  ngx_str_set(&h->key, "X-Repsheet");
-  ngx_str_set(&h->value, "true");
+  ngx_str_set(&h->key, field);
+  ngx_str_set(&h->value, value);
 }
 
 
@@ -118,6 +121,8 @@ lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
   ngx_int_t location;
   ngx_str_t cookie_value;
 
+  reason_user[0] = '\0';
+
   location = ngx_http_parse_multi_header_lines(&r->headers_in.cookies, &main_conf->cookie, &cookie_value);
   if (location == NGX_DECLINED) {
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "[Repsheet] - Could not locate %V cookie", &main_conf->cookie);
@@ -127,6 +132,11 @@ lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
     memcpy(lookup_value, cookie_value.data, cookie_value.len);
     lookup_value[cookie_value.len] = '\0';
     user_status = actor_status(main_conf->redis.connection, (const char *)lookup_value, USER, reason_user);
+
+    if (is_user_marked(main_conf->redis.connection, (const char *)lookup_value, reason_user)) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[RepsheetMark] - USER %V was found on repsheet for reason %s.", &cookie_value, reason_user);
+      set_repsheet_header(r,"repsheet-user-marked",reason_user);
+    }
   }
 
   if (user_status == DISCONNECTED) {
@@ -142,9 +152,6 @@ lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - User %V was blocked by repsheet. No reason provided", &cookie_value);
     }
     return NGX_HTTP_FORBIDDEN;
-  } else if (user_status == MARKED) {
-    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - User %s was found on repsheet. No action taken", &cookie_value);
-    set_repsheet_header(r);
   }
 
   return NGX_DECLINED;
@@ -158,11 +165,18 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
   char address[INET6_ADDRSTRLEN];
   char reason_ip[MAX_REASON_LENGTH];
 
+  address[0] = reason_ip[0] = '\0';
+
   address_code = derive_actor_address(r, address);
 
   if (address_code == NGX_DECLINED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Request was blocked by repsheet. Reason: Invalid X-Forwarded-For", address);
     return NGX_HTTP_FORBIDDEN;
+  }
+
+  if (is_ip_marked(main_conf->redis.connection, address, reason_ip)) {
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[RepsheetMark] - IP %s was found on repsheet for reason %s.", address, reason_ip);
+    set_repsheet_header(r, "repsheet-ip-marked", reason_ip);
   }
 
   ip_status = actor_status(main_conf->redis.connection, address, IP, reason_ip);
@@ -180,24 +194,49 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was blocked by repsheet. No reason provided", address);
     }
     return NGX_HTTP_FORBIDDEN;
-  } else if (ip_status == MARKED) {
-    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was found on repsheet. No action taken", address);
-    set_repsheet_header(r);
   }
 
   return NGX_DECLINED;
 }
 
+
 static ngx_int_t
 ngx_http_repsheet_handler(ngx_http_request_t *r)
 {
+  static int set_cache_sizes = 0;
+
+  repsheet_main_conf_t *main_conf = ngx_http_get_module_main_conf(r, ngx_http_repsheet_module);
+
+  if ( set_cache_sizes == 0 ) {
+    set_cache_sizes = 1;
+
+    unsigned int n;
+
+    n = main_conf->whitelist_CIDR_cache_initial_size; 
+    if ( n != NGX_CONF_UNSET ) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - setting whitelist CIDR cache size to : %d", n);
+      set_initial_whitelist_size( n );  
+    }
+
+    n = main_conf->blacklist_CIDR_cache_initial_size;
+    if ( n != NGX_CONF_UNSET ) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - setting blacklist CIDR cache size to : %d", n);
+      set_initial_blacklist_size( n );
+    }
+
+    n = main_conf->cache_expiry;
+    if ( n != NGX_CONF_UNSET ) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - setting CIDR cache expiry to : %d seconds", n);
+      set_cache_expiry( n );
+    }
+  }
+
   repsheet_loc_conf_t  *loc_conf  = ngx_http_get_module_loc_conf(r, ngx_http_repsheet_module);
 
   if (!loc_conf->enabled || loc_conf->enabled == NGX_CONF_UNSET || r->main->internal) {
     return NGX_DECLINED;
   }
 
-  repsheet_main_conf_t *main_conf = ngx_http_get_module_main_conf(r, ngx_http_repsheet_module);
 
   int connection_status = check_connection(main_conf->redis.connection);
   if (connection_status == DISCONNECTED) {
@@ -224,6 +263,7 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
   if (loc_conf->auto_blacklist || loc_conf->auto_mark) {
     int address_code;
     char address[INET6_ADDRSTRLEN];
+    address[0] = '\0';
 
     address_code = derive_actor_address(r, address);
 
@@ -368,7 +408,38 @@ static ngx_command_t ngx_http_repsheet_commands[] = {
     offsetof(repsheet_loc_conf_t, auto_mark),
     NULL
   },
-
+  {
+    ngx_string("repsheet_whitelist_CIDR_cache_initial_size"),
+    NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
+    ngx_conf_set_num_slot,
+    NGX_HTTP_MAIN_CONF_OFFSET,
+    offsetof(repsheet_main_conf_t, whitelist_CIDR_cache_initial_size),
+    NULL
+  },
+{
+    ngx_string("repsheet_blacklist_CIDR_cache_initial_size"),
+    NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
+    ngx_conf_set_num_slot,
+    NGX_HTTP_MAIN_CONF_OFFSET,
+    offsetof(repsheet_main_conf_t, blacklist_CIDR_cache_initial_size),
+    NULL
+  },
+  {
+    ngx_string("repsheet_redis_read_timeout"),
+    NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
+    ngx_conf_set_num_slot,
+    NGX_HTTP_MAIN_CONF_OFFSET,
+    offsetof(repsheet_main_conf_t, redis.read_timeout),
+    NULL
+  },
+  {
+    ngx_string("repsheet_cache_expiry"),
+    NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
+    ngx_conf_set_num_slot,
+    NGX_HTTP_MAIN_CONF_OFFSET,
+    offsetof(repsheet_main_conf_t, cache_expiry),
+    NULL
+  },
   ngx_null_command
 };
 
@@ -394,6 +465,9 @@ ngx_http_repsheet_create_main_conf(ngx_conf_t *cf)
   conf->user_lookup = NGX_CONF_UNSET;
 
   conf->proxy_headers = NGX_CONF_UNSET;
+  conf->whitelist_CIDR_cache_initial_size = NGX_CONF_UNSET;
+  conf->blacklist_CIDR_cache_initial_size = NGX_CONF_UNSET;
+  conf->cache_expiry = NGX_CONF_UNSET_UINT;
 
   return conf;
 }
@@ -412,7 +486,6 @@ ngx_http_repsheet_create_loc_conf(ngx_conf_t *cf)
   conf->enabled = NGX_CONF_UNSET;
   conf->auto_blacklist = NGX_CONF_UNSET;
   conf->auto_mark = NGX_CONF_UNSET;
-
   return conf;
 }
 
