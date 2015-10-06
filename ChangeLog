@@ -1,3 +1,7 @@
+2015-10-05  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 4.0.0: CIDR lookup caching
+
 2015-05-06  Aaron Bedra  <aaron@aaronbedra.com>
 
 	* 3.0.0: Read timeouts
