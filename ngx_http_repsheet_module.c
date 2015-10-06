@@ -21,14 +21,15 @@ typedef struct {
   ngx_flag_t ip_lookup;
   ngx_flag_t proxy_headers;
   ngx_str_t cookie;
+  ngx_int_t whitelist_CIDR_cache_initial_size;
+  ngx_int_t blacklist_CIDR_cache_initial_size;
+  ngx_uint_t cache_expiry;
 } repsheet_main_conf_t;
 
 typedef struct {
   ngx_flag_t enabled;
   ngx_flag_t auto_blacklist;
   ngx_flag_t auto_mark;
-  ngx_int_t whitelist_CIDR_cache_initial_size;
-  ngx_int_t blacklist_CIDR_cache_initial_size;
 } repsheet_loc_conf_t;
 
 ngx_module_t ngx_http_repsheet_module;
@@ -133,6 +134,7 @@ lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
     user_status = actor_status(main_conf->redis.connection, (const char *)lookup_value, USER, reason_user);
 
     if (is_user_marked(main_conf->redis.connection, (const char *)lookup_value, reason_user)) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[RepsheetMark] - USER %V was found on repsheet for reason %s.", &cookie_value, reason_user);
       set_repsheet_header(r,"repsheet-user-marked",reason_user);
     }
   }
@@ -172,7 +174,7 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
     return NGX_HTTP_FORBIDDEN;
   }
 
-   if ( is_ip_marked( main_conf->redis.connection, address, reason_ip ) ) {
+  if (is_ip_marked(main_conf->redis.connection, address, reason_ip)) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[RepsheetMark] - IP %s was found on repsheet for reason %s.", address, reason_ip);
     set_repsheet_header(r, "repsheet-ip-marked", reason_ip);
   }
@@ -197,28 +199,44 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
   return NGX_DECLINED;
 }
 
-static int set_cache_sizes = 0;
 
 static ngx_int_t
 ngx_http_repsheet_handler(ngx_http_request_t *r)
 {
-  repsheet_loc_conf_t  *loc_conf  = ngx_http_get_module_loc_conf(r, ngx_http_repsheet_module);
+  static int set_cache_sizes = 0;
+
+  repsheet_main_conf_t *main_conf = ngx_http_get_module_main_conf(r, ngx_http_repsheet_module);
 
   if ( set_cache_sizes == 0 ) {
     set_cache_sizes = 1;
-    if ( loc_conf->whitelist_CIDR_cache_initial_size != NGX_CONF_UNSET ) {
-      set_initial_whitelist_size( loc_conf->whitelist_CIDR_cache_initial_size );
+
+    unsigned int n;
+
+    n = main_conf->whitelist_CIDR_cache_initial_size; 
+    if ( n != NGX_CONF_UNSET ) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - setting whitelist CIDR cache size to : %d", n);
+      set_initial_whitelist_size( n );  
     }
-    if ( loc_conf->blacklist_CIDR_cache_initial_size != NGX_CONF_UNSET ) {
-      set_initial_blacklist_size( loc_conf->blacklist_CIDR_cache_initial_size );
+
+    n = main_conf->blacklist_CIDR_cache_initial_size;
+    if ( n != NGX_CONF_UNSET ) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - setting blacklist CIDR cache size to : %d", n);
+      set_initial_blacklist_size( n );
+    }
+
+    n = main_conf->cache_expiry;
+    if ( n != NGX_CONF_UNSET ) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - setting CIDR cache expiry to : %d seconds", n);
+      set_cache_expiry( n );
     }
   }
+
+  repsheet_loc_conf_t  *loc_conf  = ngx_http_get_module_loc_conf(r, ngx_http_repsheet_module);
 
   if (!loc_conf->enabled || loc_conf->enabled == NGX_CONF_UNSET || r->main->internal) {
     return NGX_DECLINED;
   }
 
-  repsheet_main_conf_t *main_conf = ngx_http_get_module_main_conf(r, ngx_http_repsheet_module);
 
   int connection_status = check_connection(main_conf->redis.connection);
   if (connection_status == DISCONNECTED) {
@@ -390,23 +408,38 @@ static ngx_command_t ngx_http_repsheet_commands[] = {
     offsetof(repsheet_loc_conf_t, auto_mark),
     NULL
   },
-{
+  {
     ngx_string("repsheet_whitelist_CIDR_cache_initial_size"),
-    NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+    NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
     ngx_conf_set_num_slot,
-    NGX_HTTP_LOC_CONF_OFFSET,
-    offsetof(repsheet_loc_conf_t, whitelist_CIDR_cache_initial_size),
+    NGX_HTTP_MAIN_CONF_OFFSET,
+    offsetof(repsheet_main_conf_t, whitelist_CIDR_cache_initial_size),
     NULL
   },
 {
     ngx_string("repsheet_blacklist_CIDR_cache_initial_size"),
-    NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+    NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
     ngx_conf_set_num_slot,
-    NGX_HTTP_LOC_CONF_OFFSET,
-    offsetof(repsheet_loc_conf_t, blacklist_CIDR_cache_initial_size),
+    NGX_HTTP_MAIN_CONF_OFFSET,
+    offsetof(repsheet_main_conf_t, blacklist_CIDR_cache_initial_size),
     NULL
   },
-
+  {
+    ngx_string("repsheet_redis_read_timeout"),
+    NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
+    ngx_conf_set_num_slot,
+    NGX_HTTP_MAIN_CONF_OFFSET,
+    offsetof(repsheet_main_conf_t, redis.read_timeout),
+    NULL
+  },
+  {
+    ngx_string("repsheet_cache_expiry"),
+    NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
+    ngx_conf_set_num_slot,
+    NGX_HTTP_MAIN_CONF_OFFSET,
+    offsetof(repsheet_main_conf_t, cache_expiry),
+    NULL
+  },
   ngx_null_command
 };
 
@@ -432,6 +465,9 @@ ngx_http_repsheet_create_main_conf(ngx_conf_t *cf)
   conf->user_lookup = NGX_CONF_UNSET;
 
   conf->proxy_headers = NGX_CONF_UNSET;
+  conf->whitelist_CIDR_cache_initial_size = NGX_CONF_UNSET;
+  conf->blacklist_CIDR_cache_initial_size = NGX_CONF_UNSET;
+  conf->cache_expiry = NGX_CONF_UNSET_UINT;
 
   return conf;
 }
@@ -450,8 +486,6 @@ ngx_http_repsheet_create_loc_conf(ngx_conf_t *cf)
   conf->enabled = NGX_CONF_UNSET;
   conf->auto_blacklist = NGX_CONF_UNSET;
   conf->auto_mark = NGX_CONF_UNSET;
-  conf->whitelist_CIDR_cache_initial_size = NGX_CONF_UNSET;
-  conf->blacklist_CIDR_cache_initial_size = NGX_CONF_UNSET;
   return conf;
 }
 
@@ -465,8 +499,6 @@ ngx_http_repsheet_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
   ngx_conf_merge_value(conf->enabled, prev->enabled, 0);
   ngx_conf_merge_value(conf->auto_blacklist, prev->auto_blacklist, 0);
   ngx_conf_merge_value(conf->auto_mark, prev->auto_mark, 0);
-  ngx_conf_merge_value(conf->whitelist_CIDR_cache_initial_size, prev->whitelist_CIDR_cache_initial_size, 0);
-  ngx_conf_merge_value(conf->blacklist_CIDR_cache_initial_size, prev->blacklist_CIDR_cache_initial_size, 0);
 
   return NGX_CONF_OK;
 }
