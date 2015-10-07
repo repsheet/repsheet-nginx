@@ -99,3 +99,14 @@ compiles NGINX, and then configures everything to work
 together. Running `rake` launches some curl based tests that hit the
 site and exercise Repsheet, then test that everything is working as
 expected.
+
+## Building for Linux with Docker
+
+The file docker/Dockerfile works with docker to create a standalone instance of CentOS Linux, install all the dependencies, and compile and 
+test librepsheet and repsheet-nginx.  Once you have installed docker on your system simply run:
+
+``` cd docker
+docker build .
+```
+
+This builds the docker image defined in Dockerfile, which includes creating a working instance of nginx with the repsheet module and redis installed.  
