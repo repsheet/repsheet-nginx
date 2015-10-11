@@ -88,10 +88,10 @@ installed. In order to run the integration tests, use the following
 commands:
 
 ```sh
-bundle install
-script/bootstrap
-rake nginx:compile
-rake
+$ bundle install
+$ script/bootstrap
+$ rake nginx:compile
+$ rake
 ```
 
 The `script/bootstrap` task will take some time. It downloads and
@@ -102,11 +102,16 @@ expected.
 
 ## Building for Linux with Docker
 
-The file docker/Dockerfile works with docker to create a standalone instance of CentOS Linux, install all the dependencies, and compile and 
-test librepsheet and repsheet-nginx.  Once you have installed docker on your system simply run:
+The file docker/Dockerfile works with docker to create a standalone
+instance of CentOS Linux, install all the dependencies, and compile
+and test librepsheet and repsheet-nginx.  Once you have installed
+docker on your system simply run:
 
-``` cd docker
-docker build .
+```
+$ cd docker
+$ docker build .
 ```
 
-This builds the docker image defined in Dockerfile, which includes creating a working instance of nginx with the repsheet module and redis installed.  
+This builds the docker image defined in Dockerfile, which includes
+creating a working instance of nginx with the repsheet module and
+redis installed.
