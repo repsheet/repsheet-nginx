@@ -30,6 +30,7 @@ typedef struct {
   ngx_flag_t enabled;
   ngx_flag_t auto_blacklist;
   ngx_flag_t auto_mark;
+  ngx_str_t proxy_headers_header;
 } repsheet_loc_conf_t;
 
 ngx_module_t ngx_http_repsheet_module;
@@ -53,11 +54,48 @@ x_forwarded_for(ngx_http_request_t *r)
 }
 
 
+static ngx_table_elt_t*
+extract_proxy_header(ngx_http_request_t *r, repsheet_loc_conf_t *loc_conf)
+{
+  ngx_list_part_t *part;
+  ngx_table_elt_t *h;
+  ngx_uint_t i;
+
+  part = &r->headers_in.headers.part;
+  h = part->elts;
+
+  for (i = 0; /**/; i++) {
+    if (i >= part->nelts) {
+      if (part->next == NULL) {
+	break;
+      }
+
+      part = part->next;
+      h = part->elts;
+      i = 0;
+    }
+
+    if (ngx_strncmp(h[i].key.data, loc_conf->proxy_headers_header.data, h[i].key.len) == 0) {
+      return h;
+    }
+  }
+
+  return NULL;
+}
+
+
 static int
-derive_actor_address(ngx_http_request_t *r, char *address)
+derive_actor_address(ngx_http_request_t *r, repsheet_loc_conf_t *loc_conf, char *address)
 {
   int result;
-  ngx_table_elt_t *xff = x_forwarded_for(r);
+  ngx_table_elt_t *xff;
+
+  if (ngx_strncmp(loc_conf->proxy_headers_header.data, "X-Forwarded-For", 15) == 0) {
+    xff = x_forwarded_for(r);
+  } else {
+    xff = extract_proxy_header(r, loc_conf);
+  }
+
   if (xff == NULL) {
     memcpy(address, r->connection->addr_text.data, r->connection->addr_text.len);
     address[r->connection->addr_text.len] = '\0';
@@ -158,7 +196,7 @@ lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
 }
 
 static ngx_int_t
-lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
+lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf, repsheet_loc_conf_t *loc_conf)
 {
   int address_code;
   int ip_status = LIBREPSHEET_OK;
@@ -167,7 +205,7 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
 
   address[0] = reason_ip[0] = '\0';
 
-  address_code = derive_actor_address(r, address);
+  address_code = derive_actor_address(r, loc_conf, address);
 
   if (address_code == NGX_DECLINED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Request was blocked by repsheet. Reason: Invalid X-Forwarded-For", address);
@@ -265,7 +303,7 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     char address[INET6_ADDRSTRLEN];
     address[0] = '\0';
 
-    address_code = derive_actor_address(r, address);
+    address_code = derive_actor_address(r, loc_conf, address);
 
     if (address_code == NGX_DECLINED) {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Request was blocked by repsheet. Reason: Invalid X-Forwarded-For", address);
@@ -290,7 +328,7 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
   }
 
   if (main_conf->ip_lookup) {
-    int ip_status = lookup_ip(r, main_conf);
+    int ip_status = lookup_ip(r, main_conf, loc_conf);
     if (ip_status != NGX_DECLINED) {
       return ip_status;
     }
@@ -350,6 +388,14 @@ static ngx_command_t ngx_http_repsheet_commands[] = {
     ngx_conf_set_flag_slot,
     NGX_HTTP_MAIN_CONF_OFFSET,
     offsetof(repsheet_main_conf_t, proxy_headers),
+    NULL
+  },
+  {
+    ngx_string("repsheet_proxy_headers_header"),
+    NGX_HTTP_MAIN_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+    ngx_conf_set_str_slot,
+    NGX_HTTP_LOC_CONF_OFFSET,
+    offsetof(repsheet_loc_conf_t, proxy_headers_header),
     NULL
   },
   {
@@ -499,6 +545,7 @@ ngx_http_repsheet_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
   ngx_conf_merge_value(conf->enabled, prev->enabled, 0);
   ngx_conf_merge_value(conf->auto_blacklist, prev->auto_blacklist, 0);
   ngx_conf_merge_value(conf->auto_mark, prev->auto_mark, 0);
+  ngx_conf_merge_str_value(conf->proxy_headers_header, prev->proxy_headers_header, "X-Forwarded-For");
 
   return NGX_CONF_OK;
 }
