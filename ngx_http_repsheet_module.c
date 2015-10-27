@@ -141,13 +141,13 @@ reset_connection(repsheet_main_conf_t *main_conf)
 
 
 static void
-set_repsheet_header(ngx_http_request_t *r, char *field, char *value)
+set_repsheet_header(ngx_http_request_t *r)
 {
   ngx_table_elt_t *h;
   h = ngx_list_push(&r->headers_in.headers);
   h->hash = 1;
-  ngx_str_set(&h->key, field);
-  ngx_str_set(&h->value, value);
+  ngx_str_set(&h->key, "X-Repsheet");
+  ngx_str_set(&h->value, "true");
 }
 
 
@@ -173,7 +173,7 @@ lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
 
     if (is_user_marked(main_conf->redis.connection, (const char *)lookup_value, reason_user)) {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[RepsheetMark] - USER %V was found on repsheet for reason %s.", &cookie_value, reason_user);
-      set_repsheet_header(r,"repsheet-user-marked",reason_user);
+      set_repsheet_header(r);
     }
   }
 
@@ -214,7 +214,7 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf, repsheet_loc_c
 
   if (is_ip_marked(main_conf->redis.connection, address, reason_ip)) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[RepsheetMark] - IP %s was found on repsheet for reason %s.", address, reason_ip);
-    set_repsheet_header(r, "repsheet-ip-marked", reason_ip);
+    set_repsheet_header(r);
   }
 
   ip_status = actor_status(main_conf->redis.connection, address, IP, reason_ip);
