@@ -1,3 +1,7 @@
+2015-10-28  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 4.0.1: Revert back to static headers
+
 2015-10-05  Aaron Bedra  <aaron@aaronbedra.com>
 
 	* 4.0.0: CIDR lookup caching
