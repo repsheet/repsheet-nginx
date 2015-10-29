@@ -139,15 +139,22 @@ reset_connection(repsheet_main_conf_t *main_conf)
   }
 }
 
+static void
+my_set_str(ngx_str_t *ngstr, char *cstr) {
+   ngstr->len = strlen(cstr);
+   ngstr->data = (u_char*) cstr;
+}
 
 static void
-set_repsheet_header(ngx_http_request_t *r)
+set_repsheet_header(ngx_http_request_t *r, char *key, char *val)
 {
   ngx_table_elt_t *h;
   h = ngx_list_push(&r->headers_in.headers);
   h->hash = 1;
-  ngx_str_set(&h->key, "X-Repsheet");
-  ngx_str_set(&h->value, "true");
+  my_set_str(&h->key, key);
+  my_set_str(&h->value, val);
+  //ngx_str_set(&h->key, "X-Repsheet");
+  //ngx_str_set(&h->value, "true");
 }
 
 
@@ -155,7 +162,7 @@ static ngx_int_t
 lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
 {
   int user_status = NGX_DECLINED;
-  char reason_user[MAX_REASON_LENGTH];
+  static char reason_user[MAX_REASON_LENGTH];
   ngx_int_t location;
   ngx_str_t cookie_value;
 
@@ -173,7 +180,8 @@ lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
 
     if (is_user_marked(main_conf->redis.connection, (const char *)lookup_value, reason_user)) {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[RepsheetMark] - USER %V was found on repsheet for reason %s.", &cookie_value, reason_user);
-      set_repsheet_header(r);
+      
+      set_repsheet_header(r, "X-Repsheet", reason_user);
     }
   }
 
@@ -201,7 +209,7 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf, repsheet_loc_c
   int address_code;
   int ip_status = LIBREPSHEET_OK;
   char address[INET6_ADDRSTRLEN];
-  char reason_ip[MAX_REASON_LENGTH];
+  static char reason_ip[MAX_REASON_LENGTH];
 
   address[0] = reason_ip[0] = '\0';
 
@@ -214,7 +222,7 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf, repsheet_loc_c
 
   if (is_ip_marked(main_conf->redis.connection, address, reason_ip)) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[RepsheetMark] - IP %s was found on repsheet for reason %s.", address, reason_ip);
-    set_repsheet_header(r);
+    set_repsheet_header(r, "X-Repsheet", reason_ip);
   }
 
   ip_status = actor_status(main_conf->redis.connection, address, IP, reason_ip);
