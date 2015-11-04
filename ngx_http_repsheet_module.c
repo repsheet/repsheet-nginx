@@ -140,14 +140,18 @@ reset_connection(repsheet_main_conf_t *main_conf)
 }
 
 
+
+ngx_int_t repsheet_key_index = -1;
+
 static void
 set_repsheet_header(ngx_http_request_t *r)
 {
-  ngx_table_elt_t *h;
-  h = ngx_list_push(&r->headers_in.headers);
-  h->hash = 1;
-  ngx_str_set(&h->key, "X-Repsheet");
-  ngx_str_set(&h->value, "true");
+  if ( repsheet_key_index != -1 ) {
+    ngx_http_variable_value_t *vv = ngx_http_get_indexed_variable(r, repsheet_key_index);
+
+    vv->len = sizeof("true")-1;
+    vv->data = (u_char *)"true";
+  }
 }
 
 
@@ -352,6 +356,12 @@ ngx_http_repsheet_init(ngx_conf_t *cf)
   }
 
   *h = ngx_http_repsheet_handler;
+
+  ngx_str_t key;
+  key.data = (u_char *) "repsheet";
+  key.len = sizeof("repsheet")-1;
+
+  repsheet_key_index = ngx_http_get_variable_index(cf, &key);
 
   return NGX_OK;
 }
