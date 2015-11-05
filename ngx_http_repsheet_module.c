@@ -31,9 +31,12 @@ typedef struct {
   ngx_flag_t auto_blacklist;
   ngx_flag_t auto_mark;
   ngx_str_t proxy_headers_header;
+  ngx_int_t header_index;
 } repsheet_loc_conf_t;
 
+
 ngx_module_t ngx_http_repsheet_module;
+
 
 static ngx_table_elt_t*
 x_forwarded_for(ngx_http_request_t *r)
@@ -140,23 +143,25 @@ reset_connection(repsheet_main_conf_t *main_conf)
 }
 
 
-
-ngx_int_t repsheet_key_index = -1;
-
 static void
-set_repsheet_header(ngx_http_request_t *r)
+set_repsheet_header(ngx_http_request_t *r, repsheet_loc_conf_t *loc_conf)
 {
-  if ( repsheet_key_index != -1 ) {
-    ngx_http_variable_value_t *vv = ngx_http_get_indexed_variable(r, repsheet_key_index);
+  if (loc_conf->header_index != NGX_ERROR) {
+    ngx_http_variable_value_t *repsheet_variable = ngx_http_get_indexed_variable(r, loc_conf->header_index);
 
-    vv->len = sizeof("true")-1;
-    vv->data = (u_char *)"true";
+    if (repsheet_variable == NULL || repsheet_variable->not_found || repsheet_variable->len == 0) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - $repsheet variable not set");
+      return;
+    }
+
+    repsheet_variable->len = 4;
+    repsheet_variable->data = (u_char *)"true";
   }
 }
 
 
 static ngx_int_t
-lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
+lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf, repsheet_loc_conf_t *loc_conf)
 {
   int user_status = NGX_DECLINED;
   char reason_user[MAX_REASON_LENGTH];
@@ -176,8 +181,8 @@ lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
     user_status = actor_status(main_conf->redis.connection, (const char *)lookup_value, USER, reason_user);
 
     if (is_user_marked(main_conf->redis.connection, (const char *)lookup_value, reason_user)) {
-      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[RepsheetMark] - USER %V was found on repsheet for reason %s.", &cookie_value, reason_user);
-      set_repsheet_header(r);
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - USER %V was found on repsheet. Reason: %s", &cookie_value, reason_user);
+      set_repsheet_header(r, loc_conf);
     }
   }
 
@@ -217,8 +222,8 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf, repsheet_loc_c
   }
 
   if (is_ip_marked(main_conf->redis.connection, address, reason_ip)) {
-    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[RepsheetMark] - IP %s was found on repsheet for reason %s.", address, reason_ip);
-    set_repsheet_header(r);
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was found on repsheet. Reason: %s", address, reason_ip);
+    set_repsheet_header(r, loc_conf);
   }
 
   ip_status = actor_status(main_conf->redis.connection, address, IP, reason_ip);
@@ -325,7 +330,7 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
   }
 
   if (main_conf->user_lookup) {
-    int user_status = lookup_user(r, main_conf);
+    int user_status = lookup_user(r, main_conf, loc_conf);
     if (user_status != NGX_DECLINED) {
       return user_status;
     }
@@ -356,12 +361,6 @@ ngx_http_repsheet_init(ngx_conf_t *cf)
   }
 
   *h = ngx_http_repsheet_handler;
-
-  ngx_str_t key;
-  key.data = (u_char *) "repsheet";
-  key.len = sizeof("repsheet")-1;
-
-  repsheet_key_index = ngx_http_get_variable_index(cf, &key);
 
   return NGX_OK;
 }
@@ -542,6 +541,8 @@ ngx_http_repsheet_create_loc_conf(ngx_conf_t *cf)
   conf->enabled = NGX_CONF_UNSET;
   conf->auto_blacklist = NGX_CONF_UNSET;
   conf->auto_mark = NGX_CONF_UNSET;
+  conf->header_index = NGX_CONF_UNSET;
+
   return conf;
 }
 
@@ -552,9 +553,12 @@ ngx_http_repsheet_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
   repsheet_loc_conf_t *prev = (repsheet_loc_conf_t *)parent;
   repsheet_loc_conf_t *conf = (repsheet_loc_conf_t *)child;
 
+  static ngx_str_t repsheet_variable = ngx_string("repsheet");
+
   ngx_conf_merge_value(conf->enabled, prev->enabled, 0);
   ngx_conf_merge_value(conf->auto_blacklist, prev->auto_blacklist, 0);
   ngx_conf_merge_value(conf->auto_mark, prev->auto_mark, 0);
+  ngx_conf_merge_value(conf->header_index, prev->header_index, ngx_http_get_variable_index(cf, &repsheet_variable));
   ngx_conf_merge_str_value(conf->proxy_headers_header, prev->proxy_headers_header, "X-Forwarded-For");
 
   return NGX_CONF_OK;
