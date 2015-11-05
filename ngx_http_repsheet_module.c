@@ -57,47 +57,11 @@ x_forwarded_for(ngx_http_request_t *r)
 }
 
 
-static ngx_table_elt_t*
-extract_proxy_header(ngx_http_request_t *r, repsheet_loc_conf_t *loc_conf)
-{
-  ngx_list_part_t *part;
-  ngx_table_elt_t *h;
-  ngx_uint_t i;
-
-  part = &r->headers_in.headers.part;
-  h = part->elts;
-
-  for (i = 0; /**/; i++) {
-    if (i >= part->nelts) {
-      if (part->next == NULL) {
-	break;
-      }
-
-      part = part->next;
-      h = part->elts;
-      i = 0;
-    }
-
-    if (ngx_strncmp(h[i].key.data, loc_conf->proxy_headers_header.data, h[i].key.len) == 0) {
-      return h;
-    }
-  }
-
-  return NULL;
-}
-
-
 static int
 derive_actor_address(ngx_http_request_t *r, repsheet_loc_conf_t *loc_conf, char *address)
 {
   int result;
-  ngx_table_elt_t *xff;
-
-  if (ngx_strncmp(loc_conf->proxy_headers_header.data, "X-Forwarded-For", 15) == 0) {
-    xff = x_forwarded_for(r);
-  } else {
-    xff = extract_proxy_header(r, loc_conf);
-  }
+  ngx_table_elt_t *xff = x_forwarded_for(r);
 
   if (xff == NULL) {
     memcpy(address, r->connection->addr_text.data, r->connection->addr_text.len);
@@ -397,14 +361,6 @@ static ngx_command_t ngx_http_repsheet_commands[] = {
     ngx_conf_set_flag_slot,
     NGX_HTTP_MAIN_CONF_OFFSET,
     offsetof(repsheet_main_conf_t, proxy_headers),
-    NULL
-  },
-  {
-    ngx_string("repsheet_proxy_headers_header"),
-    NGX_HTTP_MAIN_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
-    ngx_conf_set_str_slot,
-    NGX_HTTP_LOC_CONF_OFFSET,
-    offsetof(repsheet_loc_conf_t, proxy_headers_header),
     NULL
   },
   {

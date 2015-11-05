@@ -202,14 +202,4 @@ describe "Integration Specs" do
       expect(Curl.get("http://127.0.0.1:8888").response_code).to eq(200)
     end
   end
-
-  describe "Alternate XFF header" do
-    it "Properly extracts the alternate header" do
-      @redis.set("1.1.1.1:repsheet:ip:blacklisted", "Integration Spec")
-      http = Curl.get("http://127.0.0.1:8888/real") do |http|
-        http.headers['True-Client-IP'] = '1.1.1.1'
-      end
-      expect(http.response_code).to eq(403)
-    end
-  end
 end
