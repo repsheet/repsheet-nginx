@@ -79,7 +79,7 @@ extract_proxy_header(ngx_http_request_t *r, repsheet_loc_conf_t *loc_conf)
     }
 
     if (ngx_strncmp(h[i].key.data, loc_conf->proxy_headers_header.data, h[i].key.len) == 0) {
-      return h;
+      return &h[i];
     }
   }
 
