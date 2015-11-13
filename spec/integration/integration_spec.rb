@@ -204,12 +204,22 @@ describe "Integration Specs" do
   end
 
   describe "Alternate XFF header" do
-    it "Properly extracts the alternate header" do
+    
+    it "Properly extracts & blocks the alternate header when it's blacklisted" do
       @redis.set("1.1.1.1:repsheet:ip:blacklisted", "Integration Spec")
       http = Curl.get("http://127.0.0.1:8888/real") do |http|
         http.headers['True-Client-IP'] = '1.1.1.1'
       end
       expect(http.response_code).to eq(403)
     end
+
+    it "doesn't block an unblocked IP with true-client-ip set" do
+      @redis.set("1.1.1.1:repsheet:ip:blacklisted", "Integration Spec")
+      http = Curl.get("http://127.0.0.1:8888/real") do |http|
+        http.headers['True-Client-IP'] = '2.2.2.2'
+      end
+      expect(http.response_code).to eq(200)
+    end
+
   end
 end
