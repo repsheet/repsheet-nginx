@@ -157,7 +157,7 @@ set_repsheet_header(ngx_http_request_t *r, repsheet_loc_conf_t *loc_conf, char *
 
     ngx_str_t *content = &(loc_conf->header_content);
     content->len = strlen(reason);
-    content->data = (u_char*) realloc(content->data, content->len+1);
+    content->data = (u_char*) realloc(content->data, content->len);
     memcpy(content->data, reason, content->len);
 
     repsheet_variable->len = content->len;
