@@ -1,3 +1,7 @@
+2015-12-09  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 4.1.0: Add reason code to X-Repsheet header
+
 2015-10-28  Aaron Bedra  <aaron@aaronbedra.com>
 
 	* 4.0.1: Revert back to static headers
