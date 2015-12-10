@@ -32,6 +32,7 @@ typedef struct {
   ngx_flag_t auto_mark;
   ngx_str_t proxy_headers_header;
   ngx_int_t header_index;
+  ngx_str_t header_content;
 } repsheet_loc_conf_t;
 
 
@@ -144,7 +145,7 @@ reset_connection(repsheet_main_conf_t *main_conf)
 
 
 static void
-set_repsheet_header(ngx_http_request_t *r, repsheet_loc_conf_t *loc_conf)
+set_repsheet_header(ngx_http_request_t *r, repsheet_loc_conf_t *loc_conf, char *reason)
 {
   if (loc_conf->header_index != NGX_ERROR) {
     ngx_http_variable_value_t *repsheet_variable = ngx_http_get_indexed_variable(r, loc_conf->header_index);
@@ -154,8 +155,13 @@ set_repsheet_header(ngx_http_request_t *r, repsheet_loc_conf_t *loc_conf)
       return;
     }
 
-    repsheet_variable->len = 4;
-    repsheet_variable->data = (u_char *)"true";
+    ngx_str_t *content = &(loc_conf->header_content);
+    content->len = strlen(reason);
+    content->data = (u_char*) realloc(content->data, content->len);
+    memcpy(content->data, reason, content->len);
+
+    repsheet_variable->len = content->len;
+    repsheet_variable->data = content->data;
   }
 }
 
@@ -182,7 +188,7 @@ lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf, repsheet_loc
 
     if (is_user_marked(main_conf->redis.connection, (const char *)lookup_value, reason_user)) {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - USER %V was found on repsheet. Reason: %s", &cookie_value, reason_user);
-      set_repsheet_header(r, loc_conf);
+      set_repsheet_header(r, loc_conf, reason_user);
     }
   }
 
@@ -223,7 +229,7 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf, repsheet_loc_c
 
   if (is_ip_marked(main_conf->redis.connection, address, reason_ip)) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was found on repsheet. Reason: %s", address, reason_ip);
-    set_repsheet_header(r, loc_conf);
+    set_repsheet_header(r, loc_conf, reason_ip);
   }
 
   ip_status = actor_status(main_conf->redis.connection, address, IP, reason_ip);
@@ -542,6 +548,7 @@ ngx_http_repsheet_create_loc_conf(ngx_conf_t *cf)
   conf->auto_blacklist = NGX_CONF_UNSET;
   conf->auto_mark = NGX_CONF_UNSET;
   conf->header_index = NGX_CONF_UNSET;
+  conf->header_content.data = NULL;
 
   return conf;
 }
