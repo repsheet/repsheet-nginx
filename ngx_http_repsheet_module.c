@@ -31,6 +31,7 @@ typedef struct {
   ngx_flag_t auto_blacklist;
   ngx_flag_t auto_mark;
   ngx_str_t proxy_headers_header;
+  ngx_flag_t proxy_headers_fallback;
   ngx_int_t header_index;
   ngx_str_t header_content;
 } repsheet_loc_conf_t;
@@ -89,16 +90,9 @@ extract_proxy_header(ngx_http_request_t *r, repsheet_loc_conf_t *loc_conf)
 
 
 static int
-derive_actor_address(ngx_http_request_t *r, repsheet_loc_conf_t *loc_conf, char *address)
+validate_actor_address(ngx_http_request_t *r, ngx_table_elt_t *xff, char *address)
 {
   int result;
-  ngx_table_elt_t *xff;
-
-  if (ngx_strncmp(loc_conf->proxy_headers_header.data, "X-Forwarded-For", 15) == 0) {
-    xff = x_forwarded_for(r);
-  } else {
-    xff = extract_proxy_header(r, loc_conf);
-  }
 
   if (xff == NULL) {
     memcpy(address, r->connection->addr_text.data, r->connection->addr_text.len);
@@ -111,6 +105,30 @@ derive_actor_address(ngx_http_request_t *r, repsheet_loc_conf_t *loc_conf, char 
     } else {
       return NGX_OK;
     }
+  }
+}
+
+
+static int
+derive_actor_address(ngx_http_request_t *r, repsheet_loc_conf_t *loc_conf, char *address)
+{
+  int result;
+  int alternate = 0;
+  ngx_table_elt_t *xff;
+
+  if (ngx_strncmp(loc_conf->proxy_headers_header.data, "X-Forwarded-For", 15) == 0) {
+    xff = x_forwarded_for(r);
+  } else {
+    alternate = 1;
+    xff = extract_proxy_header(r, loc_conf);
+  }
+
+  result = validate_actor_address(r, xff, address);
+
+  if (result == NGX_DECLINED && alternate && loc_conf->proxy_headers_fallback) {
+    return validate_actor_address(r, x_forwarded_for(r), address);
+  } else {
+    return result;
   }
 }
 
@@ -414,6 +432,14 @@ static ngx_command_t ngx_http_repsheet_commands[] = {
     NULL
   },
   {
+    ngx_string("repsheet_proxy_headers_fallback"),
+    NGX_HTTP_MAIN_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+    ngx_conf_set_flag_slot,
+    NGX_HTTP_LOC_CONF_OFFSET,
+    offsetof(repsheet_loc_conf_t, proxy_headers_fallback),
+    NULL
+  },
+  {
     ngx_string("repsheet_redis_host"),
     NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
     ngx_conf_set_str_slot,
@@ -549,6 +575,7 @@ ngx_http_repsheet_create_loc_conf(ngx_conf_t *cf)
   conf->auto_mark = NGX_CONF_UNSET;
   conf->header_index = NGX_CONF_UNSET;
   conf->header_content.data = NULL;
+  conf->proxy_headers_fallback = NGX_CONF_UNSET;
 
   return conf;
 }
@@ -567,6 +594,7 @@ ngx_http_repsheet_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
   ngx_conf_merge_value(conf->auto_mark, prev->auto_mark, 0);
   ngx_conf_merge_value(conf->header_index, prev->header_index, ngx_http_get_variable_index(cf, &repsheet_variable));
   ngx_conf_merge_str_value(conf->proxy_headers_header, prev->proxy_headers_header, "X-Forwarded-For");
+  ngx_conf_merge_value(conf->proxy_headers_fallback, prev->proxy_headers_fallback, 0);
 
   return NGX_CONF_OK;
 }

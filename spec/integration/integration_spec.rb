@@ -204,7 +204,6 @@ describe "Integration Specs" do
   end
 
   describe "Alternate XFF header" do
-    
     it "Properly extracts & blocks the alternate header when it's blacklisted" do
       @redis.set("1.1.1.1:repsheet:ip:blacklisted", "Integration Spec")
       http = Curl.get("http://127.0.0.1:8888/real") do |http|
@@ -213,7 +212,7 @@ describe "Integration Specs" do
       expect(http.response_code).to eq(403)
     end
 
-    it "doesn't block an unblocked IP with true-client-ip set" do
+    it "Doesn't block an unblocked IP with true-client-ip set" do
       @redis.set("1.1.1.1:repsheet:ip:blacklisted", "Integration Spec")
       http = Curl.get("http://127.0.0.1:8888/real") do |http|
         http.headers['True-Client-IP'] = '2.2.2.2'
@@ -221,5 +220,22 @@ describe "Integration Specs" do
       expect(http.response_code).to eq(200)
     end
 
+    it "Falls back to X-Forwarded-For when the alternate header doesn't contain a valid IP and the fallback option is set" do
+      @redis.set("1.1.1.1:repsheet:ip:whitelisted", "Integration Spec")
+      http = Curl.get("http://127.0.0.1:8888/real") do |http|
+        http.headers['True-Client-IP'] = '-'
+        http.headers['X-Forwarded-For'] = '1.1.1.1, 2.2.2.2, 3.3.3.3'
+      end
+      expect(http.response_code).to eq(200)
+    end
+
+    it "Does not fall back to X-Forwarded-For when the fallback option is set to off" do
+      @redis.set("1.1.1.1:repsheet:ip:whitelisted", "Integration Spec")
+      http = Curl.get("http://127.0.0.1:8888/nofallback") do |http|
+        http.headers['True-Client-IP'] = '-'
+        http.headers['X-Forwarded-For'] = '1.1.1.1, 2.2.2.2, 3.3.3.3'
+      end
+      expect(http.response_code).to eq(403)
+    end
   end
 end

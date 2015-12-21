@@ -40,14 +40,19 @@ the main configuration section of `nginx.conf`.
 * `repsheet <on|off>` - Determines if Repsheet will do any processing
 * `repsheet_ip_lookup <on|off>` - Determines if Repsheet will lookup actors by IP address
 * `repsheet_user_lookup <on|off>` - Determines if Repsheet will lookup actors by user cookie
-* `repsheet_proxy_headers <on|off>` - Determines if Repsheet will use the X-Forwarded-For header
+* `repsheet_user_cookie <name>` - Sets the cookie that holds the user value to be examined
 
 * `repsheet_redis_host <host>` - Sets the host for the Redis connection
 * `repsheet_redis_port <port>` - Sets the port for the Redis connection
 * `repsheet_redis_connection_timeout <n>` - Sets the Redis connection timeout (in milliseconds)
 * `repsheet_redis_read_timeout <n>` - Sets the Redis request timeout (in milliseconds)
 
-* `repsheet_user_cookie <name>` - Sets the cookie that holds the user value to be examined
+* `repsheet_proxy_headers <on|off>` - Determines if Repsheet will use the X-Forwarded-For header
+* `repsheet_proxy_headers_header <header>` - Sets an alternate header to use for the source ip
+* `repsheet_proxy_fallback <on|off>` - Uses X-Forwarded-For as a fallback if `proxy_headers_header` fails to find a valid address
+
+* `repsheet_whitelist_CIDR_cache_initial_size <size>` - Starting size of the whitelist CIDR block cache
+* `repsheet_blacklist_CIDR_cache_initial_size <size>` - Starting size of the blacklist CIDR block cache
 
 Here's a simple example NGINX config:
 
@@ -60,14 +65,20 @@ http {
   repsheet on;
   repsheet_ip_lookup on;
   repsheet_user_lookup on;
-  repsheet_proxy_headers on;
+  repsheet_user_cookie "user";
 
   repsheet_redis_host localhost;
   repsheet_redis_port 6379;
   repsheet_redis_connection_timeout 5;
   repsheet_redis_read_timeout 10;
 
-  repsheet_user_cookie "user";
+  repsheet_proxy_headers on;
+  repsheet_proxy_headers_header "True-Client-IP";
+  repsheet_proxy_fallback on;
+
+  repsheet_whitelist_CIDR_cache_initial_size 10;
+  repsheet_blacklist_CIDR_cache_initial_size 10;
+  repsheet_cache_expiry 4;
 
   server {
     listen 8888;
