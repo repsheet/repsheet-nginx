@@ -22,7 +22,7 @@ each request to see if that cookie has been blacklisted.
 ## Dependencies
 
 * [hiredis](https://github.com/redis/hiredis) 0.13.1 or greater
-* [librepsheet](https://github.com/repsheet/librepsheet) 6.0.0 or greater
+* [librepsheet](https://github.com/repsheet/librepsheet) 6.2.0 or greater
 * [Redis](http://redis.io) 2.8 or greater (runtime only)
 
 #### Installation
@@ -53,6 +53,7 @@ the main configuration section of `nginx.conf`.
 
 * `repsheet_whitelist_CIDR_cache_initial_size <size>` - Starting size of the whitelist CIDR block cache
 * `repsheet_blacklist_CIDR_cache_initial_size <size>` - Starting size of the blacklist CIDR block cache
+* `repsheet_cache_expiry <time>` - Time in seconds before CIDR cache expires
 
 Here's a simple example NGINX config:
 
@@ -80,6 +81,12 @@ http {
   repsheet_blacklist_CIDR_cache_initial_size 10;
   repsheet_cache_expiry 4;
 
+  proxy_set_header X-Repsheet $repsheet;
+
+  map '_' $repsheet {
+    default 'false';
+  }
+
   server {
     listen 8888;
     location / {
@@ -88,6 +95,13 @@ http {
   }
 }
 ```
+
+Notice the additional `proxy_set_header` and following `map`
+directives. These are placed in the configuration when applying
+marking. The module will populate the `$repsheet` variable when a mark
+needs to be applied, but the variable has to exist before it can be set.
+This ensures that the variable exists across the entirety of
+your configuration.
 
 ## Running the Integration Tests
 
