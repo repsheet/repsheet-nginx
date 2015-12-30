@@ -1,3 +1,7 @@
+2015-12-30  Aaron Bedra  <aaron@aaronbedra.com>
+
+	* 4.2.0: Add alternate proxy header fallback
+
 2015-12-09  Aaron Bedra  <aaron@aaronbedra.com>
 
 	* 4.1.0: Add reason code to X-Repsheet header
