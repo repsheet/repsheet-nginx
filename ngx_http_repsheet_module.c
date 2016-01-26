@@ -32,11 +32,10 @@ typedef struct {
   ngx_flag_t auto_mark;
   ngx_str_t proxy_headers_header;
   ngx_flag_t proxy_headers_fallback;
-  ngx_str_t header_content;
 } repsheet_loc_conf_t;
 
 typedef struct {
-    ngx_flag_t flagged;
+  ngx_flag_t flagged;
   ngx_str_t reason;
 } repsheet_ctx_t;
 
@@ -386,8 +385,6 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     return NGX_DECLINED;
   }
 
-  loc_conf->header_content.data = NULL;
-
   int connection_status = check_connection(main_conf->redis.connection);
   if (connection_status == DISCONNECTED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - No Redis connection found, creating a new connection");
@@ -652,7 +649,6 @@ ngx_http_repsheet_create_loc_conf(ngx_conf_t *cf)
   conf->enabled = NGX_CONF_UNSET;
   conf->auto_blacklist = NGX_CONF_UNSET;
   conf->auto_mark = NGX_CONF_UNSET;
-  conf->header_content.data = NULL;
   conf->proxy_headers_fallback = NGX_CONF_UNSET;
 
   return conf;
