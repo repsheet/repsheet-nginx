@@ -83,10 +83,6 @@ http {
 
   proxy_set_header X-Repsheet $repsheet;
 
-  map '_' $repsheet {
-    default 'false';
-  }
-
   server {
     listen 8888;
     location / {
@@ -96,12 +92,10 @@ http {
 }
 ```
 
-Notice the additional `proxy_set_header` and following `map`
-directives. These are placed in the configuration when applying
-marking. The module will populate the `$repsheet` variable when a mark
-needs to be applied, but the variable has to exist before it can be set.
-This ensures that the variable exists across the entirety of
-your configuration.
+Notice the `proxy_set_header` directive. This is placed in the configuration
+when applying marking. The module will populate the `$repsheet` variable when a mark
+needs to be applied, and it will also populate the `$repsheet_reason` variable with
+the reason for the marking.
 
 ## Running the Integration Tests
 
