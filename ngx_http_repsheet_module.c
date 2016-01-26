@@ -32,13 +32,108 @@ typedef struct {
   ngx_flag_t auto_mark;
   ngx_str_t proxy_headers_header;
   ngx_flag_t proxy_headers_fallback;
-  ngx_int_t header_index;
   ngx_str_t header_content;
 } repsheet_loc_conf_t;
 
+typedef struct {
+    ngx_flag_t flagged;
+  ngx_str_t reason;
+} repsheet_ctx_t;
 
 ngx_module_t ngx_http_repsheet_module;
 
+ngx_str_t ngx_http_repsheet_variable_name = ngx_string("repsheet");
+ngx_str_t ngx_http_repsheet_flagged = ngx_string("true");
+ngx_str_t ngx_http_repsheet_default = ngx_string("");
+
+ngx_str_t ngx_http_repsheet_reason_variable_name = ngx_string("repsheet_reason");
+
+static ngx_int_t
+ngx_http_repsheet_reason_variable(ngx_http_request_t *r, ngx_http_variable_value_t *v, uintptr_t data)
+{
+  repsheet_ctx_t *ctx = ngx_http_get_module_ctx(r, ngx_http_repsheet_module);
+
+  if (ctx && ctx->reason.data) {
+    v->valid = 1;
+    v->no_cacheable = 0;
+    v->not_found = 0;
+    v->len = ctx->reason.len;
+    v->data = ctx->reason.data;
+  } else {
+    v->not_found = 1;
+  }
+
+  return NGX_OK;
+}
+
+static ngx_int_t
+ngx_http_repsheet_variable(ngx_http_request_t *r, ngx_http_variable_value_t *v, uintptr_t data)
+{
+  repsheet_ctx_t *ctx = ngx_http_get_module_ctx(r, ngx_http_repsheet_module);
+
+  if (ctx && ctx->flagged) {
+    v->valid = 1;
+    v->no_cacheable = 0;
+    v->not_found = 0;
+    v->len = ngx_http_repsheet_flagged.len;
+    v->data = ngx_http_repsheet_flagged.data;
+  } else {
+    v->valid = 1;
+    v->no_cacheable = 0;
+    v->not_found = 0;
+    v->len = ngx_http_repsheet_default.len;
+    v->data = ngx_http_repsheet_default.data;
+  }
+
+  return NGX_OK;
+}
+
+
+static int
+flag_request(ngx_http_request_t *r, char *reason)
+{
+  repsheet_ctx_t *ctx;
+  ctx = ngx_pcalloc(r->pool, sizeof(repsheet_ctx_t));
+  if (ctx == NULL) {
+    return NGX_ERROR;
+  }
+
+  ngx_http_set_ctx(r, ctx, ngx_http_repsheet_module);
+
+  ctx->flagged = 1;
+
+  int len = strlen(reason);
+  ctx->reason.len = len;
+  ctx->reason.data = ngx_palloc(r->pool, len);
+  if (ctx->reason.data == NULL) {
+    return NGX_ERROR;
+  }
+
+  memcpy(ctx->reason.data, reason, len);
+
+  return NGX_OK;
+}
+
+static ngx_int_t
+ngx_http_repsheet_preconf_add_variables(ngx_conf_t *cf)
+{
+  ngx_http_variable_t *var;
+  var = ngx_http_add_variable(cf, &ngx_http_repsheet_variable_name, NGX_HTTP_VAR_NOCACHEABLE);
+  if (var == NULL) {
+    return NGX_ERROR;
+  }
+  var->get_handler = ngx_http_repsheet_variable;
+  var->data = 0;
+
+  var = ngx_http_add_variable(cf, &ngx_http_repsheet_reason_variable_name, NGX_HTTP_VAR_NOCACHEABLE);
+  if (var == NULL) {
+    return NGX_ERROR;
+  }
+  var->get_handler = ngx_http_repsheet_reason_variable;
+  var->data = 0;
+
+  return NGX_OK;
+}
 
 static ngx_table_elt_t*
 x_forwarded_for(ngx_http_request_t *r)
@@ -161,29 +256,6 @@ reset_connection(repsheet_main_conf_t *main_conf)
   }
 }
 
-
-static void
-set_repsheet_header(ngx_http_request_t *r, repsheet_loc_conf_t *loc_conf, char *reason)
-{
-  if (loc_conf->header_index != NGX_ERROR) {
-    ngx_http_variable_value_t *repsheet_variable = ngx_http_get_indexed_variable(r, loc_conf->header_index);
-
-    if (repsheet_variable == NULL || repsheet_variable->not_found || repsheet_variable->len == 0) {
-      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - $repsheet variable not set");
-      return;
-    }
-
-    ngx_str_t *content = &(loc_conf->header_content);
-    content->len = strlen(reason);
-    content->data = (u_char*) realloc(content->data, content->len);
-    memcpy(content->data, reason, content->len);
-
-    repsheet_variable->len = content->len;
-    repsheet_variable->data = content->data;
-  }
-}
-
-
 static ngx_int_t
 lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf, repsheet_loc_conf_t *loc_conf)
 {
@@ -206,7 +278,10 @@ lookup_user(ngx_http_request_t *r, repsheet_main_conf_t *main_conf, repsheet_loc
 
     if (is_user_marked(main_conf->redis.connection, (const char *)lookup_value, reason_user)) {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - USER %V was found on repsheet. Reason: %s", &cookie_value, reason_user);
-      set_repsheet_header(r, loc_conf, reason_user);
+      if (flag_request(r, reason_user) != NGX_OK) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - failed to flag request");
+        return NGX_DECLINED;
+      }
     }
   }
 
@@ -247,7 +322,10 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf, repsheet_loc_c
 
   if (is_ip_marked(main_conf->redis.connection, address, reason_ip)) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was found on repsheet. Reason: %s", address, reason_ip);
-    set_repsheet_header(r, loc_conf, reason_ip);
+    if (flag_request(r, reason_ip) != NGX_OK) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - failed to flag request");
+      return NGX_DECLINED;
+    }
   }
 
   ip_status = actor_status(main_conf->redis.connection, address, IP, reason_ip);
@@ -304,10 +382,11 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
 
   repsheet_loc_conf_t  *loc_conf  = ngx_http_get_module_loc_conf(r, ngx_http_repsheet_module);
 
-  if (!loc_conf->enabled || loc_conf->enabled == NGX_CONF_UNSET || r->main->internal) {
+  if (!loc_conf->enabled || loc_conf->enabled == NGX_CONF_UNSET) {
     return NGX_DECLINED;
   }
 
+  loc_conf->header_content.data = NULL;
 
   int connection_status = check_connection(main_conf->redis.connection);
   if (connection_status == DISCONNECTED) {
@@ -573,7 +652,6 @@ ngx_http_repsheet_create_loc_conf(ngx_conf_t *cf)
   conf->enabled = NGX_CONF_UNSET;
   conf->auto_blacklist = NGX_CONF_UNSET;
   conf->auto_mark = NGX_CONF_UNSET;
-  conf->header_index = NGX_CONF_UNSET;
   conf->header_content.data = NULL;
   conf->proxy_headers_fallback = NGX_CONF_UNSET;
 
@@ -587,12 +665,9 @@ ngx_http_repsheet_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
   repsheet_loc_conf_t *prev = (repsheet_loc_conf_t *)parent;
   repsheet_loc_conf_t *conf = (repsheet_loc_conf_t *)child;
 
-  static ngx_str_t repsheet_variable = ngx_string("repsheet");
-
   ngx_conf_merge_value(conf->enabled, prev->enabled, 0);
   ngx_conf_merge_value(conf->auto_blacklist, prev->auto_blacklist, 0);
   ngx_conf_merge_value(conf->auto_mark, prev->auto_mark, 0);
-  ngx_conf_merge_value(conf->header_index, prev->header_index, ngx_http_get_variable_index(cf, &repsheet_variable));
   ngx_conf_merge_str_value(conf->proxy_headers_header, prev->proxy_headers_header, "X-Forwarded-For");
   ngx_conf_merge_value(conf->proxy_headers_fallback, prev->proxy_headers_fallback, 0);
 
@@ -601,14 +676,14 @@ ngx_http_repsheet_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 
 
 static ngx_http_module_t ngx_http_repsheet_module_ctx = {
-  NULL,                               /* preconfiguration */
-  ngx_http_repsheet_init,             /* postconfiguration */
-  ngx_http_repsheet_create_main_conf, /* create main configuration */
-  NULL,                               /* init main configuration */
-  NULL,                               /* create server configuration */
-  NULL,                               /* merge server configuration */
-  ngx_http_repsheet_create_loc_conf,  /* create location configuration */
-  ngx_http_repsheet_merge_loc_conf    /* merge location configuration */
+  ngx_http_repsheet_preconf_add_variables, /* preconfiguration */
+  ngx_http_repsheet_init,                  /* postconfiguration */
+  ngx_http_repsheet_create_main_conf,      /* create main configuration */
+  NULL,                                    /* init main configuration */
+  NULL,                                    /* create server configuration */
+  NULL,                                    /* merge server configuration */
+  ngx_http_repsheet_create_loc_conf,       /* create location configuration */
+  ngx_http_repsheet_merge_loc_conf         /* merge location configuration */
 };
 
 
