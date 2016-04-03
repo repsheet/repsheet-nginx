@@ -6,7 +6,7 @@ Repsheet works by inspecting requests as they come into the web server
 and checking the requesting actor's status in Redis. When a request
 comes in, the IP is checked to see if it has been flagged by
 Repsheet. If the actor has been flagged, that information is logged
-and the header `X-Repsheet: true` will be added to the downstream
+and the header `X-Repsheet: <reason>`, where `<reason>` is the internally stored reason the actor is being flagged,  will be added to the downstream
 request to let the application know that the actor is suspected of
 malicious activity. If the actor has been blacklisted, Repsheet
 instructs NGINX to return a 403.
