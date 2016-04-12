@@ -3,7 +3,7 @@
 set -o nounset
 set -o errexit
 
-NGINX_VERSION=1.8.0
+NGINX_VERSION=1.9.14
 
 DIR=$(pwd)
 BUILDDIR=$DIR/build
