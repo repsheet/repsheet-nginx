@@ -4,7 +4,7 @@ before_install:
   - sudo apt-get install -qq build-essential libjson0-dev libcurl4-openssl-dev check
 script: sh ci.sh
 rvm:
-  2.0
+  2.4.1
 services:
   - redis-server
 branches:
