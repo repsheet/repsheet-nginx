@@ -1,7 +1,7 @@
 language: ruby
 before_install:
   - sudo apt-get update -qq
-  - sudo apt-get install -qq build-essential libcurl4-openssl-dev libhredis-dev
+  - sudo apt-get install -qq build-essential libcurl4-openssl-dev libhiredis-dev
 script: sh ci.sh
 rvm:
   2.5.1
