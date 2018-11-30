@@ -1,24 +1,10 @@
 #!/bin/sh
 
-# Install a supported version of hiredis
-curl -O -L https://github.com/redis/hiredis/archive/v0.13.1.tar.gz
-tar xzf v0.13.1.tar.gz
-cd hiredis-0.13.1
-./configure
+# Install Redis Module
+git clone git://github.com/repsheet/redis_module
+cd redis_module
 make
-sudo make install
-sudo ldconfig
-cd ..
-
-# Install librepsheet
-git clone git://github.com/repsheet/librepsheet
-cd librepsheet
-./autogen.sh
-./configure
-make
-sudo make install
-sudo ldconfig
-pkg-config --list-all
+redis-cli module load ./module.so
 cd ..
 
 # Compile and run tests

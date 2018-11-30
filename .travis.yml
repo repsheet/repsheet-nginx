@@ -1,10 +1,10 @@
 language: ruby
 before_install:
   - sudo apt-get update -qq
-  - sudo apt-get install -qq build-essential libjson0-dev libcurl4-openssl-dev check
+  - sudo apt-get install -qq build-essential libcurl4-openssl-dev libhredis-dev
 script: sh ci.sh
 rvm:
-  2.4.1
+  2.5.1
 services:
   - redis-server
 branches:
