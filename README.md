@@ -3,44 +3,32 @@
 ## How does it work?
 
 Repsheet works by inspecting requests as they come into the web server
-and checking the requesting actor's status in Redis. When a request
-comes in, the IP is checked to see if it has been flagged by
-Repsheet. If the actor has been flagged, that information is logged
-and the header `X-Repsheet: <reason>`, where `<reason>` is the internally stored reason the actor is being flagged,  will be added to the downstream
-request to let the application know that the actor is suspected of
-malicious activity. If the actor has been blacklisted, Repsheet
-instructs NGINX to return a 403.
+and checking the requesting actor's status in a cache. When a request
+comes in, the status of the actor is used to determine the required
+action. If the actor has been flagged, that information is added and
+the header `X-Repsheet: <reason>`. If the actor has been blacklisted,
+Repsheet instructs NGINX to return a 403.
 
 An actor can be defined by either an IP address or a cookie value. By
-default Repsheet looks at the IP address of the requesting actor by
+default Repsheet looks at the IP address of the requesting actor
 using the directly connected IP address provided by NGINX or by
 examining the `X-Forwarded-For` header if enabled using the
-`repsheet_proxy_headers` directive. If the `repsheet_user_cookie`
-directive is given a value, it will test the value of that cookie in
-each request to see if that cookie has been blacklisted.
+`repsheet_proxy_headers` directive.
 
 ## Dependencies
 
-* [hiredis](https://github.com/redis/hiredis) 0.13.1 or greater
-* [librepsheet](https://github.com/repsheet/librepsheet) 6.2.0 or greater
-* [Redis](http://redis.io) 2.8 or greater (runtime only)
+* [hiredis](https://github.com/redis/hiredis) 0.11 or greater
+* [Redis](http://redis.io) 4.0 or greater
+* [Repsheet Redis Module](https://github.com/repsheet/redis_module)
 
 #### Installation
 
-Since NGINX doesn't have shared module support, this module will need
-to be accessible during the compilation of NGINX itself. The `scripts`
-folder has some examples on how to add the module to your NGINX
-installation.
-
-To activate and configure Repsheet you will need to set some
-directives. The following list explains what each directive is and
-what is does. At the moment, the Repsheet directives all live under
-the main configuration section of `nginx.conf`.
+You can install this module the traditional way by compiling it in or
+by compiling it as a shared module. To activate and configure
+Repsheet you will need to set some directives. The following list
+explains what each directive is and what is does.
 
 * `repsheet <on|off>` - Determines if Repsheet will do any processing
-* `repsheet_ip_lookup <on|off>` - Determines if Repsheet will lookup actors by IP address
-* `repsheet_user_lookup <on|off>` - Determines if Repsheet will lookup actors by user cookie
-* `repsheet_user_cookie <name>` - Sets the cookie that holds the user value to be examined
 
 * `repsheet_redis_host <host>` - Sets the host for the Redis connection
 * `repsheet_redis_port <port>` - Sets the port for the Redis connection
@@ -51,10 +39,6 @@ the main configuration section of `nginx.conf`.
 * `repsheet_proxy_headers_header <header>` - Sets an alternate header to use for the source ip
 * `repsheet_proxy_fallback <on|off>` - Uses X-Forwarded-For as a fallback if `proxy_headers_header` fails to find a valid address
 
-* `repsheet_whitelist_CIDR_cache_initial_size <size>` - Starting size of the whitelist CIDR block cache
-* `repsheet_blacklist_CIDR_cache_initial_size <size>` - Starting size of the blacklist CIDR block cache
-* `repsheet_cache_expiry <time>` - Time in seconds before CIDR cache expires
-
 Here's a simple example NGINX config:
 
 ```
@@ -64,22 +48,13 @@ events {
 
 http {
   repsheet on;
-  repsheet_ip_lookup on;
-  repsheet_user_lookup on;
-  repsheet_user_cookie "user";
-
   repsheet_redis_host localhost;
   repsheet_redis_port 6379;
   repsheet_redis_connection_timeout 5;
   repsheet_redis_read_timeout 10;
-
   repsheet_proxy_headers on;
   repsheet_proxy_headers_header "True-Client-IP";
   repsheet_proxy_fallback on;
-
-  repsheet_whitelist_CIDR_cache_initial_size 10;
-  repsheet_blacklist_CIDR_cache_initial_size 10;
-  repsheet_cache_expiry 4;
 
   proxy_set_header X-Repsheet $repsheet;
 
@@ -92,10 +67,11 @@ http {
 }
 ```
 
-Notice the `proxy_set_header` directive. This is placed in the configuration
-when applying marking. The module will populate the `$repsheet` variable when a mark
-needs to be applied, and it will also populate the `$repsheet_reason` variable with
-the reason for the marking.
+Notice the `proxy_set_header` directive. This is placed in the
+configuration when applying marking. The module will populate the
+`$repsheet` variable when a mark needs to be applied, and it will also
+populate the `$repsheet_reason` variable with the reason for the
+marking.
 
 ## Running the Integration Tests
 
@@ -109,7 +85,6 @@ commands:
 ```sh
 $ bundle install
 $ script/bootstrap
-$ rake nginx:compile
 $ rake
 ```
 
@@ -128,7 +103,7 @@ docker on your system simply run:
 
 ```
 $ cd docker
-$ docker build .
+$ docker build repsheet .
 ```
 
 This builds the docker image defined in Dockerfile, which includes
