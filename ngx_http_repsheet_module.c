@@ -115,27 +115,36 @@ lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf, repsheet_loc_c
 
   Status lookup_result = status(main_conf->redis.connection, address);
 
-  if (is_ip_marked(lookup_result)) {
-    // TODO: get reason
-    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was found on repsheet. Reason: TODO", address);
-    if (flag_request(r, "TODO") != NGX_OK) {
-      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - failed to flag request");
-      // TODO: should this really return here?
-      return NGX_DECLINED;
-    }
-  }
-
   if (lookup_result == DISCONNECTED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - The Redis request failed, bypassing further operations");
     return NGX_DECLINED;
-  } else if (lookup_result == WHITELISTED) {
-    // TODO: get reason
-    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s is whitelisted by repsheet. Reason: TODO", address);
-    return NGX_DECLINED;
-  } else if (lookup_result == BLACKLISTED) {
-    // TODO: get reason
-    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was blocked by repsheet. Reason: TODO", address);
-    return NGX_HTTP_FORBIDDEN;
+  }
+
+  char reason[MAX_REASON_LENGTH];
+  memset(reason, '\0', MAX_REASON_LENGTH);
+  int reason_result = get_reason(main_conf->redis.connection, address, lookup_result, reason);
+
+  if (lookup_result != OK) {
+    if (reason_result == DISCONNECTED || reason_result == INVALID) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Could not retrieve reason");
+      ngx_memcpy(reason, "UNKNOWN", 7);
+    }
+
+    if (is_ip_marked(lookup_result)) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was found on repsheet. Reason: %s", address, reason);
+      if (flag_request(r, reason) != NGX_OK) {
+	ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - failed to flag request");
+	return NGX_DECLINED;
+      }
+    }
+
+    if (lookup_result == WHITELISTED) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s is whitelisted by repsheet. Reason: %s", address, reason);
+      return NGX_DECLINED;
+    } else if (lookup_result == BLACKLISTED) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was blocked by repsheet. Reason: %s", address, reason);
+      return NGX_HTTP_FORBIDDEN;
+    }
   }
 
   return NGX_DECLINED;

@@ -4,13 +4,15 @@ describe "Integration Specs" do
 
   before do
     @redis = Redis.new
+  end
+
+  after do
     @redis.flushdb
   end
 
-  after  { @redis.flushdb }
-
   describe "Bootstrap" do
     it "Redis is running" do
+      @redis.flushdb
       expect(@redis.ping).to eq("PONG")
     end
 

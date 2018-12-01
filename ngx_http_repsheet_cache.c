@@ -1,7 +1,6 @@
 #include "ngx_http_repsheet_cache.h"
 
-int check_connection(redisContext *context)
-{
+int check_connection(redisContext *context) {
   if (context == NULL || context->err) {
     return DISCONNECTED;
   }
@@ -21,8 +20,7 @@ int check_connection(redisContext *context)
   }
 }
 
-int reset_connection(repsheet_main_conf_t *main_conf)
-{
+int reset_connection(repsheet_main_conf_t *main_conf) {
   cleanup_connection(main_conf);
 
   const char *host = (const char *) main_conf->redis.host.data;
@@ -46,8 +44,7 @@ int reset_connection(repsheet_main_conf_t *main_conf)
   }
 }
 
-void cleanup_connection(repsheet_main_conf_t *main_conf)
-{
+void cleanup_connection(repsheet_main_conf_t *main_conf) {
   if (main_conf->redis.connection != NULL) {
     redisFree(main_conf->redis.connection);
     main_conf->redis.connection = NULL;
@@ -116,6 +113,37 @@ Status status(redisContext *context, char *actor) {
         return MARKED;
       }
 
+      freeReplyObject(reply);
+      return OK;
+    }
+  } else {
+    return DISCONNECTED;
+  }
+}
+
+int get_reason(redisContext *context, char *actor, Status status, char *reason) {
+  redisReply *reply;
+
+  switch (status) {
+  case WHITELISTED:
+    reply = redisCommand(context, "GET %s:repsheet:ip:whitelisted", actor);
+    break;
+  case BLACKLISTED:
+    reply = redisCommand(context, "GET %s:repsheet:ip:blacklisted", actor);
+    break;
+  case MARKED:
+    reply = redisCommand(context, "GET %s:repsheet:ip:marked", actor);
+    break;
+  default:
+    return INVALID;
+  }
+
+  if (reply) {
+    if (reply->type == REDIS_REPLY_ERROR) {
+      freeReplyObject(reply);
+      return DISCONNECTED;
+    } else {
+      ngx_memcpy(reason, reply->str, reply->len);
       freeReplyObject(reply);
       return OK;
     }

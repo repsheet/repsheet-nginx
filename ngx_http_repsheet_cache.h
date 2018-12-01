@@ -13,5 +13,6 @@ int status(redisContext *context, char *actor);
 int is_ip_whitelisted(Status status);
 int is_ip_blacklisted(Status status);
 int is_ip_marked(Status status);
+int get_reason(redisContext *context, char *actor, Status status, char *reason);
 
 #endif

@@ -10,6 +10,8 @@
 #define MARKED 3
 #define INVALID 4
 
+#define MAX_REASON_LENGTH 1024
+
 #include <ngx_core.h>
 #include <hiredis/hiredis.h>
 
