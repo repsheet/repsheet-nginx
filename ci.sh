@@ -10,7 +10,7 @@ sudo make install
 git clone git://github.com/repsheet/redis_module
 cd redis_module
 make
-redis-server --loadmodule ./module.so &
+redis-server --loadmodule ./repsheet.so &
 cd ..
 
 # Compile and run tests
