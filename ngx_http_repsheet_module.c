@@ -6,53 +6,6 @@
 #include "ngx_http_repsheet_cache.h"
 #include "ngx_http_repsheet_xff.h"
 
-ngx_str_t ngx_http_repsheet_variable_name = ngx_string("repsheet");
-ngx_str_t ngx_http_repsheet_flagged = ngx_string("true");
-ngx_str_t ngx_http_repsheet_default = ngx_string("");
-ngx_str_t ngx_http_repsheet_reason_variable_name = ngx_string("repsheet_reason");
-
-
-static ngx_int_t
-ngx_http_repsheet_reason_variable(ngx_http_request_t *r, ngx_http_variable_value_t *v, uintptr_t data)
-{
-  repsheet_ctx_t *ctx = ngx_http_get_module_ctx(r, ngx_http_repsheet_module);
-
-  if (ctx && ctx->reason.data) {
-    v->valid = 1;
-    v->no_cacheable = 0;
-    v->not_found = 0;
-    v->len = ctx->reason.len;
-    v->data = ctx->reason.data;
-  } else {
-    v->not_found = 1;
-  }
-
-  return NGX_OK;
-}
-
-
-static ngx_int_t
-ngx_http_repsheet_variable(ngx_http_request_t *r, ngx_http_variable_value_t *v, uintptr_t data)
-{
-  repsheet_ctx_t *ctx = ngx_http_get_module_ctx(r, ngx_http_repsheet_module);
-
-  if (ctx && ctx->flagged) {
-    v->valid = 1;
-    v->no_cacheable = 0;
-    v->not_found = 0;
-    v->len = ngx_http_repsheet_flagged.len;
-    v->data = ngx_http_repsheet_flagged.data;
-  } else {
-    v->valid = 1;
-    v->no_cacheable = 0;
-    v->not_found = 0;
-    v->len = ngx_http_repsheet_default.len;
-    v->data = ngx_http_repsheet_default.data;
-  }
-
-  return NGX_OK;
-}
-
 
 static int
 flag_request(ngx_http_request_t *r, char *reason)
@@ -75,28 +28,6 @@ flag_request(ngx_http_request_t *r, char *reason)
   }
 
   memcpy(ctx->reason.data, reason, len);
-
-  return NGX_OK;
-}
-
-
-static ngx_int_t
-ngx_http_repsheet_preconf_add_variables(ngx_conf_t *cf)
-{
-  ngx_http_variable_t *var;
-  var = ngx_http_add_variable(cf, &ngx_http_repsheet_variable_name, NGX_HTTP_VAR_NOCACHEABLE);
-  if (var == NULL) {
-    return NGX_ERROR;
-  }
-  var->get_handler = ngx_http_repsheet_variable;
-  var->data = 0;
-
-  var = ngx_http_add_variable(cf, &ngx_http_repsheet_reason_variable_name, NGX_HTTP_VAR_NOCACHEABLE);
-  if (var == NULL) {
-    return NGX_ERROR;
-  }
-  var->get_handler = ngx_http_repsheet_reason_variable;
-  var->data = 0;
 
   return NGX_OK;
 }
@@ -330,14 +261,14 @@ ngx_http_repsheet_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 
 
 static ngx_http_module_t ngx_http_repsheet_module_ctx = {
-  ngx_http_repsheet_preconf_add_variables, /* preconfiguration */
-  ngx_http_repsheet_init,                  /* postconfiguration */
-  ngx_http_repsheet_create_main_conf,      /* create main configuration */
-  NULL,                                    /* init main configuration */
-  NULL,                                    /* create server configuration */
-  NULL,                                    /* merge server configuration */
-  ngx_http_repsheet_create_loc_conf,       /* create location configuration */
-  ngx_http_repsheet_merge_loc_conf         /* merge location configuration */
+  NULL,                               /* preconfiguration */
+  ngx_http_repsheet_init,             /* postconfiguration */
+  ngx_http_repsheet_create_main_conf, /* create main configuration */
+  NULL,                               /* init main configuration */
+  NULL,                               /* create server configuration */
+  NULL,                               /* merge server configuration */
+  ngx_http_repsheet_create_loc_conf,  /* create location configuration */
+  ngx_http_repsheet_merge_loc_conf    /* merge location configuration */
 };
 
 

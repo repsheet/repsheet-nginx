@@ -56,8 +56,6 @@ http {
   repsheet_proxy_headers_header "True-Client-IP";
   repsheet_proxy_fallback on;
 
-  proxy_set_header X-Repsheet $repsheet;
-
   server {
     listen 8888;
     location / {
@@ -66,12 +64,6 @@ http {
   }
 }
 ```
-
-Notice the `proxy_set_header` directive. This is placed in the
-configuration when applying marking. The module will populate the
-`$repsheet` variable when a mark needs to be applied, and it will also
-populate the `$repsheet_reason` variable with the reason for the
-marking.
 
 ## Running the Integration Tests
 
