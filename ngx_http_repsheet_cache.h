@@ -6,6 +6,7 @@
 int check_connection(redisContext *context);
 int reset_connection(repsheet_main_conf_t *main_conf);
 void cleanup_connection(repsheet_main_conf_t *main_conf);
+void evaluate_connection(ngx_http_request_t *r, repsheet_main_conf_t *main_conf);
 int blacklist(redisContext *context, char *actor, char *reason);
 int whitelist(redisContext *context, char *actor, char *reason);
 int mark(redisContext *context, char *actor, char *reason);

@@ -1,3 +1,5 @@
+#include <ngx_http.h>
+
 #include "ngx_http_repsheet_cache.h"
 
 int check_connection(redisContext *context) {
@@ -48,6 +50,30 @@ void cleanup_connection(repsheet_main_conf_t *main_conf) {
   if (main_conf->redis.connection != NULL) {
     redisFree(main_conf->redis.connection);
     main_conf->redis.connection = NULL;
+  }
+}
+
+void evaluate_connection(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
+{
+  int connection_status = check_connection(main_conf->redis.connection);
+
+  if (connection_status == DISCONNECTED) {
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - No Redis connection found, creating a new connection");
+
+    if (main_conf->redis.connection != NULL) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Redis Context Error: %s", main_conf->redis.connection->errstr);
+    }
+
+    connection_status = reset_connection(main_conf);
+
+    if (connection_status == DISCONNECTED) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Unable to connect to Redis, bypassing Repsheet operations");
+
+      if (main_conf->redis.connection != NULL) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Redis Context Error: %s", main_conf->redis.connection->errstr);
+        cleanup_connection(main_conf);
+      }
+    }
   }
 }
 
