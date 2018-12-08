@@ -4,29 +4,13 @@
 #include "ngx_http_repsheet_xff.h"
 #include "ngx_http_repsheet_lookup.h"
 
-static int
-flag_request(ngx_http_request_t *r, char *reason)
-{
-  repsheet_ctx_t *ctx;
-  ctx = ngx_pcalloc(r->pool, sizeof(repsheet_ctx_t));
-  if (ctx == NULL) {
-    return NGX_ERROR;
-  }
-
-  ngx_http_set_ctx(r, ctx, ngx_http_repsheet_module);
-
-  ctx->flagged = 1;
-
-  int len = strlen(reason);
-  ctx->reason.len = len;
-  ctx->reason.data = ngx_palloc(r->pool, len);
-  if (ctx->reason.data == NULL) {
-    return NGX_ERROR;
-  }
-
-  memcpy(ctx->reason.data, reason, len);
-
-  return NGX_OK;
+void set_reason_header(ngx_http_request_t *r, ngx_str_t *reason) {
+  ngx_table_elt_t *h;
+  h = ngx_list_push(&r->headers_in.headers);
+  h->hash = 1;
+  ngx_str_set(&h->key, "X-Repsheet");
+  h->value.data = reason->data;
+  h->value.len = reason->len;
 }
 
 ngx_int_t lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf, repsheet_loc_conf_t *loc_conf)
@@ -58,10 +42,10 @@ ngx_int_t lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf, reps
 
     if (is_ip_marked(lookup_result)) {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was found on repsheet. Reason: %s", address, reason);
-      if (flag_request(r, reason) != NGX_OK) {
-	ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - failed to flag request");
-	return NGX_DECLINED;
-      }
+      ngx_str_t value;
+      ngx_memcpy(value.data, reason, ngx_strlen(reason));
+      value.len = ngx_strlen(reason);
+      set_reason_header(r, &value);
     }
 
     if (lookup_result == WHITELISTED) {
