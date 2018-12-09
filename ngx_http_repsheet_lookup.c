@@ -4,13 +4,12 @@
 #include "ngx_http_repsheet_xff.h"
 #include "ngx_http_repsheet_lookup.h"
 
-void set_reason_header(ngx_http_request_t *r, ngx_str_t *reason) {
+void set_repsheet_header(ngx_http_request_t *r) {
   ngx_table_elt_t *h;
   h = ngx_list_push(&r->headers_in.headers);
   h->hash = 1;
   ngx_str_set(&h->key, "X-Repsheet");
-  h->value.data = reason->data;
-  h->value.len = reason->len;
+  ngx_str_set(&h->value, "true");
 }
 
 ngx_int_t lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf, repsheet_loc_conf_t *loc_conf)
@@ -42,10 +41,7 @@ ngx_int_t lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf, reps
 
     if (is_ip_marked(lookup_result)) {
       ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was found on repsheet. Reason: %s", address, reason);
-      ngx_str_t value;
-      ngx_memcpy(value.data, reason, ngx_strlen(reason));
-      value.len = ngx_strlen(reason);
-      set_reason_header(r, &value);
+      set_repsheet_header(r);
     }
 
     if (lookup_result == WHITELISTED) {

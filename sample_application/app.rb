@@ -1,8 +1,8 @@
 require 'sinatra'
 
 get '/app' do
-  if request.env['HTTP_X_REPSHEET']
-    "Actor is marked. Reason: #{request.env['HTTP_X_REPSHEET']}"
+  if request.env['HTTP_X_REPSHEET'] == "true"
+    "Actor is marked"
   else
     "Actor is not on the Repsheet"
   end
