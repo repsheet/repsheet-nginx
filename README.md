@@ -90,8 +90,8 @@ expected.
 
 The file docker/Dockerfile works with docker to create a standalone
 instance of CentOS Linux, install all the dependencies, and compile
-and test librepsheet and repsheet-nginx.  Once you have installed
-docker on your system simply run:
+and test repsheet-nginx. Once you have installed docker on your system
+simply run:
 
 ```
 $ cd docker

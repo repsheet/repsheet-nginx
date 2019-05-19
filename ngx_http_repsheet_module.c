@@ -18,9 +18,8 @@ ngx_http_repsheet_handler(ngx_http_request_t *r)
     return NGX_DECLINED;
   }
 
-  evaluate_connection(r, main_conf);
-
-  return lookup_ip(r, main_conf, loc_conf);
+  ngx_int_t cache_connection_status = evaluate_cache_connection(r, main_conf);
+  return lookup_ip(r, main_conf, loc_conf, cache_connection_status);
 }
 
 

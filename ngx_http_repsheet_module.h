@@ -29,10 +29,8 @@ typedef struct {
 
 typedef struct {
   repsheet_redis_t redis;
-  ngx_flag_t user_lookup;
   ngx_flag_t ip_lookup;
   ngx_flag_t proxy_headers;
-  ngx_str_t cookie;
   ngx_int_t whitelist_CIDR_cache_initial_size;
   ngx_int_t blacklist_CIDR_cache_initial_size;
   ngx_uint_t cache_expiry;
@@ -40,8 +38,6 @@ typedef struct {
 
 typedef struct {
   ngx_flag_t enabled;
-  ngx_flag_t auto_blacklist;
-  ngx_flag_t auto_mark;
   ngx_str_t proxy_headers_header;
   ngx_flag_t proxy_headers_fallback;
 } repsheet_loc_conf_t;

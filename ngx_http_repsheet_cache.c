@@ -2,7 +2,7 @@
 
 #include "ngx_http_repsheet_cache.h"
 
-int check_connection(redisContext *context) {
+static int check_connection(redisContext *context) {
   if (context == NULL || context->err) {
     return DISCONNECTED;
   }
@@ -22,7 +22,14 @@ int check_connection(redisContext *context) {
   }
 }
 
-int reset_connection(repsheet_main_conf_t *main_conf) {
+static void cleanup_connection(repsheet_main_conf_t *main_conf) {
+  if (main_conf->redis.connection != NULL) {
+    redisFree(main_conf->redis.connection);
+    main_conf->redis.connection = NULL;
+  }
+}
+
+static int reset_connection(repsheet_main_conf_t *main_conf) {
   cleanup_connection(main_conf);
 
   const char *host = (const char *) main_conf->redis.host.data;
@@ -46,71 +53,26 @@ int reset_connection(repsheet_main_conf_t *main_conf) {
   }
 }
 
-void cleanup_connection(repsheet_main_conf_t *main_conf) {
-  if (main_conf->redis.connection != NULL) {
-    redisFree(main_conf->redis.connection);
-    main_conf->redis.connection = NULL;
-  }
-}
-
-void evaluate_connection(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
+ngx_int_t evaluate_cache_connection(ngx_http_request_t *r, repsheet_main_conf_t *main_conf)
 {
   int connection_status = check_connection(main_conf->redis.connection);
 
   if (connection_status == DISCONNECTED) {
-    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - No Redis connection found, creating a new connection");
-
-    if (main_conf->redis.connection != NULL) {
-      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Redis Context Error: %s", main_conf->redis.connection->errstr);
-    }
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Redis disconnected, creating new connection");
 
     connection_status = reset_connection(main_conf);
 
     if (connection_status == DISCONNECTED) {
-      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Unable to connect to Redis, bypassing Repsheet operations");
-
       if (main_conf->redis.connection != NULL) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Redis Context Error: %s", main_conf->redis.connection->errstr);
         cleanup_connection(main_conf);
       }
+
+      return NGX_ERROR;
     }
   }
-}
 
-int blacklist(redisContext *context, char *actor, char *reason) {
-  redisReply *reply;
-  reply = redisCommand(context, "REPSHEET.BLACKLIST %s %s", actor, reason);
-
-  if (reply) {
-    freeReplyObject(reply);
-    return OK;
-  } else {
-    return DISCONNECTED;
-  }
-}
-
-int whitelist(redisContext *context, char *actor, char *reason) {
-  redisReply *reply;
-  reply = redisCommand(context, "REPSHEET.WHITELIST %s %s", actor, reason);
-
-  if (reply) {
-    freeReplyObject(reply);
-    return OK;
-  } else {
-    return DISCONNECTED;
-  }
-}
-
-int mark(redisContext *context, char *actor, char *reason) {
-  redisReply *reply;
-  reply = redisCommand(context, "REPSHEET.MARK %s %s", actor, reason);
-
-  if (reply) {
-    freeReplyObject(reply);
-    return OK;
-  } else {
-    return DISCONNECTED;
-  }
+  return NGX_OK;
 }
 
 Status status(redisContext *context, char *actor) {
@@ -147,7 +109,8 @@ Status status(redisContext *context, char *actor) {
   }
 }
 
-int get_reason(redisContext *context, char *actor, Status status, char *reason) {
+// TODO: Fold reason fetch into status to prevent additional calls
+ngx_int_t get_reason(redisContext *context, char *actor, Status status, char *reason) {
   redisReply *reply;
 
   switch (status) {
@@ -178,14 +141,14 @@ int get_reason(redisContext *context, char *actor, Status status, char *reason) 
   }
 }
 
-int is_ip_whitelisted(Status status) {
+ngx_int_t is_ip_whitelisted(Status status) {
   return status == WHITELISTED;
 }
 
-int is_ip_blacklisted(Status status) {
+ngx_int_t is_ip_blacklisted(Status status) {
   return status == BLACKLISTED;
 }
 
-int is_ip_marked(Status status) {
+ngx_int_t is_ip_marked(Status status) {
   return status == MARKED;
 }

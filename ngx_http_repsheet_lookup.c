@@ -12,8 +12,13 @@ void set_repsheet_header(ngx_http_request_t *r) {
   ngx_str_set(&h->value, "true");
 }
 
-ngx_int_t lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf, repsheet_loc_conf_t *loc_conf)
+ngx_int_t lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf, repsheet_loc_conf_t *loc_conf, ngx_int_t cache_connection_status)
 {
+  if (cache_connection_status == NGX_ERROR) {
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Cache connection error, bypassing Repsheet");
+    return NGX_DECLINED;
+  }
+
   char address[INET6_ADDRSTRLEN];
   int address_code = derive_actor_address(r, loc_conf, address);
 
