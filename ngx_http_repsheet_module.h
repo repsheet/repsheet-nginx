@@ -9,6 +9,7 @@
 #define BLACKLISTED 2
 #define MARKED 3
 #define INVALID 4
+#define ERROR 5
 
 #define MAX_REASON_LENGTH 1024
 
@@ -16,6 +17,12 @@
 #include <hiredis/hiredis.h>
 
 typedef int Status;
+
+typedef struct {
+  Status status;
+  char *status_str;
+  char *reason;
+} repsheet_cache_status_t;
 
 typedef struct {
   ngx_str_t  host;

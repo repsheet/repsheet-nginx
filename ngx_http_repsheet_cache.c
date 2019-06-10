@@ -75,80 +75,51 @@ ngx_int_t evaluate_cache_connection(ngx_http_request_t *r, repsheet_main_conf_t 
   return NGX_OK;
 }
 
-Status status(redisContext *context, char *actor) {
-  redisReply *reply;
-  reply = redisCommand(context, "REPSHEET.STATUS %s", actor);
+void free_cache_status(repsheet_cache_status_t *cache_status) {
+  free(cache_status->status_str);
+  free(cache_status->reason);
+  free(cache_status);
+}
+
+repsheet_cache_status_t *status(redisContext *context, char *actor) {
+  repsheet_cache_status_t *cache_status = malloc(sizeof(repsheet_cache_status_t));
+  redisReply *reply = redisCommand(context, "REPSHEET.STATUS %s", actor);
 
   if (reply) {
     if (reply->type == REDIS_REPLY_ERROR) {
       freeReplyObject(reply);
-      return DISCONNECTED;
-    } else {
-      char *message = reply->str;
-
-      if (ngx_strncmp(message, "WHITELISTED", ngx_strlen(message)) == 0) {
-	freeReplyObject(reply);
-        return WHITELISTED;
-      }
-
-      if (ngx_strncmp(message, "BLACKLISTED", ngx_strlen(message)) == 0) {
-	freeReplyObject(reply);
-        return BLACKLISTED;
-      }
-
-      if (ngx_strncmp(message, "MARKED", ngx_strlen(message)) == 0) {
-	freeReplyObject(reply);
-        return MARKED;
-      }
-
+      cache_status->status = DISCONNECTED;
+      return cache_status;
+    } else if (reply->type != REDIS_REPLY_ARRAY) {
       freeReplyObject(reply);
-      return OK;
+      cache_status->status = ERROR;
+      return cache_status;
+    } else {
+      if (reply->elements != 2) {
+	cache_status->status = ERROR;
+	return cache_status;
+      }
+
+      cache_status->status_str = strdup(reply->element[0]->str);
+      cache_status->reason = strdup(reply->element[1]->str);
+      freeReplyObject(reply);
+
+      if (ngx_strncmp(cache_status->status_str, "WHITELISTED", ngx_strlen(cache_status->status_str)) == 0) {
+	cache_status->status = WHITELISTED;
+        return cache_status;
+      } else if (ngx_strncmp(cache_status->status_str, "BLACKLISTED", ngx_strlen(cache_status->status_str)) == 0) {
+	cache_status->status = BLACKLISTED;
+        return cache_status;
+      } else if (ngx_strncmp(cache_status->status_str, "MARKED", ngx_strlen(cache_status->status_str)) == 0) {
+	cache_status->status = MARKED;
+        return cache_status;
+      } else {
+	cache_status->status = OK;
+	return cache_status;
+      }
     }
   } else {
-    return DISCONNECTED;
+    cache_status->status = DISCONNECTED;
+    return cache_status;
   }
-}
-
-// TODO: Fold reason fetch into status to prevent additional calls
-ngx_int_t get_reason(redisContext *context, char *actor, Status status, char *reason) {
-  redisReply *reply;
-
-  switch (status) {
-  case WHITELISTED:
-    reply = redisCommand(context, "GET %s:repsheet:ip:whitelisted", actor);
-    break;
-  case BLACKLISTED:
-    reply = redisCommand(context, "GET %s:repsheet:ip:blacklisted", actor);
-    break;
-  case MARKED:
-    reply = redisCommand(context, "GET %s:repsheet:ip:marked", actor);
-    break;
-  default:
-    return INVALID;
-  }
-
-  if (reply) {
-    if (reply->type == REDIS_REPLY_ERROR) {
-      freeReplyObject(reply);
-      return DISCONNECTED;
-    } else {
-      ngx_memcpy(reason, reply->str, reply->len);
-      freeReplyObject(reply);
-      return OK;
-    }
-  } else {
-    return DISCONNECTED;
-  }
-}
-
-ngx_int_t is_ip_whitelisted(Status status) {
-  return status == WHITELISTED;
-}
-
-ngx_int_t is_ip_blacklisted(Status status) {
-  return status == BLACKLISTED;
-}
-
-ngx_int_t is_ip_marked(Status status) {
-  return status == MARKED;
 }

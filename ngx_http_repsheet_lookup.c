@@ -27,36 +27,39 @@ ngx_int_t lookup_ip(ngx_http_request_t *r, repsheet_main_conf_t *main_conf, reps
     return NGX_HTTP_FORBIDDEN;
   }
 
-  Status lookup_result = status(main_conf->redis.connection, address);
+  repsheet_cache_status_t *cache_status = status(main_conf->redis.connection, address);
 
-  if (lookup_result == DISCONNECTED) {
+  if (cache_status->status == DISCONNECTED) {
     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - The Redis request failed, bypassing further operations");
+    free_cache_status(cache_status);
     return NGX_DECLINED;
   }
 
-  char reason[MAX_REASON_LENGTH];
-  memset(reason, '\0', MAX_REASON_LENGTH);
-  int reason_result = get_reason(main_conf->redis.connection, address, lookup_result, reason);
-
-  if (lookup_result != OK) {
-    if (reason_result == DISCONNECTED || reason_result == INVALID) {
-      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Could not retrieve reason");
-      ngx_memcpy(reason, "UNKNOWN", 7);
-    }
-
-    if (is_ip_marked(lookup_result)) {
-      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was found on repsheet. Reason: %s", address, reason);
-      set_repsheet_header(r);
-    }
-
-    if (lookup_result == WHITELISTED) {
-      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s is whitelisted by repsheet. Reason: %s", address, reason);
+  if (cache_status->status != OK) {
+    if (cache_status->status == INVALID) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Could not retrieve reason, bypassing");
+      free_cache_status(cache_status);
       return NGX_DECLINED;
-    } else if (lookup_result == BLACKLISTED) {
-      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was blocked by repsheet. Reason: %s", address, reason);
+    } else if (cache_status->status == MARKED) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was found on repsheet. Reason: %s", address, cache_status->reason);
+      set_repsheet_header(r);
+      free_cache_status(cache_status);
+      return NGX_DECLINED;
+    } else if (cache_status->status == WHITELISTED) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s is whitelisted by repsheet. Reason: %s", address, cache_status->reason);
+      free_cache_status(cache_status);
+      return NGX_DECLINED;
+    } else if (cache_status->status == BLACKLISTED) {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - IP %s was blocked by repsheet. Reason: %s", address, cache_status->reason);
+      free_cache_status(cache_status);
       return NGX_HTTP_FORBIDDEN;
+    } else {
+      ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[Repsheet] - Invalid status %s, bypassing", cache_status->status_str);
+      free_cache_status(cache_status);
+      return NGX_DECLINED;
     }
+  } else {
+    free_cache_status(cache_status);
+    return NGX_DECLINED;
   }
-
-  return NGX_DECLINED;
 }
