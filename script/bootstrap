@@ -8,6 +8,7 @@ NGINX_VERSION=1.16.0
 DIR=$(pwd)
 BUILDDIR=$DIR/build
 NGINX_DIR=nginx
+DEBUG_FLAGS="-g -O0 -Wall -Werror -static-libasan -fsanitize=address -fsanitize=leak -fsanitize=undefined -fsanitize=unreachable -fsanitize=vla-bound -fsanitize=null"
 
 setup_local_directories () {
     if [ ! -d $BUILDDIR ]; then
@@ -52,10 +53,13 @@ install_nginx () {
 compile () {
     pushd "vendor" > /dev/null 2>&1
     pushd "nginx-$NGINX_VERSION" > /dev/null 2>&1
-    CFLAGS="-g -O0 -Wall -Werror" ./configure        \
+    ./configure                                      \
         --with-cc-opt="-Wno-deprecated-declarations" \
         --with-cc-opt="-std=c99"                     \
+	--with-cc-opt="$DEBUG_FLAGS"                 \
         --with-debug                                 \
+	--with-threads                               \
+	--with-ld-opt="-lasan -lubsan -ldl"          \
         --prefix=$(pwd)/../../build/nginx            \
         --conf-path=conf/nginx.conf                  \
         --error-log-path=logs/error.log              \
