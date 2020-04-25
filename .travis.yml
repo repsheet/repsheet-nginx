@@ -3,6 +3,7 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq build-essential libcurl4-openssl-dev libhiredis-dev
   - gem install bundler
+  - gem update --system
 script: sh ci.sh
 rvm:
   2.5.1
