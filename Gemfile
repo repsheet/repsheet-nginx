@@ -5,5 +5,5 @@ group :development, :test do
   gem "rspec"
   gem "redis"
   gem "curb"
-  gem "sinatra"
+  gem "sinatra", ">= 2.0.4"
 end
